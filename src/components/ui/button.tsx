@@ -6,7 +6,7 @@ import { tv } from 'tailwind-variants';
 
 const button = tv({
   slots: {
-    container: 'my-2 flex flex-row items-center justify-center rounded-md px-4',
+    container: 'my-2 flex flex-row items-center justify-center rounded-full px-4',
     label: 'font-inter text-base font-semibold',
     indicator: 'h-6 text-white',
   },
@@ -46,15 +46,15 @@ const button = tv({
     },
     size: {
       default: {
-        container: 'h-10 px-4',
-        label: 'text-base',
+        container: 'h-12 px-4',
+        label: 'text-lg',
       },
       lg: {
-        container: 'h-12 px-8',
+        container: 'h-14 px-8',
         label: 'text-xl',
       },
       sm: {
-        container: 'h-8 px-3',
+        container: 'h-10 px-3',
         label: 'text-sm',
         indicator: 'h-2',
       },
@@ -90,6 +90,7 @@ interface Props extends ButtonVariants, Omit<PressableProps, 'disabled'> {
   loading?: boolean;
   className?: string;
   textClassName?: string;
+  icon?: React.ReactNode;
 }
 
 export const Button = React.forwardRef<View, Props>(
@@ -103,6 +104,7 @@ export const Button = React.forwardRef<View, Props>(
       className = '',
       testID,
       textClassName = '',
+      icon,
       ...props
     },
     ref
@@ -124,6 +126,7 @@ export const Button = React.forwardRef<View, Props>(
           props.children
         ) : (
           <>
+            {icon && icon}
             {loading ? (
               <ActivityIndicator
                 size="small"

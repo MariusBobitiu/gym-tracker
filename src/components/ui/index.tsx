@@ -1,5 +1,31 @@
 import { cssInterop } from 'nativewind';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Svg from 'react-native-svg';
+
+// Apply cssInterop BEFORE exporting components to ensure className support
+cssInterop(Pressable, {
+  className: {
+    target: 'style',
+  },
+});
+
+cssInterop(ActivityIndicator, {
+  className: {
+    target: 'style',
+  },
+});
+
+cssInterop(Svg, {
+  className: {
+    target: 'style',
+  },
+});
 
 export * from './button';
 export * from './checkbox';
@@ -20,12 +46,6 @@ export {
   ScrollView,
   TouchableOpacity,
   View,
-} from 'react-native';
+};
 export { SafeAreaView } from 'react-native-safe-area-context';
 
-//Apply cssInterop to Svg to resolve className string into style
-cssInterop(Svg, {
-  className: {
-    target: 'style',
-  },
-});

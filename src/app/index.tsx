@@ -2,21 +2,24 @@ import { Stack, router } from 'expo-router';
 
 import { Button, Text, View } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '@/lib/theme-context';
 
 export default function Home() {
+  const { colors } = useTheme();
+
   return (
-    <SafeAreaView edges={['top']} className={styles.container}>
+    <SafeAreaView
+      edges={['top']}
+      className="flex flex-1 p-2 pb-24"
+      style={{ backgroundColor: colors.background }}
+    >
       <Stack.Screen options={{ title: 'Home' }} />
-      <Text className={styles.title}>Home</Text>
+      <Text className="text-xl font-bold" style={{ color: colors.foreground }}>
+        Home
+      </Text>
       <Button label="Go to Details" onPress={() => router.push('/details')}>
         <Text>Go to Details</Text>
       </Button>
     </SafeAreaView>
   );
 }
-
-const styles = {
-  container: 'flex flex-1 bg-white',
-  content: 'flex-1 items-center justify-center',
-  title: 'text-xl font-bold',
-};
