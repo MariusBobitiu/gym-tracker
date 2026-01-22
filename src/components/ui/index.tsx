@@ -28,6 +28,7 @@ cssInterop(Svg, {
 });
 
 export * from './button';
+export * from './card';
 export * from './checkbox';
 export { default as colors } from './colors';
 export * from './image';
@@ -37,6 +38,7 @@ export * from './modal';
 export * from './progress-bar';
 export * from './select';
 export * from './text';
+export * from './typography';
 export * from './utils';
 
 // export base components from react-native

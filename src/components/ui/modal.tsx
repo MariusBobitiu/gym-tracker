@@ -38,6 +38,7 @@ import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Path, Svg } from 'react-native-svg';
 
+import { useTheme } from '@/lib/theme-context';
 import { Text } from './text';
 
 type ModalProps = BottomSheetModalProps & {
@@ -84,14 +85,19 @@ export const Modal = React.forwardRef(
       () => (modal.ref.current as BottomSheetModal) || null
     );
 
+    const { colors: themeColors } = useTheme();
+    
     const renderHandleComponent = React.useCallback(
       () => (
         <>
-          <View className="mb-8 mt-2 h-1 w-12 self-center rounded-lg bg-gray-400 dark:bg-gray-700" />
+          <View
+            className="mb-8 mt-2 h-1 w-12 self-center rounded-lg"
+            style={{ backgroundColor: themeColors.muted }}
+          />
           <ModalHeader title={title} dismiss={modal.dismiss} />
         </>
       ),
-      [title, modal.dismiss]
+      [title, modal.dismiss, themeColors]
     );
 
     return (
@@ -156,13 +162,17 @@ const getDetachedProps = (detached: boolean) => {
  */
 
 const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
+  const { colors: themeColors } = useTheme();
   return (
     <>
       {title && (
         <View className="flex-row px-2 py-4">
           <View className="size-[24px]" />
           <View className="flex-1">
-            <Text className="text-center text-[16px] font-bold text-[#26313D] dark:text-white">
+            <Text
+              className="text-center text-[16px] font-bold"
+              style={{ color: themeColors.foreground }}
+            >
               {title}
             </Text>
           </View>
@@ -174,6 +184,7 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
 });
 
 const CloseButton = ({ close }: { close: () => void }) => {
+  const { colors: themeColors } = useTheme();
   return (
     <Pressable
       onPress={close}
@@ -184,13 +195,15 @@ const CloseButton = ({ close }: { close: () => void }) => {
       accessibilityHint="closes the modal"
     >
       <Svg
-        className="fill-neutral-300 dark:fill-white"
         width={24}
         height={24}
         fill="none"
         viewBox="0 0 24 24"
       >
-        <Path d="M18.707 6.707a1 1 0 0 0-1.414-1.414L12 10.586 6.707 5.293a1 1 0 0 0-1.414 1.414L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12l5.293-5.293Z" />
+        <Path
+          d="M18.707 6.707a1 1 0 0 0-1.414-1.414L12 10.586 6.707 5.293a1 1 0 0 0-1.414 1.414L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12l5.293-5.293Z"
+          fill={themeColors.foreground}
+        />
       </Svg>
     </Pressable>
   );

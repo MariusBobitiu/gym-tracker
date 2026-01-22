@@ -7,31 +7,32 @@ import type {
 } from 'react-hook-form';
 import { useController } from 'react-hook-form';
 import type { TextInputProps } from 'react-native';
-import { I18nManager, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { TextInput as NTextInput } from 'react-native';
 import { tv } from 'tailwind-variants';
 
 import colors from './colors';
+import { useTheme } from '@/lib/theme-context';
 import { Text } from './text';
 
 const inputTv = tv({
   slots: {
     container: 'mb-2',
-    label: 'text-grey-100 mb-1 text-lg dark:text-neutral-100',
+    label: 'text-grey-100 mb-1 text-lg',
     input:
-      'mt-0 rounded-xl border-[0.5px] border-neutral-300 bg-neutral-100 px-4 py-3 font-inter text-base  font-medium leading-5 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white',
+      'mt-0 rounded-xl border-[0.5px] border-neutral-300 bg-neutral-100 px-4 py-3 font-inter text-base  font-medium leading-5',
   },
 
   variants: {
     focused: {
       true: {
-        input: 'border-neutral-400 dark:border-neutral-300',
+        input: 'border-neutral-400',
       },
     },
     error: {
       true: {
         input: 'border-danger-600',
-        label: 'text-danger-600 dark:text-danger-600',
+        label: 'text-danger-600',
       },
     },
     disabled: {
@@ -73,6 +74,7 @@ interface ControlledInputProps<T extends FieldValues>
 
 export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
   const { label, error, testID, ...inputProps } = props;
+  const { colors: themeColors } = useTheme();
   const [isFocussed, setIsFocussed] = React.useState(false);
   const onBlur = React.useCallback(() => setIsFocussed(false), []);
   const onFocus = React.useCallback(() => setIsFocussed(true), []);
@@ -87,12 +89,32 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
     [error, isFocussed, props.disabled]
   );
 
+  const inputStyle = React.useMemo(
+    () =>
+      StyleSheet.flatten([
+        {
+          backgroundColor: themeColors.input,
+          borderColor: isFocussed
+            ? themeColors.ring
+            : error
+              ? themeColors.destructive
+              : themeColors.border,
+          color: themeColors.foreground,
+        },
+        inputProps.style,
+      ]),
+    [isFocussed, error, themeColors, inputProps.style]
+  );
+
   return (
     <View className={styles.container()}>
       {label && (
         <Text
           testID={testID ? `${testID}-label` : undefined}
           className={styles.label()}
+          style={{
+            color: error ? themeColors.destructive : themeColors.foreground,
+          }}
         >
           {label}
         </Text>
@@ -105,16 +127,13 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
         onBlur={onBlur}
         onFocus={onFocus}
         {...inputProps}
-        style={StyleSheet.flatten([
-          { writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr' },
-          { textAlign: I18nManager.isRTL ? 'right' : 'left' },
-          inputProps.style,
-        ])}
+        style={inputStyle}
       />
       {error && (
         <Text
           testID={testID ? `${testID}-error` : undefined}
-          className="text-sm text-danger-400 dark:text-danger-600"
+          className="text-sm"
+          style={{ color: themeColors.destructive }}
         >
           {error}
         </Text>

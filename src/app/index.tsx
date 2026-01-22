@@ -1,6 +1,6 @@
 import { Stack, router } from 'expo-router';
 
-import { Button, Text, View } from '@/components/ui';
+import { Button, H1, H2, H3, P, Small, Text, View } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/lib/theme-context';
 
@@ -14,9 +14,11 @@ export default function Home() {
       style={{ backgroundColor: colors.background }}
     >
       <Stack.Screen options={{ title: 'Home' }} />
-      <Text className="text-xl font-bold" style={{ color: colors.foreground }}>
-        Home
-      </Text>
+      <H1>Home</H1>
+      <H2>Home</H2>
+      <H3>Home</H3>
+      <P>Home</P>
+      <Small>Home</Small>
     </SafeAreaView>
   );
 }

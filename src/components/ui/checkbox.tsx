@@ -1,7 +1,6 @@
 import { MotiView } from 'moti';
 import React, { useCallback } from 'react';
 import {
-  I18nManager,
   Pressable,
   type PressableProps,
   View,
@@ -226,7 +225,7 @@ export const SwitchIcon = ({ checked = false }: IconProps) => {
           right: 0,
         }}
         animate={{
-          translateX: I18nManager.isRTL ? translateX : -translateX,
+          translateX: -translateX,
         }}
         transition={{ translateX: { overshootClamping: true } }}
       />

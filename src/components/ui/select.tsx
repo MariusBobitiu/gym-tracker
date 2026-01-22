@@ -4,7 +4,6 @@ import {
   type BottomSheetModal,
 } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
-import { useColorScheme } from 'nativewind';
 import * as React from 'react';
 import type { FieldValues } from 'react-hook-form';
 import { useController } from 'react-hook-form';
@@ -17,6 +16,7 @@ import { tv } from 'tailwind-variants';
 import colors from '@/components/ui/colors';
 // import { CaretDown } from '@/components/ui/icons';
 
+import { useTheme } from '@/lib/theme-context';
 import type { InputControllerType } from './input';
 import { useModal } from './modal';
 import { Modal } from './modal';
@@ -25,10 +25,10 @@ import { Text } from './text';
 const selectTv = tv({
   slots: {
     container: 'mb-4',
-    label: 'text-grey-100 mb-1 text-lg dark:text-neutral-100',
+    label: 'text-grey-100 mb-1 text-lg',
     input:
-      'border-grey-50 mt-0 flex-row items-center justify-center rounded-xl border-[0.5px] p-3  dark:border-neutral-500 dark:bg-neutral-800',
-    inputValue: 'dark:text-neutral-100',
+      'border-grey-50 mt-0 flex-row items-center justify-center rounded-xl border-[0.5px] p-3',
+    inputValue: '',
   },
 
   variants: {
@@ -40,7 +40,7 @@ const selectTv = tv({
     error: {
       true: {
         input: 'border-danger-600',
-        label: 'text-danger-600 dark:text-danger-600',
+        label: 'text-danger-600',
         inputValue: 'text-danger-600',
       },
     },
@@ -73,10 +73,9 @@ function keyExtractor(item: OptionType) {
 
 export const Options = React.forwardRef<BottomSheetModal, OptionsProps>(
   ({ options, onSelect, value, testID }, ref) => {
+    const { colors: themeColors } = useTheme();
     const height = options.length * 70 + 100;
     const snapPoints = React.useMemo(() => [height], [height]);
-    const { colorScheme } = useColorScheme();
-    const isDark = colorScheme === 'dark';
 
     const renderSelectItem = React.useCallback(
       ({ item }: { item: OptionType }) => (
@@ -97,7 +96,7 @@ export const Options = React.forwardRef<BottomSheetModal, OptionsProps>(
         index={0}
         snapPoints={snapPoints}
         backgroundStyle={{
-          backgroundColor: isDark ? colors.neutral[800] : colors.white,
+          backgroundColor: themeColors.card,
         }}
       >
         <List
@@ -121,12 +120,19 @@ const Option = React.memo(
     selected?: boolean;
     label: string;
   }) => {
+    const { colors: themeColors } = useTheme();
     return (
       <Pressable
-        className="flex-row items-center border-b border-neutral-300 bg-white px-3 py-2 dark:border-neutral-700 dark:bg-neutral-800"
+        className="flex-row items-center border-b border-neutral-300 px-3 py-2"
+        style={{
+          backgroundColor: themeColors.card,
+          borderBottomColor: themeColors.border,
+        }}
         {...props}
       >
-        <Text className="flex-1 dark:text-neutral-100 ">{label}</Text>
+        <Text className="flex-1" style={{ color: themeColors.foreground }}>
+          {label}
+        </Text>
         {selected && <Check />}
       </Pressable>
     );
@@ -158,6 +164,7 @@ export const Select = (props: SelectProps) => {
     onSelect,
     testID,
   } = props;
+  const { colors: themeColors } = useTheme();
   const modal = useModal();
 
   const onSelectOption = React.useCallback(
@@ -192,6 +199,11 @@ export const Select = (props: SelectProps) => {
           <Text
             testID={testID ? `${testID}-label` : undefined}
             className={styles.label()}
+            style={{
+              color: error
+                ? themeColors.destructive
+                : themeColors.foreground,
+            }}
           >
             {label}
           </Text>
@@ -201,16 +213,32 @@ export const Select = (props: SelectProps) => {
           disabled={disabled}
           onPress={modal.present}
           testID={testID ? `${testID}-trigger` : undefined}
+          style={{
+            backgroundColor: themeColors.input,
+            borderColor: error
+              ? themeColors.destructive
+              : themeColors.border,
+          }}
         >
           <View className="flex-1">
-            <Text className={styles.inputValue()}>{textValue}</Text>
+            <Text
+              className={styles.inputValue()}
+              style={{
+                color: error
+                  ? themeColors.destructive
+                  : themeColors.foreground,
+              }}
+            >
+              {textValue}
+            </Text>
           </View>
           {/* <CaretDown /> */}
         </Pressable>
         {error && (
           <Text
             testID={`${testID}-error`}
-            className="text-sm text-danger-300 dark:text-danger-600"
+            className="text-sm"
+            style={{ color: themeColors.destructive }}
           >
             {error}
           </Text>
@@ -250,20 +278,23 @@ export function ControlledSelect<T extends FieldValues>(
   );
 }
 
-const Check = ({ ...props }: SvgProps) => (
-  <Svg
-    width={25}
-    height={24}
-    fill="none"
-    viewBox="0 0 25 24"
-    {...props}
-    className="stroke-black dark:stroke-white"
-  >
-    <Path
-      d="m20.256 6.75-10.5 10.5L4.506 12"
-      strokeWidth={2.438}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
+const Check = ({ ...props }: SvgProps) => {
+  const { colors: themeColors } = useTheme();
+  return (
+    <Svg
+      width={25}
+      height={24}
+      fill="none"
+      viewBox="0 0 25 24"
+      {...props}
+    >
+      <Path
+        d="m20.256 6.75-10.5 10.5L4.506 12"
+        strokeWidth={2.438}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        stroke={themeColors.foreground}
+      />
+    </Svg>
+  );
+};

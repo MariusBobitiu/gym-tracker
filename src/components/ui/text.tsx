@@ -1,7 +1,8 @@
 import React from 'react';
 import type { TextProps, TextStyle } from 'react-native';
-import { I18nManager, StyleSheet, Text as NNText } from 'react-native';
+import { StyleSheet, Text as NNText } from 'react-native';
 import { twMerge } from 'tailwind-merge';
+import { useTheme } from '@/lib/theme-context';
 
 interface Props extends TextProps {
   className?: string;
@@ -13,10 +14,12 @@ export const Text = ({
   children,
   ...props
 }: Props) => {
+  const { colors } = useTheme();
+  
   const textStyle = React.useMemo(
     () =>
       twMerge(
-        'text-base text-black  dark:text-white  font-inter font-normal',
+        'text-base font-inter font-normal',
         className
       ),
     [className]
@@ -26,11 +29,11 @@ export const Text = ({
     () =>
       StyleSheet.flatten([
         {
-          writingDirection: I18nManager.isRTL ? 'rtl' : 'ltr',
+          color: colors.foreground,
         },
         style,
       ]) as TextStyle,
-    [style]
+    [style, colors]
   );
   return (
     <NNText className={textStyle} style={nStyle} {...props}>
