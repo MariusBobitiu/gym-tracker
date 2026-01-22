@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useSelectedTheme, type ColorSchemeType } from '@/lib/hooks/use-selected-theme';
+import { useSelectedTheme, type ColorSchemeType } from '@/hooks/use-selected-theme';
 import { Radio, Text, View } from '@/components/ui';
 import { useTheme } from '@/lib/theme-context';
 

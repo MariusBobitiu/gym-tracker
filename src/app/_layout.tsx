@@ -5,7 +5,7 @@ import { SessionProvider, useSession } from '@/lib/auth/context';
 import { SplashScreenController } from '@/components/splash';
 import { ThemeProvider } from '@/lib/theme-context';
 import { useEffect } from 'react';
-import { loadSelectedTheme } from '@/lib/hooks';
+import { loadSelectedTheme } from '@/hooks';
 
 export default function Root() {
   // Set up the auth context and render your layout inside of it.

@@ -1,22 +1,30 @@
 import { Stack } from 'expo-router';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, H1, H2, H3, P, ScrollView, Small } from '@/components/ui';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSession } from '@/lib/auth/context';
-import { BackgroundGradient } from '@/components/background-gradient';
-import { useTheme } from '@/lib/theme-context';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  H2,
+  H3,
+  P,
+  ScrollView,
+  Small,
+} from '@/components/ui';
 import { Buttons } from '@/components/buttons';
+import AppHeader, { headerOptions } from '@/components/app-header';
+import { Screen } from '@/components/screen';
+import { useSession } from '@/lib/auth/context';
+import { useTheme } from '@/lib/theme-context';
 
 export default function Home() {
   const { signOut } = useSession();
   const { isDark } = useTheme();
   return (
-    <SafeAreaView
-      edges={['top']}
-      className="flex flex-1 p-2"
-    >
-      <BackgroundGradient />
-      <Stack.Screen options={{ title: 'Home' }} />
-      <H1 className='mb-4'>Home</H1>
+    <Screen padding="sm">
+      <Stack.Screen options={headerOptions({ title: 'Home' })} />
+      <AppHeader showBackButton={false} />
       <Card className={`${isDark ? 'shadow-[0_0_10px_0_rgba(0,0,0,0.8)]' : 'shadow-[0_0_5px_0_rgba(0,0,0,0.15)]'}`}>
         <CardHeader>
           <CardTitle>
@@ -33,10 +41,7 @@ export default function Home() {
         </CardContent>
       </Card>
 
-      <ScrollView
-        className='flex-1 mt-4'
-        contentContainerClassName='flex-1'
-      >
+      <ScrollView className="flex-1 mt-4" contentContainerClassName="flex-1">
         <Buttons />
       </ScrollView>
       <Button
@@ -44,8 +49,8 @@ export default function Home() {
           signOut();
         }}
         label="Sign Out"
-        className='mt-4'
+        className="mt-4"
       />
-    </SafeAreaView>
+    </Screen>
   );
 }
