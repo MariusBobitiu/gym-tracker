@@ -1,4 +1,4 @@
-import { Button, Text, View } from '@/components/ui';
+import { Button, Text } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, Stack } from 'expo-router';
 import { useTheme } from '@/lib/theme-context';
@@ -19,7 +19,7 @@ export default function Profile() {
       </Text>
       <ThemeToggler />
 			<Link href="/profile/account" asChild>
-				<Button label="Account" />
+				<Button label="Account" variant="outline" />
 			</Link>
     </SafeAreaView>
   );

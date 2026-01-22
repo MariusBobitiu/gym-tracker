@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Pressable, LayoutChangeEvent } from 'react-native';
+import { Pressable, LayoutChangeEvent, Platform } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
@@ -8,8 +8,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { CalendarClock, Dumbbell, Notebook, User } from 'lucide-react-native';
 
 import { Text, View, colors } from '@/components/ui';
 import { useTheme } from '@/lib/theme-context';
@@ -24,36 +23,33 @@ type TabItem = {
 const tabs: TabItem[] = [
   {
     name: 'index',
-    label: 'Activity',
+    label: 'Today',
     icon: (active, isDark) => (
-      <MaterialIcons
-        name="spa"
+      <Dumbbell
         size={24}
-        color={active ? '#FFFFFF' : isDark ? '#FFFFFF' : '#000000'}
+        color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
     showLabel: true,
   },
   {
-    name: 'fitness',
-    label: 'Fitness',
+    name: 'planner',
+    label: 'Planner',
     icon: (active, isDark) => (
-      <Ionicons
-        name="fitness"
+      <Notebook
         size={24}
-        color={active ? '#FFFFFF' : isDark ? '#FFFFFF' : '#000000'}
+        color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
     showLabel: true,
   },
   {
-    name: 'plans',
-    label: 'Plans',
+    name: 'history',
+    label: 'History',
     icon: (active, isDark) => (
-      <Ionicons
-        name="document-text"
+      <CalendarClock
         size={24}
-        color={active ? '#FFFFFF' : isDark ? '#FFFFFF' : '#000000'}
+        color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
     showLabel: true,
@@ -62,10 +58,9 @@ const tabs: TabItem[] = [
     name: 'profile',
     label: 'Profile',
     icon: (active, isDark) => (
-      <MaterialIcons
-        name="person"
+      <User
         size={24}
-        color={active ? '#FFFFFF' : isDark ? '#FFFFFF' : '#000000'}
+        color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
     showLabel: true,
@@ -124,10 +119,10 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
   function handlePress(tabName: string): void {
     if (tabName === 'index') {
       router.push('/');
-    } else if (tabName === 'fitness') {
-      router.push('/fitness');
-    } else if (tabName === 'plans') {
-      router.push('/plans');
+    } else if (tabName === 'planner') {
+      router.push('/planner');
+    } else if (tabName === 'history') {
+      router.push('/history');
     } else if (tabName === 'profile') {
       router.push('/profile');
     }
@@ -142,8 +137,8 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
 
     // Update indicator position if this is the active tab
     if (tabName === activeTab) {
-      const horizontalPadding = 8;
-      const indicatorWidth = tabWidth - horizontalPadding * 2;
+      const horizontalPadding = 0;
+      const indicatorWidth = tabWidth;
       const leftPosition = x + horizontalPadding;
       
       if (isInitialized.current) {
@@ -173,9 +168,9 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
   return (
     <View className="absolute bottom-6 left-0 right-0 px-4">
       <BlurView
-        intensity={80}
-        tint={isDark ? 'dark' : 'light'}
-        className={`rounded-full border overflow-hidden ${className}`}
+        intensity={15}
+        tint={Platform.OS === 'ios' ? 'systemMaterial' : 'dark'}
+        className={`rounded-full border-[0.6px] overflow-hidden ${className}`}
         style={{
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
@@ -198,8 +193,10 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
                 left: 0,
                 top: 4,
                 bottom: 4,
-                backgroundColor: isDark ? '#ffffff20' : '#00000020',
+                backgroundColor: isDark ? '#ffffff15' : '#00000015',
                 borderRadius: 9999,
+                borderWidth: 0.6,
+                borderColor: isDark ? '#ffffff10' : '#00000010',
               },
               animatedBackgroundStyle,
             ]}
@@ -219,9 +216,8 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
                   {tab.icon(isActive, isDark)}
                   {tab.showLabel && (
                     <Text
-                      className={`mt-1 text-xs font-medium ${
-                        isActive ? 'text-white' : 'text-foreground'
-                      }`}
+                      className={`mt-1 text-xs font-medium`}
+                      style={{ color: isActive ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000' }}
                     >
                       {tab.label}
                     </Text>

@@ -17,9 +17,6 @@ export default function Home() {
       <Text className="text-xl font-bold" style={{ color: colors.foreground }}>
         Home
       </Text>
-      <Button label="Go to Details" onPress={() => router.push('/details')}>
-        <Text>Go to Details</Text>
-      </Button>
     </SafeAreaView>
   );
 }

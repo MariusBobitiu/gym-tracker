@@ -22,44 +22,58 @@ type ThemeColors = {
   destructiveForeground: string;
 };
 
-const lightTheme: ThemeColors = {
-  background: colors.white,
-  foreground: colors.black,
-  card: colors.white,
-  cardForeground: colors.black,
-  muted: colors.neutral[100],
-  mutedForeground: colors.neutral[500],
-  accent: colors.neutral[100],
-  accentForeground: colors.black,
-  border: colors.neutral[200],
-  input: colors.neutral[200],
-  ring: colors.primary[400],
-  primary: colors.primary[400],
-  primaryForeground: colors.white,
-  secondary: colors.neutral[100],
-  secondaryForeground: colors.black,
-  destructive: colors.danger[500],
-  destructiveForeground: colors.white,
+export const lightTheme: ThemeColors = {
+  background: "#F7F8FA",
+  foreground: "#0B0D10",
+
+  card: "#FFFFFF",
+  cardForeground: "#0B0D10",
+
+  muted: "#EEF2F7",
+  mutedForeground: "#5A6676",
+
+  accent: "#EAEFF6",
+  accentForeground: "#0B0D10",
+
+  border: "#D7DFEA",
+  input: "#FFFFFF",
+  ring: "#ffa90a",
+
+  primary: "#ffa90a",
+  primaryForeground: "#1A1203",
+
+  secondary: "#111827",
+  secondaryForeground: "#FFFFFF",
+
+  destructive: "#DC2626",
+  destructiveForeground: "#FFFFFF",
 };
 
-const darkTheme: ThemeColors = {
-  background: colors.charcoal[950],
-  foreground: colors.charcoal[100],
-  card: colors.charcoal[850],
-  cardForeground: colors.charcoal[100],
-  muted: colors.charcoal[850],
-  mutedForeground: colors.neutral[400],
-  accent: colors.charcoal[800],
-  accentForeground: colors.charcoal[100],
-  border: colors.charcoal[800],
-  input: colors.charcoal[800],
-  ring: colors.primary[200],
-  primary: colors.primary[200],
-  primaryForeground: colors.black,
-  secondary: colors.charcoal[800],
-  secondaryForeground: colors.charcoal[100],
-  destructive: colors.danger[600],
-  destructiveForeground: colors.white,
+export const darkTheme: ThemeColors = {
+  background: "#0B0D10",
+  foreground: "#F5F7FA",
+
+  card: "#10141A",
+  cardForeground: "#F5F7FA",
+
+  muted: "#151B24",
+  mutedForeground: "#9AA4B2",
+
+  accent: "#1A2230",
+  accentForeground: "#F5F7FA",
+
+  border: "#1F2A3A",
+  input: "#121824",
+  ring: "#ffa90a",
+
+  primary: "#ffa90a",
+  primaryForeground: "#140F03",
+
+  secondary: "#1A2330",
+  secondaryForeground: "#E7ECF3",
+
+  destructive: "#EF4444",
+  destructiveForeground: "#FFFFFF",
 };
 
 type ThemeContextType = {
