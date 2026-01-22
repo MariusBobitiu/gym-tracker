@@ -1,12 +1,13 @@
-import { getItem, removeItem, setItem } from '../storage';
+import {
+  getStorageItem,
+  removeStorageItem,
+  setStorageItem,
+  STORAGE_KEYS,
+  type TokenType,
+} from '../storage';
 
-const TOKEN = 'token';
+const TOKEN = STORAGE_KEYS.token;
 
-export type TokenType = {
-  access: string;
-  refresh: string;
-};
-
-export const getToken = () => getItem<TokenType>(TOKEN);
-export const removeToken = () => removeItem(TOKEN);
-export const setToken = (value: TokenType) => setItem<TokenType>(TOKEN, value);
+export const getToken = () => getStorageItem(TOKEN);
+export const removeToken = () => removeStorageItem(TOKEN);
+export const setToken = (value: TokenType) => setStorageItem(TOKEN, value);

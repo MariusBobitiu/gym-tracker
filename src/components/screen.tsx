@@ -63,13 +63,13 @@ export function Screen({
 
   // Add extra bottom padding to avoid content being hidden behind bottom navigation
   const containerStyle = React.useMemo(
-    () => ({ padding: paddingValue, paddingBottom: 64 }),
+    () => ({ padding: paddingValue }),
     [paddingValue]
   );
 
   // Add extra bottom padding to avoid content being hidden behind bottom navigation
   const scrollContentStyle = React.useMemo(
-    () => ({ padding: paddingValue, paddingBottom: 64 }),
+    () => ({ padding: paddingValue }),
     [paddingValue]
   );
 

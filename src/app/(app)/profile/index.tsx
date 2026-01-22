@@ -7,10 +7,9 @@ import { Button, H1 } from '@/components/ui';
 export default function Profile() {
 
   return (
-    <Screen className="pb-24">
+    <Screen>
       <Stack.Screen options={headerOptions({ title: 'Profile' })} />
-      <AppHeader showBackButton={false} />
-      <H1>Profile</H1>
+      <AppHeader showBackButton={false} title="Profile" isMainScreen />
       <ThemeToggler />
       <Link href="/profile/account" asChild>
         <Button label="Account" variant="outline" />

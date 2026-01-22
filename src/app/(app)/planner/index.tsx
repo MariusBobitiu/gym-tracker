@@ -7,8 +7,7 @@ export default function Planner() {
   return (
     <Screen className="pb-24">
       <Stack.Screen options={headerOptions({ title: 'Planner' })} />
-      <AppHeader showBackButton={false} />
-      <Text className="text-xl font-bold">Planner</Text>
+      <AppHeader showBackButton={false} title="Planner" isMainScreen />
     </Screen>
   );
 }

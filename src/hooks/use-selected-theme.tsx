@@ -2,10 +2,10 @@ import { colorScheme, useColorScheme } from 'nativewind';
 import React from 'react';
 import { useMMKVString } from 'react-native-mmkv';
 
-import { storage } from '@/lib/storage';
+import { storage, STORAGE_KEYS, type ThemePreference } from '@/lib/storage';
 
-const SELECTED_THEME = 'SELECTED_THEME';
-export type ColorSchemeType = 'light' | 'dark' | 'system';
+const SELECTED_THEME = STORAGE_KEYS.selectedTheme;
+export type ColorSchemeType = ThemePreference;
 /**
  * this hooks should only be used while selecting the theme
  * This hooks will return the selected theme which is stored in MMKV

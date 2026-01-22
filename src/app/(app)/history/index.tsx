@@ -8,8 +8,7 @@ export default function History() {
   return (
     <Screen className="pb-24">
       <Stack.Screen options={headerOptions({ title: 'History' })} />
-      <AppHeader showBackButton={false} />
-      <Text className="text-xl font-bold">History</Text>
+      <AppHeader showBackButton={false} title="History" isMainScreen />
     </Screen>
   );
 }

@@ -1,5 +1,5 @@
 import { use, createContext, type PropsWithChildren } from 'react';
-import { useStorageState } from '../storage';
+import { useStorageState, STORAGE_KEYS } from '../storage';
 
 
 const AuthContext = createContext<{
@@ -25,7 +25,9 @@ export function useSession() {
 }
 
 export function SessionProvider({ children }: PropsWithChildren) {
-  const [[isLoading, session], setSession] = useStorageState('session');
+  const [[isLoading, session], setSession] = useStorageState(
+    STORAGE_KEYS.session
+  );
 
   return (
     <AuthContext.Provider

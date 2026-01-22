@@ -7,6 +7,7 @@
 - Swapped core app screens to use `Screen` + `headerOptions()` to reduce repeated config.
 - Added `useAuthGuard()` hook to handle auth edge cases (deep links, expired sessions, onboarding redirects).
 - Added theme system with tokens (colors, spacing, radius, typography) plus `useTheme()` and `cn()` helper.
+- Added typed MMKV storage layer with safe get/set/remove, migrations, and optional encrypted store.
 
 ## Notes
 

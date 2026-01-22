@@ -86,6 +86,33 @@ Tokens:
 - `radius`: numeric radius scale
 - `typography`: sizes, line heights, weights, letter spacing
 
+## Storage (MMKV)
+
+Typed storage helpers live in `src/lib/storage.ts` and expose `getStorageItem`, `setStorageItem`, and `removeStorageItem` along with typed keys.
+
+```tsx
+import { STORAGE_KEYS, getStorageItem, setStorageItem } from '@/lib/storage';
+
+const theme = getStorageItem(STORAGE_KEYS.selectedTheme);
+setStorageItem(STORAGE_KEYS.selectedTheme, 'dark');
+```
+
+Migrations are versioned via `STORAGE_VERSION` and run once on app start:
+
+```tsx
+import { runStorageMigrations } from '@/lib/storage';
+
+runStorageMigrations();
+```
+
+Optional encrypted storage is available when `EXPO_PUBLIC_MMKV_ENCRYPTION_KEY` is set:
+
+```tsx
+import { setSecureItem, SECURE_STORAGE_KEYS } from '@/lib/storage';
+
+setSecureItem(SECURE_STORAGE_KEYS.authToken, { access: '...', refresh: '...' });
+```
+
 ## Navigation + Access Control
 
 Protected groups live in `src/app/_layout.tsx` via `Stack.Protected` guards.
