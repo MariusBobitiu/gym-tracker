@@ -23,6 +23,7 @@ export default function Example() {
 ```
 
 Props you will likely use:
+
 - `preset`: `fixed` (default) or `scroll`
 - `padding`: `none` | `sm` | `md` | `lg`
 - `safeAreaEdges`: defaults to `['top']`
@@ -52,8 +53,29 @@ export default function Account() {
 ```
 
 Tips:
+
 - Use `showBackButton={false}` for tab-root screens.
 - Override `headerShown` in `headerOptions()` if you need the native header.
+
+## Navigation + Access Control
+
+Protected groups live in `src/app/_layout.tsx` via `Stack.Protected` guards.
+
+For edge cases (deep links, expired sessions, onboarding redirects), use `useAuthGuard()` in screens:
+
+```tsx
+import { useAuthGuard } from '@/hooks';
+
+export default function Account() {
+  useAuthGuard({
+    allowlist: ['/reset-password'],
+    onboardingRoute: '/onboarding',
+    isOnboarded: true,
+  });
+
+  return null;
+}
+```
 
 ## Project Notes
 
