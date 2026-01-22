@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Text, View } from '@/components/ui';
 import BackHeader from '@/components/ui/back-header';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { BackgroundGradient } from '@/components/background-gradient';
 
 export default function Account() {
   const { colors } = useTheme();
@@ -11,8 +12,8 @@ export default function Account() {
     <SafeAreaView
       edges={['top']}
       className="flex flex-1 p-4 pb-24"
-      style={{ backgroundColor: colors.background }}
     >
+      <BackgroundGradient />
       <BackHeader elements={[
         <Text key="1" style={{ color: colors.foreground }}>Account</Text>,
         <Button

@@ -3,21 +3,24 @@ import { useEffect } from 'react';
 import { View } from '@/components/ui';
 import { BottomNavigation } from '@/components/bottom-navigation';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
-import { useTheme } from '@/lib/theme-context';
+import { BackgroundGradient } from '@/components/background-gradient';
 
 export default function Layout() {
-  const { colors } = useTheme();
   useEffect(() => {
     loadSelectedTheme();
   }, []);
 
   return (
-      <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <View className="flex-1">
+        <BackgroundGradient />
         <Stack
           screenOptions={{
             headerShown: false,
             animation: 'fade',
             animationDuration: 150,
+            contentStyle: {
+              backgroundColor: 'transparent'
+            }
           }}
         />
         <BottomNavigation />

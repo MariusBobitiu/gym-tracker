@@ -1,14 +1,13 @@
-import { Text, View } from '@/components/ui';
+import { Text } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { useTheme } from '@/lib/theme-context';
+import { BackgroundGradient } from '@/components/background-gradient';
 
 export default function History() {
-  const { colors } = useTheme();
-
 
   return (
-    <SafeAreaView edges={['top']} className="flex flex-1 p-4 pb-24" style={{ backgroundColor: colors.background }}>
+    <SafeAreaView edges={['top']} className="flex flex-1 p-4 pb-24">
+      <BackgroundGradient />
       <Stack.Screen options={{ title: 'History' }} />
       <Text className="text-xl font-bold">History</Text>
     </SafeAreaView>

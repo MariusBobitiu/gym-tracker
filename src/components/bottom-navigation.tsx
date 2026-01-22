@@ -177,12 +177,14 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
           shadowOpacity: 0.15,
           shadowRadius: 12,
           elevation: 10,
-          borderColor: isDark 
-            ? `rgba(255, 255, 255, 0.1)` 
-            : `rgba(0, 0, 0, 0.1)`,
-          backgroundColor: isDark
-            ? `rgba(18, 18, 18, 0.7)`
-            : `rgba(255, 255, 255, 0.7)`,
+          borderColor: isDark ? colors.border : colors.border,
+          backgroundColor: isDark ? `${colors.card}15` : `${colors.background}15`
+          // borderColor: isDark 
+          //   ? `rgba(255, 255, 255, 0.1)` 
+          //   : `rgba(0, 0, 0, 0.1)`,
+          // backgroundColor: isDark
+          //   ? `rgba(18, 18, 18, 0.7)`
+          //   : `rgba(255, 255, 255, 0.7)`,
         }}
       >
         <View className="flex-row items-center relative px-2 py-1">
@@ -193,10 +195,10 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
                 left: 0,
                 top: 4,
                 bottom: 4,
-                backgroundColor: isDark ? '#ffffff15' : '#00000015',
+                backgroundColor: `${colors.foreground}10`,
                 borderRadius: 9999,
                 borderWidth: 0.6,
-                borderColor: isDark ? '#ffffff10' : '#00000010',
+                borderColor: colors.border
               },
               animatedBackgroundStyle,
             ]}

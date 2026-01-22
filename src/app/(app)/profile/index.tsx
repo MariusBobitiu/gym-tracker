@@ -1,22 +1,21 @@
-import { Button, Text } from '@/components/ui';
+import { Button, H1, Text } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link, Stack } from 'expo-router';
-import { useTheme } from '@/lib/theme-context';
 import { ThemeToggler } from '@/components/theme-toggler';
+import { BackgroundGradient } from '@/components/background-gradient';
 
 export default function Profile() {
-  const { colors } = useTheme();
 
   return (
     <SafeAreaView
       edges={['top']}
       className="flex flex-1 p-4 pb-24"
-      style={{ backgroundColor: colors.background }}
     >
+      <BackgroundGradient />
       <Stack.Screen options={{ title: 'Profile' }} />
-      <Text style={{ color: colors.foreground }} className="text-xl font-bold mb-6">
+      <H1>
         Profile
-      </Text>
+      </H1>
       <ThemeToggler />
 			<Link href="/profile/account" asChild>
 				<Button label="Account" variant="outline" />
