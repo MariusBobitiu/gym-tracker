@@ -1,9 +1,10 @@
 import { Stack } from 'expo-router';
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, H1, H2, H3, P, Small } from '@/components/ui';
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, H1, H2, H3, P, ScrollView, Small } from '@/components/ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '@/lib/auth/context';
 import { BackgroundGradient } from '@/components/background-gradient';
 import { useTheme } from '@/lib/theme-context';
+import { Buttons } from '@/components/buttons';
 
 export default function Home() {
   const { signOut } = useSession();
@@ -11,7 +12,7 @@ export default function Home() {
   return (
     <SafeAreaView
       edges={['top']}
-      className="flex flex-1 p-2 pb-24"
+      className="flex flex-1 p-2"
     >
       <BackgroundGradient />
       <Stack.Screen options={{ title: 'Home' }} />
@@ -32,6 +33,12 @@ export default function Home() {
         </CardContent>
       </Card>
 
+      <ScrollView
+        className='flex-1 mt-4'
+        contentContainerClassName='flex-1'
+      >
+        <Buttons />
+      </ScrollView>
       <Button
         onPress={() => {
           signOut();

@@ -33,14 +33,23 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.gym-tracker"
+      "bundleIdentifier": "dev.mariusbobitiu.gym-tracker",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.gymtracker"
+      "package": "dev.mariusbobitiu.gymtracker"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f0ea3ba6-6ef0-478b-9132-3ebf2319efe5"
+      }
     }
   }
 }

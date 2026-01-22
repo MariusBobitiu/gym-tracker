@@ -19,7 +19,8 @@ export default function Layout() {
             animation: 'fade',
             animationDuration: 150,
             contentStyle: {
-              backgroundColor: 'transparent'
+              backgroundColor: 'transparent',
+              marginBottom: 84 // Bottom navigation height + padding
             }
           }}
         />
