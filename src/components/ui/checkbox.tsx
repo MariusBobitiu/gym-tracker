@@ -8,6 +8,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 
 import colors from '@/components/ui/colors';
+import { useTheme } from '@/lib/theme-context';
 
 import { Text } from './text';
 
@@ -63,8 +64,13 @@ type LabelProps = {
 };
 
 const Label = ({ text, testID, className = '' }: LabelProps) => {
+  const { tokens } = useTheme();
   return (
-    <Text testID={testID} className={` ${className} pl-2`}>
+    <Text
+      testID={testID}
+      className={` ${className}`}
+      style={{ paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.sm }}
+    >
       {text}
     </Text>
   );
@@ -72,14 +78,16 @@ const Label = ({ text, testID, className = '' }: LabelProps) => {
 
 export const CheckboxIcon = ({ checked = false }: IconProps) => {
   const color = checked ? colors.primary[300] : colors.charcoal[400];
+  const { tokens } = useTheme();
   return (
     <MotiView
       style={{
         height: SIZE,
         width: SIZE,
         borderColor: color,
+        borderRadius: tokens.radius.sm,
       }}
-      className="items-center justify-center rounded-[5px] border-2"
+      className="items-center justify-center border-2"
       from={{ backgroundColor: 'transparent', borderColor: '#CCCFD6' }}
       animate={{
         backgroundColor: checked ? color : 'transparent',
@@ -128,7 +136,6 @@ const CheckboxBase = ({
         <Label
           text={label}
           testID={testID ? `${testID}-label` : undefined}
-          className="pr-2"
         />
       ) : null}
     </CheckboxRoot>
@@ -143,14 +150,16 @@ export const Checkbox = Object.assign(CheckboxBase, {
 
 export const RadioIcon = ({ checked = false }: IconProps) => {
   const color = checked ? colors.primary[300] : colors.charcoal[400];
+  const { tokens } = useTheme();
   return (
     <MotiView
       style={{
         height: SIZE,
         width: SIZE,
         borderColor: color,
+        borderRadius: tokens.radius.pill,
       }}
-      className="items-center justify-center rounded-[20px] border-2 bg-transparent"
+      className="items-center justify-center border-2 bg-transparent"
       from={{ borderColor: '#CCCFD6' }}
       animate={{
         borderColor: color,
@@ -158,7 +167,8 @@ export const RadioIcon = ({ checked = false }: IconProps) => {
       transition={{ borderColor: { duration: 100, type: 'timing' } }}
     >
       <MotiView
-        className={`size-[10px] rounded-[10px] ${checked && 'bg-primary-300'} `}
+        className={`size-[10px] ${checked && 'bg-primary-300'} `}
+        style={{ borderRadius: tokens.radius.pill }}
         from={{ opacity: 0 }}
         animate={{ opacity: checked ? 1 : 0 }}
         transition={{ opacity: { duration: 50, type: 'timing' } }}
@@ -198,6 +208,7 @@ export const Radio = Object.assign(RadioBase, {
 });
 
 export const SwitchIcon = ({ checked = false }: IconProps) => {
+  const { tokens } = useTheme();
   const translateX = checked
     ? THUMB_OFFSET
     : WIDTH - THUMB_WIDTH - THUMB_OFFSET;
@@ -206,12 +217,13 @@ export const SwitchIcon = ({ checked = false }: IconProps) => {
 
   return (
     <View className="w-[50px] justify-center">
-      <View className="overflow-hidden rounded-full">
+      <View className="overflow-hidden" style={{ borderRadius: tokens.radius.pill }}>
         <View
           style={{
             width: WIDTH,
             height: HEIGHT,
             backgroundColor,
+            borderRadius: tokens.radius.pill,
           }}
         />
       </View>
@@ -221,7 +233,7 @@ export const SwitchIcon = ({ checked = false }: IconProps) => {
           width: THUMB_WIDTH,
           position: 'absolute',
           backgroundColor: 'white',
-          borderRadius: 13,
+          borderRadius: tokens.radius.pill,
           right: 0,
         }}
         animate={{

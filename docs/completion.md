@@ -6,6 +6,7 @@
 - Updated `AppHeader` to support left/title/right layout and added a `headerOptions()` helper for Stack configs.
 - Swapped core app screens to use `Screen` + `headerOptions()` to reduce repeated config.
 - Added `useAuthGuard()` hook to handle auth edge cases (deep links, expired sessions, onboarding redirects).
+- Added theme system with tokens (colors, spacing, radius, typography) plus `useTheme()` and `cn()` helper.
 
 ## Notes
 

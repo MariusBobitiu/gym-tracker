@@ -9,12 +9,12 @@ type TypographyProps = TextProps & {
 };
 
 export function H1({ className = '', style, children, ...props }: TypographyProps) {
-  const { colors } = useTheme();
+  const { colors, tokens } = useTheme();
   
   const textStyle = React.useMemo(
     () =>
       twMerge(
-        'text-4xl font-bold tracking-tight',
+        'tracking-tight',
         className
       ),
     [className]
@@ -25,10 +25,14 @@ export function H1({ className = '', style, children, ...props }: TypographyProp
       StyleSheet.flatten([
         {
           color: colors.foreground,
+          fontSize: tokens.typography.sizes['4xl'],
+          lineHeight: tokens.typography.lineHeights['4xl'],
+          fontWeight: tokens.typography.weights.bold,
+          letterSpacing: tokens.typography.letterSpacing.tight,
         },
         style,
       ]) as TextStyle,
-    [style, colors]
+    [style, colors, tokens]
   );
 
   return (
@@ -39,12 +43,12 @@ export function H1({ className = '', style, children, ...props }: TypographyProp
 }
 
 export function H2({ className = '', style, children, ...props }: TypographyProps) {
-  const { colors } = useTheme();
+  const { colors, tokens } = useTheme();
   
   const textStyle = React.useMemo(
     () =>
       twMerge(
-        'text-3xl font-semibold tracking-tight',
+        'tracking-tight',
         className
       ),
     [className]
@@ -55,10 +59,14 @@ export function H2({ className = '', style, children, ...props }: TypographyProp
       StyleSheet.flatten([
         {
           color: colors.foreground,
+          fontSize: tokens.typography.sizes['3xl'],
+          lineHeight: tokens.typography.lineHeights['3xl'],
+          fontWeight: tokens.typography.weights.semibold,
+          letterSpacing: tokens.typography.letterSpacing.tight,
         },
         style,
       ]) as TextStyle,
-    [style, colors]
+    [style, colors, tokens]
   );
 
   return (
@@ -69,12 +77,12 @@ export function H2({ className = '', style, children, ...props }: TypographyProp
 }
 
 export function H3({ className = '', style, children, ...props }: TypographyProps) {
-  const { colors } = useTheme();
+  const { colors, tokens } = useTheme();
   
   const textStyle = React.useMemo(
     () =>
       twMerge(
-        'text-2xl font-semibold tracking-tight',
+        'tracking-tight',
         className
       ),
     [className]
@@ -85,10 +93,14 @@ export function H3({ className = '', style, children, ...props }: TypographyProp
       StyleSheet.flatten([
         {
           color: colors.foreground,
+          fontSize: tokens.typography.sizes['2xl'],
+          lineHeight: tokens.typography.lineHeights['2xl'],
+          fontWeight: tokens.typography.weights.semibold,
+          letterSpacing: tokens.typography.letterSpacing.tight,
         },
         style,
       ]) as TextStyle,
-    [style, colors]
+    [style, colors, tokens]
   );
 
   return (
@@ -99,12 +111,12 @@ export function H3({ className = '', style, children, ...props }: TypographyProp
 }
 
 export function P({ className = '', style, children, ...props }: TypographyProps) {
-  const { colors } = useTheme();
+  const { colors, tokens } = useTheme();
   
   const textStyle = React.useMemo(
     () =>
       twMerge(
-        'text-base leading-7',
+        '',
         className
       ),
     [className]
@@ -115,10 +127,13 @@ export function P({ className = '', style, children, ...props }: TypographyProps
       StyleSheet.flatten([
         {
           color: colors.foreground,
+          fontSize: tokens.typography.sizes.md,
+          lineHeight: tokens.typography.lineHeights.xl,
+          fontWeight: tokens.typography.weights.regular,
         },
         style,
       ]) as TextStyle,
-    [style, colors]
+    [style, colors, tokens]
   );
 
   return (
@@ -129,12 +144,12 @@ export function P({ className = '', style, children, ...props }: TypographyProps
 }
 
 export function Small({ className = '', style, children, ...props }: TypographyProps) {
-  const { colors } = useTheme();
+  const { colors, tokens } = useTheme();
   
   const textStyle = React.useMemo(
     () =>
       twMerge(
-        'text-sm font-medium leading-none',
+        '',
         className
       ),
     [className]
@@ -145,10 +160,13 @@ export function Small({ className = '', style, children, ...props }: TypographyP
       StyleSheet.flatten([
         {
           color: colors.foreground,
+          fontSize: tokens.typography.sizes.sm,
+          lineHeight: tokens.typography.lineHeights.sm,
+          fontWeight: tokens.typography.weights.medium,
         },
         style,
       ]) as TextStyle,
-    [style, colors]
+    [style, colors, tokens]
   );
 
   return (

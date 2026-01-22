@@ -15,7 +15,6 @@ export default function Layout() {
             animationDuration: 150,
             contentStyle: {
               backgroundColor: 'transparent',
-              marginBottom: 84 // Bottom navigation height + padding
             }
           }}
         />

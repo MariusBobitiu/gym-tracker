@@ -14,12 +14,12 @@ export const Text = ({
   children,
   ...props
 }: Props) => {
-  const { colors } = useTheme();
+  const { colors, tokens } = useTheme();
   
   const textStyle = React.useMemo(
     () =>
       twMerge(
-        'text-base font-inter font-normal',
+        'font-inter',
         className
       ),
     [className]
@@ -30,10 +30,13 @@ export const Text = ({
       StyleSheet.flatten([
         {
           color: colors.foreground,
+          fontSize: tokens.typography.sizes.md,
+          lineHeight: tokens.typography.lineHeights.md,
+          fontWeight: tokens.typography.weights.regular,
         },
         style,
       ]) as TextStyle,
-    [style, colors]
+    [style, colors, tokens]
   );
   return (
     <NNText className={textStyle} style={nStyle} {...props}>

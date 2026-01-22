@@ -116,7 +116,7 @@ export const Button = React.forwardRef<View, Props>(
     },
     ref
   ) => {
-    const { colors } = useTheme();
+    const { colors, tokens } = useTheme();
     const styles = React.useMemo(
       () => button({ variant, disabled, size }),
       [variant, disabled, size]
@@ -263,9 +263,80 @@ export const Button = React.forwardRef<View, Props>(
       }
     };
 
+    const sizeStyle = React.useMemo(() => {
+      switch (size) {
+        case 'lg':
+          return {
+            height: 56,
+            paddingHorizontal: tokens.spacing.lg,
+          };
+        case 'sm':
+          return {
+            height: 40,
+            paddingHorizontal: tokens.spacing.sm,
+          };
+        case 'icon':
+          return {
+            height: 36,
+            width: 36,
+            paddingHorizontal: 0,
+          };
+        case 'default':
+        default:
+          return {
+            height: 48,
+            paddingHorizontal: tokens.spacing.md,
+          };
+      }
+    }, [size, tokens.spacing]);
+
+    const labelTypography = React.useMemo(() => {
+      switch (size) {
+        case 'lg':
+          return {
+            fontSize: tokens.typography.sizes.lg,
+            lineHeight: tokens.typography.lineHeights.lg,
+          };
+        case 'sm':
+          return {
+            fontSize: tokens.typography.sizes.sm,
+            lineHeight: tokens.typography.lineHeights.sm,
+          };
+        case 'icon':
+          return {
+            fontSize: tokens.typography.sizes.md,
+            lineHeight: tokens.typography.lineHeights.md,
+          };
+        case 'default':
+        default:
+          return {
+            fontSize: tokens.typography.sizes.md,
+            lineHeight: tokens.typography.lineHeights.md,
+          };
+      }
+    }, [size, tokens.typography]);
+
+    const labelStyle = React.useMemo(
+      () =>
+        StyleSheet.flatten([
+          {
+            fontWeight: tokens.typography.weights.semibold,
+          },
+          labelTypography,
+          getLabelStyle(),
+        ]),
+      [labelTypography, variant, disabled, colors, tokens.typography.weights.semibold]
+    );
+
     const containerStyle = React.useMemo(
-      () => StyleSheet.flatten([getContainerStyle(), propStyle]),
-      [variant, disabled, colors, propStyle]
+      () =>
+        StyleSheet.flatten([
+          getContainerStyle(),
+          sizeStyle,
+          { borderRadius: tokens.radius.pill },
+          propStyle,
+        ]),
+      [variant, disabled, colors, propStyle, sizeStyle, tokens.radius.pill]
     );
 
     return (
@@ -293,7 +364,7 @@ export const Button = React.forwardRef<View, Props>(
               <Text
                 testID={testID ? `${testID}-label` : undefined}
                 className={styles.label({ className: textClassName })}
-                style={getLabelStyle()}
+                style={labelStyle}
               >
                 {text}
               </Text>

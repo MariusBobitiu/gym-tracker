@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { BackgroundGradient } from '@/components/background-gradient';
+import { useTheme } from '@/lib/theme-context';
 
 type ScreenPreset = 'fixed' | 'scroll';
 type PaddingPreset = 'none' | 'sm' | 'md' | 'lg';
@@ -26,13 +27,6 @@ type ScreenProps = {
   scrollProps?: ScrollViewProps;
 };
 
-const paddingPresets: Record<PaddingPreset, string> = {
-  none: '',
-  sm: 'p-2',
-  md: 'p-4',
-  lg: 'p-6',
-};
-
 const joinClassName = (...values: Array<string | undefined>) =>
   values.filter(Boolean).join(' ');
 
@@ -48,12 +42,35 @@ export function Screen({
   contentContainerClassName,
   scrollProps,
 }: ScreenProps) {
-  const paddingClassName = paddingPresets[padding];
-  const containerClassName = joinClassName('flex-1', paddingClassName, className);
-  const scrollContainerClassName = joinClassName(
-    'flex-grow',
-    paddingClassName,
-    contentContainerClassName
+  const { tokens } = useTheme();
+  const containerClassName = joinClassName('flex-1', className);
+  const scrollContainerClassName = joinClassName('flex-grow', contentContainerClassName);
+
+  const paddingValue = React.useMemo(() => {
+    switch (padding) {
+      case 'none':
+        return 0;
+      case 'sm':
+        return tokens.spacing.sm;
+      case 'md':
+        return tokens.spacing.md;
+      case 'lg':
+        return tokens.spacing.lg;
+      default:
+        return tokens.spacing.md;
+    }
+  }, [padding, tokens.spacing]);
+
+  // Add extra bottom padding to avoid content being hidden behind bottom navigation
+  const containerStyle = React.useMemo(
+    () => ({ padding: paddingValue, paddingBottom: 64 }),
+    [paddingValue]
+  );
+
+  // Add extra bottom padding to avoid content being hidden behind bottom navigation
+  const scrollContentStyle = React.useMemo(
+    () => ({ padding: paddingValue, paddingBottom: 64 }),
+    [paddingValue]
   );
 
   const content =
@@ -61,13 +78,16 @@ export function Screen({
       <ScrollView
         className="flex-1"
         contentContainerClassName={scrollContainerClassName}
+        contentContainerStyle={[scrollContentStyle, scrollProps?.contentContainerStyle]}
         keyboardShouldPersistTaps="handled"
         {...scrollProps}
       >
         {children}
       </ScrollView>
     ) : (
-      <View className={containerClassName}>{children}</View>
+      <View className={containerClassName} style={containerStyle}>
+        {children}
+      </View>
     );
 
   const wrappedContent = keyboardAvoiding ? (

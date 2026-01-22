@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useColorScheme } from 'nativewind';
 import colors from '@/components/ui/colors';
+import { themeTokens, type ThemeTokens } from '@/lib/theme-tokens';
 
 type ThemeColors = {
   background: string;
@@ -83,11 +84,13 @@ export const darkTheme: ThemeColors = {
 
 type ThemeContextType = {
   colors: ThemeColors;
+  tokens: ThemeTokens;
   isDark: boolean;
 };
 
 const ThemeContext = React.createContext<ThemeContextType>({
   colors: lightTheme,
+  tokens: themeTokens,
   isDark: false,
 });
 
@@ -101,7 +104,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
   const themeColors = isDark ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{ colors: themeColors, isDark }}>
+    <ThemeContext.Provider value={{ colors: themeColors, tokens: themeTokens, isDark }}>
       {children}
     </ThemeContext.Provider>
   );

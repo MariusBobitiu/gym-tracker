@@ -57,6 +57,35 @@ Tips:
 - Use `showBackButton={false}` for tab-root screens.
 - Override `headerShown` in `headerOptions()` if you need the native header.
 
+## Theme System
+
+Theme tokens and the `useTheme()` hook live in `src/lib`.
+
+```tsx
+import { useTheme } from '@/lib/theme-context';
+import { cn } from '@/lib/cn';
+
+export function CardTitle({ className = '', children }: { className?: string; children: React.ReactNode }) {
+  const { colors, tokens } = useTheme();
+
+  return (
+    <Text
+      className={cn('text-lg font-semibold', className)}
+      style={{ color: colors.foreground, paddingBottom: tokens.spacing.sm }}
+    >
+      {children}
+    </Text>
+  );
+}
+```
+
+Tokens:
+
+- `colors`: light/dark theme palette used for RN styles
+- `spacing`: numeric spacing scale for padding/margin
+- `radius`: numeric radius scale
+- `typography`: sizes, line heights, weights, letter spacing
+
 ## Navigation + Access Control
 
 Protected groups live in `src/app/_layout.tsx` via `Stack.Protected` guards.

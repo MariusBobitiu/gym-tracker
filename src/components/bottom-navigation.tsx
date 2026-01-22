@@ -26,7 +26,7 @@ const tabs: TabItem[] = [
     label: 'Today',
     icon: (active, isDark) => (
       <Dumbbell
-        size={24}
+        size={20}
         color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
@@ -37,7 +37,7 @@ const tabs: TabItem[] = [
     label: 'Planner',
     icon: (active, isDark) => (
       <Notebook
-        size={24}
+        size={20}
         color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
@@ -48,7 +48,7 @@ const tabs: TabItem[] = [
     label: 'History',
     icon: (active, isDark) => (
       <CalendarClock
-        size={24}
+        size={20}
         color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
@@ -59,7 +59,7 @@ const tabs: TabItem[] = [
     label: 'Profile',
     icon: (active, isDark) => (
       <User
-        size={24}
+        size={20}
         color={active ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000'}
       />
     ),
@@ -173,18 +173,12 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
         className={`rounded-full border-[0.6px] overflow-hidden ${className}`}
         style={{
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.3,
           shadowRadius: 12,
           elevation: 10,
-          borderColor: isDark ? colors.border : colors.border,
-          backgroundColor: isDark ? `${colors.card}15` : `${colors.background}15`
-          // borderColor: isDark 
-          //   ? `rgba(255, 255, 255, 0.1)` 
-          //   : `rgba(0, 0, 0, 0.1)`,
-          // backgroundColor: isDark
-          //   ? `rgba(18, 18, 18, 0.7)`
-          //   : `rgba(255, 255, 255, 0.7)`,
+          borderColor: isDark ? `${colors.border}30` : `${colors.border}30`,
+          backgroundColor: isDark ? `${colors.background}95` : `${colors.background}95`
         }}
       >
         <View className="flex-row items-center relative px-2 py-1">
@@ -198,7 +192,7 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
                 backgroundColor: `${colors.foreground}10`,
                 borderRadius: 9999,
                 borderWidth: 0.6,
-                borderColor: colors.border
+                borderColor: `${colors.border}30`
               },
               animatedBackgroundStyle,
             ]}
@@ -214,12 +208,15 @@ export function BottomNavigation({ className = '' }: Props): React.ReactElement 
                 className="items-center justify-center z-10"
                 style={{ flex: 1 }}
               >
-                <View className="items-center justify-center p-3">
+                <View className="items-center justify-center p-2">
                   {tab.icon(isActive, isDark)}
                   {tab.showLabel && (
                     <Text
-                      className={`mt-1 text-xs font-medium`}
-                      style={{ color: isActive ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000' }}
+                      style={{ 
+                        color: isActive ? '#ffa90a' : isDark ? '#FFFFFF' : '#000000', 
+                        fontSize: 12,
+                        fontWeight: isActive ? '600' : '400',
+                      }}
                     >
                       {tab.label}
                     </Text>

@@ -73,7 +73,7 @@ function keyExtractor(item: OptionType) {
 
 export const Options = React.forwardRef<BottomSheetModal, OptionsProps>(
   ({ options, onSelect, value, testID }, ref) => {
-    const { colors: themeColors } = useTheme();
+    const { colors: themeColors, tokens } = useTheme();
     const height = options.length * 70 + 100;
     const snapPoints = React.useMemo(() => [height], [height]);
 
@@ -97,6 +97,8 @@ export const Options = React.forwardRef<BottomSheetModal, OptionsProps>(
         snapPoints={snapPoints}
         backgroundStyle={{
           backgroundColor: themeColors.card,
+          borderTopLeftRadius: tokens.radius.lg,
+          borderTopRightRadius: tokens.radius.lg,
         }}
       >
         <List
@@ -120,13 +122,15 @@ const Option = React.memo(
     selected?: boolean;
     label: string;
   }) => {
-    const { colors: themeColors } = useTheme();
+    const { colors: themeColors, tokens } = useTheme();
     return (
       <Pressable
         className="flex-row items-center border-b border-neutral-300 px-3 py-2"
         style={{
           backgroundColor: themeColors.card,
           borderBottomColor: themeColors.border,
+          paddingHorizontal: tokens.spacing.md,
+          paddingVertical: tokens.spacing.sm,
         }}
         {...props}
       >
@@ -164,7 +168,7 @@ export const Select = (props: SelectProps) => {
     onSelect,
     testID,
   } = props;
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, tokens } = useTheme();
   const modal = useModal();
 
   const onSelectOption = React.useCallback(
@@ -203,6 +207,9 @@ export const Select = (props: SelectProps) => {
               color: error
                 ? themeColors.destructive
                 : themeColors.foreground,
+              fontSize: tokens.typography.sizes.md,
+              lineHeight: tokens.typography.lineHeights.md,
+              fontWeight: tokens.typography.weights.medium,
             }}
           >
             {label}
@@ -218,6 +225,8 @@ export const Select = (props: SelectProps) => {
             borderColor: error
               ? themeColors.destructive
               : themeColors.border,
+            borderRadius: tokens.radius.md,
+            padding: tokens.spacing.md,
           }}
         >
           <View className="flex-1">
@@ -227,6 +236,8 @@ export const Select = (props: SelectProps) => {
                 color: error
                   ? themeColors.destructive
                   : themeColors.foreground,
+                fontSize: tokens.typography.sizes.md,
+                lineHeight: tokens.typography.lineHeights.md,
               }}
             >
               {textValue}
@@ -238,7 +249,11 @@ export const Select = (props: SelectProps) => {
           <Text
             testID={`${testID}-error`}
             className="text-sm"
-            style={{ color: themeColors.destructive }}
+            style={{
+              color: themeColors.destructive,
+              fontSize: tokens.typography.sizes.sm,
+              lineHeight: tokens.typography.lineHeights.sm,
+            }}
           >
             {error}
           </Text>

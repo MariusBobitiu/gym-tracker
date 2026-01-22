@@ -74,7 +74,7 @@ interface ControlledInputProps<T extends FieldValues>
 
 export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
   const { label, error, testID, ...inputProps } = props;
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, tokens } = useTheme();
   const [isFocussed, setIsFocussed] = React.useState(false);
   const onBlur = React.useCallback(() => setIsFocussed(false), []);
   const onFocus = React.useCallback(() => setIsFocussed(true), []);
@@ -94,16 +94,22 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
       StyleSheet.flatten([
         {
           backgroundColor: themeColors.input,
+          borderRadius: tokens.radius.md,
           borderColor: isFocussed
             ? themeColors.ring
             : error
               ? themeColors.destructive
               : themeColors.border,
           color: themeColors.foreground,
+          fontSize: tokens.typography.sizes.md,
+          lineHeight: tokens.typography.lineHeights.md,
+          fontWeight: tokens.typography.weights.medium,
+          paddingHorizontal: tokens.spacing.md,
+          paddingVertical: tokens.spacing.md,
         },
         inputProps.style,
       ]),
-    [isFocussed, error, themeColors, inputProps.style]
+    [isFocussed, error, themeColors, inputProps.style, tokens]
   );
 
   return (
@@ -114,6 +120,9 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
           className={styles.label()}
           style={{
             color: error ? themeColors.destructive : themeColors.foreground,
+            fontSize: tokens.typography.sizes.md,
+            lineHeight: tokens.typography.lineHeights.md,
+            fontWeight: tokens.typography.weights.medium,
           }}
         >
           {label}
@@ -133,7 +142,11 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
         <Text
           testID={testID ? `${testID}-error` : undefined}
           className="text-sm"
-          style={{ color: themeColors.destructive }}
+          style={{
+            color: themeColors.destructive,
+            fontSize: tokens.typography.sizes.sm,
+            lineHeight: tokens.typography.lineHeights.sm,
+          }}
         >
           {error}
         </Text>

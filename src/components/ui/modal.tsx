@@ -85,19 +85,26 @@ export const Modal = React.forwardRef(
       () => (modal.ref.current as BottomSheetModal) || null
     );
 
-    const { colors: themeColors } = useTheme();
+    const { colors: themeColors, tokens } = useTheme();
     
     const renderHandleComponent = React.useCallback(
       () => (
         <>
           <View
             className="mb-8 mt-2 h-1 w-12 self-center rounded-lg"
-            style={{ backgroundColor: themeColors.muted }}
+            style={{
+              backgroundColor: themeColors.muted,
+              borderRadius: tokens.radius.md,
+              height: 4,
+              width: 48,
+              marginTop: tokens.spacing.sm,
+              marginBottom: tokens.spacing.lg,
+            }}
           />
           <ModalHeader title={title} dismiss={modal.dismiss} />
         </>
       ),
-      [title, modal.dismiss, themeColors]
+      [title, modal.dismiss, themeColors, tokens]
     );
 
     return (
@@ -162,16 +169,27 @@ const getDetachedProps = (detached: boolean) => {
  */
 
 const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, tokens } = useTheme();
   return (
     <>
       {title && (
-        <View className="flex-row px-2 py-4">
-          <View className="size-[24px]" />
+        <View
+          className="flex-row"
+          style={{
+            paddingHorizontal: tokens.spacing.sm,
+            paddingVertical: tokens.spacing.lg,
+          }}
+        >
+          <View style={{ height: 24, width: 24 }} />
           <View className="flex-1">
             <Text
-              className="text-center text-[16px] font-bold"
-              style={{ color: themeColors.foreground }}
+              className="text-center"
+              style={{
+                color: themeColors.foreground,
+                fontSize: tokens.typography.sizes.md,
+                lineHeight: tokens.typography.lineHeights.md,
+                fontWeight: tokens.typography.weights.bold,
+              }}
             >
               {title}
             </Text>
@@ -184,11 +202,18 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
 });
 
 const CloseButton = ({ close }: { close: () => void }) => {
-  const { colors: themeColors } = useTheme();
+  const { colors: themeColors, tokens } = useTheme();
   return (
     <Pressable
       onPress={close}
       className="absolute right-3 top-3 size-[24px] items-center justify-center "
+      style={{
+        top: tokens.spacing.md,
+        right: tokens.spacing.md,
+        height: 24,
+        width: 24,
+        borderRadius: tokens.radius.pill,
+      }}
       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       accessibilityLabel="close modal"
       accessibilityRole="button"

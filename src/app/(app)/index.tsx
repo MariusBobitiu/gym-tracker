@@ -22,7 +22,7 @@ export default function Home() {
   const { signOut } = useSession();
   const { isDark } = useTheme();
   return (
-    <Screen padding="sm">
+    <Screen padding="sm" safeAreaEdges={['top', 'bottom']} preset='scroll'>
       <Stack.Screen options={headerOptions({ title: 'Home' })} />
       <AppHeader showBackButton={false} />
       <Card className={`${isDark ? 'shadow-[0_0_10px_0_rgba(0,0,0,0.8)]' : 'shadow-[0_0_5px_0_rgba(0,0,0,0.15)]'}`}>
