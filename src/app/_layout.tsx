@@ -1,30 +1,47 @@
 import '../../global.css';
 
-import { Stack, router } from 'expo-router';
+import { Stack } from 'expo-router'; 
+import { SessionProvider, useSession } from '@/lib/auth/context';
+import { SplashScreenController } from '@/components/splash';
+import { ThemeProvider } from '@/lib/theme-context';
 import { useEffect } from 'react';
-import { View } from '@/components/ui';
-import { BottomNavigation } from '@/components/bottom-navigation';
-import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
-import { ThemeProvider, useTheme } from '@/lib/theme-context';
+import { loadSelectedTheme } from '@/lib/hooks';
 
-export default function Layout() {
-  const { colors } = useTheme();
+export default function Root() {
+  // Set up the auth context and render your layout inside of it.
+  return (
+    <SessionProvider>
+      <ThemeProvider>
+        <SplashScreenController />
+        <RootNavigator />
+      </ThemeProvider>
+    </SessionProvider>
+  );
+}
+
+// Create a new component that can access the SessionProvider context later.
+function RootNavigator() {
+  const { session } = useSession();
+
   useEffect(() => {
     loadSelectedTheme();
   }, []);
 
   return (
-    <ThemeProvider>
-      <View className="flex-1" style={{ backgroundColor: colors.background }}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'fade',
-            animationDuration: 150,
-          }}
-        />
-        <BottomNavigation />
-      </View>
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        animationDuration: 150,
+      }}
+    >
+      <Stack.Protected guard={!!session}>
+        <Stack.Screen name="(app)" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!session}>
+        <Stack.Screen name="sign-in" />
+      </Stack.Protected>
+    </Stack>
   );
 }

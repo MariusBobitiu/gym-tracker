@@ -14,7 +14,7 @@ export function Card({ className = '', style, children, ...props }: CardProps) {
   const cardStyle = React.useMemo(
     () =>
       twMerge(
-        'rounded-lg border bg-card shadow-sm',
+        'rounded-lg border bg-card shadow-sm p-4',
         className
       ),
     [className]
@@ -48,7 +48,7 @@ export function CardHeader({ className = '', style, children, ...props }: CardHe
   const headerStyle = React.useMemo(
     () =>
       twMerge(
-        'flex flex-col space-y-1.5 p-6',
+        'flex flex-col space-y-1.5 p-2',
         className
       ),
     [className]
@@ -137,7 +137,7 @@ export function CardContent({ className = '', style, children, ...props }: CardC
   const contentStyle = React.useMemo(
     () =>
       twMerge(
-        'p-6 pt-0',
+        'p-2',
         className
       ),
     [className]
@@ -158,7 +158,7 @@ export function CardFooter({ className = '', style, children, ...props }: CardFo
   const footerStyle = React.useMemo(
     () =>
       twMerge(
-        'flex flex-row items-center p-6 pt-0',
+        'flex flex-row items-center',
         className
       ),
     [className]

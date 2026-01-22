@@ -20,6 +20,7 @@ type ThemeColors = {
   secondaryForeground: string;
   destructive: string;
   destructiveForeground: string;
+  gradient: string;
 };
 
 export const lightTheme: ThemeColors = {
@@ -47,13 +48,15 @@ export const lightTheme: ThemeColors = {
 
   destructive: "#DC2626",
   destructiveForeground: "#FFFFFF",
+
+  gradient: "linear-gradient(180deg, #F7F8FA 0%, #FFFFFF 100%)",
 };
 
 export const darkTheme: ThemeColors = {
   background: "#0B0D10",
   foreground: "#F5F7FA",
 
-  card: "#10141A",
+  card: "#111317",
   cardForeground: "#F5F7FA",
 
   muted: "#151B24",
@@ -62,7 +65,7 @@ export const darkTheme: ThemeColors = {
   accent: "#1A2230",
   accentForeground: "#F5F7FA",
 
-  border: "#1F2A3A",
+  border: "#171a1e",
   input: "#121824",
   ring: "#ffa90a",
 
@@ -74,6 +77,8 @@ export const darkTheme: ThemeColors = {
 
   destructive: "#EF4444",
   destructiveForeground: "#FFFFFF",
+
+  gradient: "linear-gradient(180deg, #111317 0%, #171a1e 100%)",
 };
 
 type ThemeContextType = {
