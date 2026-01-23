@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import React from "react";
 import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
-import { H2 } from "@/components/ui";
+import { H2, P } from "@/components/ui";
 import { Button } from "@/components/ui/button";
 import { View } from "react-native";
 import { useTheme } from "@/lib/theme-context";
@@ -51,7 +51,8 @@ const AppHeader = ({
   isMainScreen = false,
 }: AppHeaderProps) => {
   const { colors } = useTheme();
-  const resolvedTitle = typeof title === "string" ? <H2>{title}</H2> : title;
+  const resolvedTitle =
+    typeof title === "string" ? <P style={{ fontSize: 20, fontWeight: "600" }}>{title}</P> : title;
 
   const rightContent = isMainScreen ? (
     <View className="flex-row items-center gap-2">

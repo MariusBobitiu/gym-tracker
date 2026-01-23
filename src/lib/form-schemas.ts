@@ -1,5 +1,9 @@
-import { z } from "zod";
+import { email, z } from "zod";
 
+export const nameSchema = z
+  .string()
+  .min(2, "Name must be at least 2 characters")
+  .max(100, "Name must be at most 100 characters");
 export const emailSchema = z
   .email("Invalid email format")
   .min(5, "Email must be at least 5 characters")
@@ -19,3 +23,17 @@ export const signInSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
 });
+
+export const signUpSchema = z
+  .object({
+    name: nameSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+  });
+
+export type SignInFormData = z.infer<typeof signInSchema>;
+export type SignUpFormData = z.infer<typeof signUpSchema>;
