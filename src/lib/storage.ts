@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   selectedTheme: 'selected_theme',
   session: 'session',
   token: 'token',
+  user: 'user',
 } as const;
 
 export const SECURE_STORAGE_KEYS = {
@@ -31,6 +32,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.selectedTheme]: ThemePreference;
   [STORAGE_KEYS.session]: string;
   [STORAGE_KEYS.token]: TokenType;
+  [STORAGE_KEYS.user]: Record<string, unknown>;
 };
 
 export type SecureStorageSchema = {

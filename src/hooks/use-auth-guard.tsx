@@ -46,7 +46,7 @@ function pathMatches(pathname: string, candidates: string[]) {
 }
 
 export function useAuthGuard(options: AuthGuardOptions = {}) {
-  const { session, isLoading } = useSession();
+  const { status } = useSession();
   const segments = useSegments();
   const router = useRouter();
   const pathname = usePathname();
@@ -56,11 +56,12 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
   );
 
   useEffect(() => {
+    const isLoading = status === 'loading';
     if (!mergedOptions.enabled || isLoading) {
       return;
     }
 
-    const hasSession = !!session;
+    const hasSession = status === 'authed';
     const firstSegment = segments[0] ?? '';
     const isInAppGroup = firstSegment === '(app)';
     const isAuthScreen = firstSegment === 'sign-in';
@@ -96,6 +97,6 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
     pathname,
     router,
     segments,
-    session,
+    status,
   ]);
 }

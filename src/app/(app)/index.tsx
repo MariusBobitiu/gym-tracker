@@ -16,11 +16,11 @@ import {
 import { Buttons } from "@/components/buttons";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
-import { useSession } from "@/lib/auth/context";
+import { useAuth } from "@/lib/auth/context";
 import { useTheme } from "@/lib/theme-context";
 
 export default function Home() {
-  const { signOut } = useSession();
+  const { signOut } = useAuth();
   const { isDark } = useTheme();
   return (
     <>

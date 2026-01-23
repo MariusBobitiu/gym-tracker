@@ -113,6 +113,61 @@ import { setSecureItem, SECURE_STORAGE_KEYS } from '@/lib/storage';
 setSecureItem(SECURE_STORAGE_KEYS.authToken, { access: '...', refresh: '...' });
 ```
 
+## Networking
+
+The base API client lives in `src/lib/api-client.ts` and provides a typed result shape plus token injection from MMKV.
+
+```tsx
+import { apiClient } from '@/lib/api-client';
+
+type Profile = {
+  id: string;
+  name: string;
+};
+
+const result = await apiClient.request<Profile>('/me');
+
+if (result.ok) {
+  console.log(result.data.name);
+} else {
+  console.warn(result.error.message);
+}
+```
+
+Notes:
+
+- Configure the base URL with `EXPO_PUBLIC_API_URL`.
+- Access tokens are read from `SECURE_STORAGE_KEYS.authToken` (secure MMKV) or `STORAGE_KEYS.token`.
+- `useRefreshToken()` exists as a placeholder for wiring in refresh flows.
+
+## Query + Caching
+
+TanStack Query is wired in at the root with a shared `QueryClient` that maps errors to a toast.
+
+```tsx
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/query-client';
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+```
+
+Query key helpers live in `src/lib/query-keys.ts`:
+
+```tsx
+import { queryKeys } from '@/lib/query-keys';
+
+const workoutsKeys = queryKeys.scope('workouts');
+workoutsKeys.list({ range: 'month' });
+workoutsKeys.detail('workout-id');
+```
+
+Notes:
+
+- Standard error mapping to toast is handled in `src/lib/query-error.ts`.
+- `queryClient` is provided in `src/app/_layout.tsx`.
+
 ## Navigation + Access Control
 
 Protected groups live in `src/app/_layout.tsx` via `Stack.Protected` guards.

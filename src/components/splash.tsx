@@ -4,7 +4,8 @@ import { useSession } from '@/lib/auth/context';
 SplashScreen.preventAutoHideAsync();
 
 export function SplashScreenController() {
-  const { isLoading } = useSession();
+  const { status } = useSession();
+  const isLoading = status === 'loading';
 
   if (!isLoading) {
     SplashScreen.hide();
