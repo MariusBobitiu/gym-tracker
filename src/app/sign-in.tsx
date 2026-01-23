@@ -7,6 +7,7 @@ import { BackgroundGradient } from '@/components/background-gradient';
 
 export default function SignIn() {
   const { signIn } = useAuth();
+  
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <BackgroundGradient />
