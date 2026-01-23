@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 
 import { Button, Text } from '@/components/ui';
+import { useReducedMotion } from '@/lib/motion';
 import { useTheme } from '@/lib/theme-context';
 
 type BaseStateProps = ViewProps & {
@@ -193,22 +194,29 @@ export function Skeleton({
   ...props
 }: SkeletonProps) {
   const { colors, tokens } = useTheme();
+  const reduceMotion = useReducedMotion();
   const preset = variant ? skeletonPresets[variant] : null;
   const resolvedHeight = preset?.height ?? height;
   const resolvedWidth: DimensionValue = preset?.width ?? width;
   const resolvedRadius = preset?.radius ?? radius ?? tokens.radius.sm;
 
+  const baseStyle = [
+    {
+      height: resolvedHeight,
+      width: resolvedWidth,
+      borderRadius: resolvedRadius,
+      backgroundColor: colors.muted,
+    },
+    style,
+  ];
+
+  if (reduceMotion) {
+    return <View style={baseStyle} {...props} />;
+  }
+
   return (
     <MotiView
-      style={[
-        {
-          height: resolvedHeight,
-          width: resolvedWidth,
-          borderRadius: resolvedRadius,
-          backgroundColor: colors.muted,
-        },
-        style,
-      ]}
+      style={baseStyle}
       from={{ opacity: 0.35 }}
       animate={{ opacity: 1 }}
       transition={{ type: 'timing', duration: 900, loop: true, repeatReverse: true }}

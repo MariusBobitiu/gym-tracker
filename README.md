@@ -193,6 +193,33 @@ Field components:
 - `FormField` for label/helper/error layout.
 - `ControlledTextField`, `ControlledSelectField`, `ControlledCheckboxField`.
 
+## Quality Defaults
+
+Quality helpers live in `src/lib` and provide haptics, accessibility defaults, and reduced motion support.
+
+```tsx
+import { triggerHaptic } from '@/lib/haptics';
+
+await triggerHaptic('success');
+```
+
+```tsx
+import { getHitSlop } from '@/lib/accessibility';
+
+<Pressable hitSlop={getHitSlop()} />;
+```
+
+```tsx
+import { useReducedMotion } from '@/lib/motion';
+
+const reduceMotion = useReducedMotion();
+```
+
+Notes:
+
+- Buttons default to `accessibilityRole="button"` and use their `label` as an accessibility label.
+- `Skeleton` respects reduced motion and renders without animation when enabled.
+
 ## Navigation + Access Control
 
 Protected groups live in `src/app/_layout.tsx` via `Stack.Protected` guards.

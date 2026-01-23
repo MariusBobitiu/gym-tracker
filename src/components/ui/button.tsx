@@ -3,6 +3,7 @@ import type { PressableProps, StyleProp, View, ViewStyle } from 'react-native';
 import { ActivityIndicator, Pressable, Text, StyleSheet } from 'react-native';
 import type { VariantProps } from 'tailwind-variants';
 import { tv } from 'tailwind-variants';
+import { getHitSlop, resolveAccessibilityLabel } from '@/lib/accessibility';
 import { useTheme } from '@/lib/theme-context';
 
 const button = tv({
@@ -112,6 +113,9 @@ export const Button = React.forwardRef<View, Props>(
       textClassName = '',
       icon,
       style: propStyle,
+      accessibilityLabel,
+      accessibilityRole,
+      hitSlop,
       ...props
     },
     ref
@@ -339,11 +343,19 @@ export const Button = React.forwardRef<View, Props>(
       [variant, disabled, colors, propStyle, sizeStyle, tokens.radius.pill]
     );
 
+    const resolvedAccessibilityLabel = resolveAccessibilityLabel({
+      label: text,
+      accessibilityLabel,
+    });
+
     return (
       <Pressable
         disabled={disabled || loading}
         className={styles.container({ className })}
         style={containerStyle as StyleProp<ViewStyle>}
+        accessibilityRole={accessibilityRole ?? 'button'}
+        accessibilityLabel={resolvedAccessibilityLabel}
+        hitSlop={hitSlop ?? getHitSlop()}
         {...props}
         ref={ref}
         testID={testID}

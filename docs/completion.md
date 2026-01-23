@@ -11,6 +11,7 @@
 - Added networking layer with a base `apiClient`, typed request helper, MMKV token injection, and refresh-token hook placeholder.
 - Added TanStack Query provider, query key helpers, and standardized error-to-toast mapping.
 - Added RHF + Zod form foundation with FormField, controlled field components, and shared schemas.
+- Added quality defaults: haptics wrapper, accessibility helpers, and reduced motion hook/skeleton handling.
 
 ## Notes
 
