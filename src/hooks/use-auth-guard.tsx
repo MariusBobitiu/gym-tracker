@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react';
-import { usePathname, useRouter, useSegments, type Href } from 'expo-router';
-import { useSession } from '@/lib/auth/context';
+import { useEffect, useMemo } from "react";
+import { usePathname, useRouter, useSegments, type Href } from "expo-router";
+import { useSession } from "@/lib/auth/context";
 
 type AuthGuardOptions = {
   enabled?: boolean;
@@ -19,13 +19,13 @@ type ResolvedAuthGuardOptions = AuthGuardOptions & {
 
 const defaultOptions: ResolvedAuthGuardOptions = {
   enabled: true,
-  redirectTo: '/sign-in',
-  authenticatedRoute: '/(app)',
+  redirectTo: "/sign-in",
+  authenticatedRoute: "/(app)",
 };
 
 function hrefToPathname(href: Href) {
-  if (typeof href === 'string') {
-    return href.split('?')[0].split('#')[0];
+  if (typeof href === "string") {
+    return href.split("?")[0].split("#")[0];
   }
 
   return href.pathname;
@@ -37,7 +37,7 @@ function pathMatches(pathname: string, candidates: string[]) {
       return true;
     }
 
-    if (candidate.endsWith('/')) {
+    if (candidate.endsWith("/")) {
       return pathname.startsWith(candidate);
     }
 
@@ -50,21 +50,21 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
   const segments = useSegments();
   const router = useRouter();
   const pathname = usePathname();
+  const isLoading = status === "loading";
   const mergedOptions = useMemo<ResolvedAuthGuardOptions>(
     () => ({ ...defaultOptions, ...options }),
-    [options],
+    [options]
   );
 
   useEffect(() => {
-    const isLoading = status === 'loading';
     if (!mergedOptions.enabled || isLoading) {
       return;
     }
 
-    const hasSession = status === 'authed';
-    const firstSegment = segments[0] ?? '';
-    const isInAppGroup = firstSegment === '(app)';
-    const isAuthScreen = firstSegment === 'sign-in';
+    const hasSession = status === "authed";
+    const firstSegment = segments[0] ?? "";
+    const isInAppGroup = firstSegment === "(app)";
+    const isAuthScreen = firstSegment === "sign-in";
     const redirectPath = hrefToPathname(mergedOptions.redirectTo);
     const authenticatedPath = hrefToPathname(mergedOptions.authenticatedRoute);
     const onboardingHref = mergedOptions.onboardingRoute ?? null;
@@ -72,9 +72,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
     const allowlistPaths = mergedOptions.allowlist
       ? mergedOptions.allowlist.map(hrefToPathname)
       : [];
-    const isAllowlisted = allowlistPaths.length
-      ? pathMatches(pathname, allowlistPaths)
-      : false;
+    const isAllowlisted = allowlistPaths.length ? pathMatches(pathname, allowlistPaths) : false;
 
     if (!hasSession) {
       if (isInAppGroup && !isAllowlisted && pathname !== redirectPath) {
@@ -91,12 +89,5 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
     if (isAuthScreen && pathname !== authenticatedPath) {
       router.replace(mergedOptions.authenticatedRoute);
     }
-  }, [
-    isLoading,
-    mergedOptions,
-    pathname,
-    router,
-    segments,
-    status,
-  ]);
+  }, [isLoading, mergedOptions, pathname, router, segments, status]);
 }

@@ -1,12 +1,12 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
-import { View } from 'react-native';
+import React, { forwardRef, useImperativeHandle } from "react";
+import { View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-} from 'react-native-reanimated';
-import { twMerge } from 'tailwind-merge';
+} from "react-native-reanimated";
+import { twMerge } from "tailwind-merge";
 
 type Props = {
   initialProgress?: number;
@@ -18,7 +18,7 @@ export type ProgressBarRef = {
 };
 
 export const ProgressBar = forwardRef<ProgressBarRef, Props>(
-  ({ initialProgress = 0, className = '' }, ref) => {
+  ({ initialProgress = 0, className = "" }, ref) => {
     const progress = useSharedValue<number>(initialProgress ?? 0);
     useImperativeHandle(ref, () => {
       return {
@@ -34,7 +34,7 @@ export const ProgressBar = forwardRef<ProgressBarRef, Props>(
     const style = useAnimatedStyle(() => {
       return {
         width: `${progress.value}%`,
-        backgroundColor: '#000',
+        backgroundColor: "#000",
         height: 2,
       };
     });

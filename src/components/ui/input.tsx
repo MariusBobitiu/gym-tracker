@@ -1,43 +1,37 @@
-import * as React from 'react';
-import type {
-  Control,
-  FieldValues,
-  Path,
-  RegisterOptions,
-} from 'react-hook-form';
-import { useController } from 'react-hook-form';
-import type { TextInputProps } from 'react-native';
-import { StyleSheet, View } from 'react-native';
-import { TextInput as NTextInput } from 'react-native';
-import { tv } from 'tailwind-variants';
+import * as React from "react";
+import type { Control, FieldValues, Path, RegisterOptions } from "react-hook-form";
+import { useController } from "react-hook-form";
+import type { TextInputProps } from "react-native";
+import { StyleSheet, View, TextInput as NTextInput } from "react-native";
+import { tv } from "tailwind-variants";
 
-import colors from './colors';
-import { useTheme } from '@/lib/theme-context';
-import { Text } from './text';
+import colors from "./colors";
+import { useTheme } from "@/lib/theme-context";
+import { Text } from "./text";
 
 const inputTv = tv({
   slots: {
-    container: 'mb-2',
-    label: 'text-grey-100 mb-1 text-lg',
+    container: "mb-2",
+    label: "text-grey-100 mb-1 text-lg",
     input:
-      'mt-0 rounded-xl border-[0.5px] border-neutral-300 bg-neutral-100 px-4 py-3 font-inter text-base  font-medium leading-5',
+      "mt-0 rounded-xl border-[0.5px] border-neutral-300 bg-neutral-100 px-4 py-3 font-inter text-base  font-medium leading-5",
   },
 
   variants: {
     focused: {
       true: {
-        input: 'border-neutral-400',
+        input: "border-neutral-400",
       },
     },
     error: {
       true: {
-        input: 'border-danger-600',
-        label: 'text-danger-600',
+        input: "border-danger-600",
+        label: "text-danger-600",
       },
     },
     disabled: {
       true: {
-        input: 'bg-neutral-200',
+        input: "bg-neutral-200",
       },
     },
   },
@@ -56,10 +50,7 @@ export interface NInputProps extends TextInputProps {
 }
 
 type TRule<T extends FieldValues> =
-  | Omit<
-      RegisterOptions<T>,
-      'disabled' | 'valueAsNumber' | 'valueAsDate' | 'setValueAs'
-    >
+  | Omit<RegisterOptions<T>, "disabled" | "valueAsNumber" | "valueAsDate" | "setValueAs">
   | undefined;
 
 export type RuleType<T extends FieldValues> = { [name in keyof T]: TRule<T> };
@@ -69,9 +60,7 @@ export type InputControllerType<T extends FieldValues> = {
   rules?: RuleType<T>;
 };
 
-interface ControlledInputProps<T extends FieldValues>
-  extends NInputProps,
-    InputControllerType<T> {}
+interface ControlledInputProps<T extends FieldValues> extends NInputProps, InputControllerType<T> {}
 
 export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
   const { label, error, hideError, testID, ...inputProps } = props;
@@ -124,8 +113,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
             fontSize: tokens.typography.sizes.md,
             lineHeight: tokens.typography.lineHeights.md,
             fontWeight: tokens.typography.weights.medium,
-          }}
-        >
+          }}>
           {label}
         </Text>
       )}
@@ -147,8 +135,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
             color: themeColors.destructive,
             fontSize: tokens.typography.sizes.sm,
             lineHeight: tokens.typography.lineHeights.sm,
-          }}
-        >
+          }}>
           {error}
         </Text>
       )}
@@ -157,9 +144,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
 });
 
 // only used with react-hook-form
-export function ControlledInput<T extends FieldValues>(
-  props: ControlledInputProps<T>
-) {
+export function ControlledInput<T extends FieldValues>(props: ControlledInputProps<T>) {
   const { name, control, rules, ...inputProps } = props;
 
   const { field, fieldState } = useController({ control, name, rules });
@@ -168,7 +153,7 @@ export function ControlledInput<T extends FieldValues>(
       ref={field.ref}
       autoCapitalize="none"
       onChangeText={field.onChange}
-      value={(field.value as string) || ''}
+      value={(field.value as string) || ""}
       {...inputProps}
       error={fieldState.error?.message}
     />

@@ -1,4 +1,4 @@
-import type { Insets } from 'react-native';
+import type { Insets } from "react-native";
 
 export const DEFAULT_HIT_SLOP = 10;
 

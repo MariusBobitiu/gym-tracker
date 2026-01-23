@@ -1,7 +1,6 @@
-import * as React from 'react';
-import { useColorScheme } from 'nativewind';
-import colors from '@/components/ui/colors';
-import { themeTokens, type ThemeTokens } from '@/lib/theme-tokens';
+import * as React from "react";
+import { useColorScheme } from "nativewind";
+import { themeTokens, type ThemeTokens } from "@/lib/theme-tokens";
 
 type ThemeColors = {
   background: string;
@@ -100,7 +99,7 @@ type ThemeProviderProps = {
 
 export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElement {
   const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = colorScheme === "dark";
   const themeColors = isDark ? darkTheme : lightTheme;
 
   return (
@@ -113,7 +112,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
 export function useTheme(): ThemeContextType {
   const context = React.useContext(ThemeContext);
   if (!context) {
-    throw new Error('useTheme must be used within ThemeProvider');
+    throw new Error("useTheme must be used within ThemeProvider");
   }
   return context;
 }

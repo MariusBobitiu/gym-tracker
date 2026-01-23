@@ -5,7 +5,7 @@
  * NOTE: We use js file so we can load the client env types
  */
 
-import Constants from 'expo-constants';
+import Constants from "expo-constants";
 /**
  *  @type {typeof import('../../env.js').ClientEnv}
  */

@@ -1,10 +1,6 @@
-import {
-  MutationCache,
-  QueryCache,
-  QueryClient,
-} from '@tanstack/react-query';
+import { MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
-import { showQueryError } from '@/lib/query/query-error';
+import { showQueryError } from "@/lib/query/query-error";
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({

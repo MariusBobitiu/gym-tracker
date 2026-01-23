@@ -1,9 +1,9 @@
-import { Link, Stack } from 'expo-router';
-import AppHeader, { headerOptions } from '@/components/app-header';
-import { ThemeToggler } from '@/components/theme-toggler';
-import { Screen } from '@/components/screen';
-import { Button, View } from '@/components/ui';
-import { useAuth } from '@/lib/auth/context';
+import { Link, Stack } from "expo-router";
+import AppHeader, { headerOptions } from "@/components/app-header";
+import { ThemeToggler } from "@/components/theme-toggler";
+import { Screen } from "@/components/screen";
+import { Button, View } from "@/components/ui";
+import { useAuth } from "@/lib/auth/context";
 
 export default function Settings() {
   const { signOut } = useAuth();
@@ -22,12 +22,8 @@ export default function Settings() {
       <Link href="/profile/account" asChild>
         <Button label="Account" variant="outline" />
       </Link>
-      <View className='flex-1 pb-24'>
-        <Button
-          variant="destructive"
-          onPress={() => signOut()}
-          label="Sign Out"
-        />
+      <View className="flex-1 pb-24">
+        <Button variant="destructive" onPress={() => signOut()} label="Sign Out" />
       </View>
     </Screen>
   );

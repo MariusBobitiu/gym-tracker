@@ -6,9 +6,9 @@ export type ThemeTokens = {
     md: number;
     lg: number;
     xl: number;
-    '2xl': number;
-    '3xl': number;
-    'navbarHeight': number;
+    "2xl": number;
+    "3xl": number;
+    navbarHeight: number;
   };
   radius: {
     sm: number;
@@ -24,9 +24,9 @@ export type ThemeTokens = {
       md: number;
       lg: number;
       xl: number;
-      '2xl': number;
-      '3xl': number;
-      '4xl': number;
+      "2xl": number;
+      "3xl": number;
+      "4xl": number;
     };
     lineHeights: {
       xs: number;
@@ -34,15 +34,15 @@ export type ThemeTokens = {
       md: number;
       lg: number;
       xl: number;
-      '2xl': number;
-      '3xl': number;
-      '4xl': number;
+      "2xl": number;
+      "3xl": number;
+      "4xl": number;
     };
     weights: {
-      regular: '400';
-      medium: '500';
-      semibold: '600';
-      bold: '700';
+      regular: "400";
+      medium: "500";
+      semibold: "600";
+      bold: "700";
     };
     letterSpacing: {
       tight: number;
@@ -60,8 +60,8 @@ export const themeTokens: ThemeTokens = {
     md: 12,
     lg: 16,
     xl: 24,
-    '2xl': 32,
-    '3xl': 40,
+    "2xl": 32,
+    "3xl": 40,
     navbarHeight: 96,
   },
   radius: {
@@ -78,9 +78,9 @@ export const themeTokens: ThemeTokens = {
       md: 16,
       lg: 18,
       xl: 20,
-      '2xl': 24,
-      '3xl': 30,
-      '4xl': 36,
+      "2xl": 24,
+      "3xl": 30,
+      "4xl": 36,
     },
     lineHeights: {
       xs: 16,
@@ -88,15 +88,15 @@ export const themeTokens: ThemeTokens = {
       md: 24,
       lg: 26,
       xl: 28,
-      '2xl': 32,
-      '3xl': 36,
-      '4xl': 40,
+      "2xl": 32,
+      "3xl": 36,
+      "4xl": 40,
     },
     weights: {
-      regular: '400',
-      medium: '500',
-      semibold: '600',
-      bold: '700',
+      regular: "400",
+      medium: "500",
+      semibold: "600",
+      bold: "700",
     },
     letterSpacing: {
       tight: -0.5,

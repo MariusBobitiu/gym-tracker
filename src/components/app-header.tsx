@@ -50,7 +50,7 @@ const AppHeader = ({
   className,
   isMainScreen = false,
 }: AppHeaderProps) => {
-  const { colors, tokens } = useTheme();
+  const { colors } = useTheme();
   const resolvedTitle = typeof title === "string" ? <H2>{title}</H2> : title;
 
   const rightContent = isMainScreen ? (
@@ -66,7 +66,7 @@ const AppHeader = ({
         icon={<Settings color={colors.foreground} />}
         className="p-0"
         size="icon"
-        onPress={() => router.push('/(app)/settings')}
+        onPress={() => router.push("/(app)/settings")}
       />
     </View>
   ) : (
@@ -75,14 +75,16 @@ const AppHeader = ({
 
   return (
     <View className={`-mt-4 mb-2 flex-row items-center ${className ?? ""}`}>
-    {left ? (
+      {left ? (
         <View className="flex-1 items-start">{left}</View>
       ) : showBackButton ? (
         <View className="flex-1 items-start">
           <BackButton />
         </View>
       ) : null}
-      <View className={cn("flex-[2]", left || showBackButton ? "items-center" : "")}>{resolvedTitle ?? null}</View>
+      <View className={cn("flex-[2]", left || showBackButton ? "items-center" : "")}>
+        {resolvedTitle ?? null}
+      </View>
       <View className="flex-1 items-end">{rightContent}</View>
     </View>
   );

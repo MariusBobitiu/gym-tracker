@@ -1,29 +1,17 @@
-import React from 'react';
-import type { TextProps, TextStyle } from 'react-native';
-import { StyleSheet, Text as NNText } from 'react-native';
-import { twMerge } from 'tailwind-merge';
-import { useTheme } from '@/lib/theme-context';
+import React from "react";
+import type { TextProps, TextStyle } from "react-native";
+import { StyleSheet, Text as NNText } from "react-native";
+import { twMerge } from "tailwind-merge";
+import { useTheme } from "@/lib/theme-context";
 
 interface Props extends TextProps {
   className?: string;
 }
 
-export const Text = ({
-  className = '',
-  style,
-  children,
-  ...props
-}: Props) => {
+export const Text = ({ className = "", style, children, ...props }: Props) => {
   const { colors, tokens } = useTheme();
-  
-  const textStyle = React.useMemo(
-    () =>
-      twMerge(
-        'font-inter',
-        className
-      ),
-    [className]
-  );
+
+  const textStyle = React.useMemo(() => twMerge("font-inter", className), [className]);
 
   const nStyle = React.useMemo(
     () =>

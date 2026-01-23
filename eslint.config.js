@@ -1,30 +1,25 @@
-/* eslint-env node */
-const { defineConfig } = require('eslint/config');
-const expoConfig = require('eslint-config-expo/flat');
-const importPlugin = require('eslint-plugin-import');
-
+/* global module, require */
+const { defineConfig } = require("eslint/config");
+const expoConfig = require("eslint-config-expo/flat");
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['dist/*'],
+    ignores: ["dist/*"],
   },
   {
-    plugins: {
-      import: importPlugin,
-    },
     settings: {
-      'import/resolver': {
+      "import/resolver": {
         typescript: {
           alwaysTryTypes: true,
-          project: './tsconfig.json',
+          project: "./tsconfig.json",
         },
         node: {
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
+          extensions: [".js", ".jsx", ".ts", ".tsx"],
         },
       },
     },
     rules: {
-      'react/display-name': 'off',
+      "react/display-name": "off",
     },
   },
 ]);

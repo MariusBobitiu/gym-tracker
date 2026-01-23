@@ -9,13 +9,12 @@ import {
   SECURE_STORAGE_KEYS,
   STORAGE_KEYS,
   type TokenType,
-} from '../storage';
+} from "../storage";
 
 const TOKEN = STORAGE_KEYS.token;
 const SECURE_TOKEN = SECURE_STORAGE_KEYS.authToken;
 
-export const getToken = () =>
-  secureStorage ? getSecureItem(SECURE_TOKEN) : getStorageItem(TOKEN);
+export const getToken = () => (secureStorage ? getSecureItem(SECURE_TOKEN) : getStorageItem(TOKEN));
 export const removeToken = () => {
   removeStorageItem(TOKEN);
   if (secureStorage) {

@@ -1,13 +1,10 @@
-const colors = require('./src/components/ui/colors');
+const colors = require("./src/components/ui/colors");
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './src/app/**/*.{js,ts,tsx}',
-    './src/components/**/*.{js,ts,tsx}',
-  ],
+  content: ["./src/app/**/*.{js,ts,tsx}", "./src/components/**/*.{js,ts,tsx}"],
 
-  presets: [require('nativewind/preset')],
+  presets: [require("nativewind/preset")],
   theme: {
     extend: {
       colors: {
@@ -25,7 +22,7 @@ module.exports = {
           DEFAULT: colors.white,
           dark: colors.charcoal[850],
         },
-        'card-foreground': {
+        "card-foreground": {
           DEFAULT: colors.black,
           dark: colors.charcoal[100],
         },
@@ -33,7 +30,7 @@ module.exports = {
           DEFAULT: colors.neutral[100],
           dark: colors.charcoal[850],
         },
-        'muted-foreground': {
+        "muted-foreground": {
           DEFAULT: colors.neutral[500],
           dark: colors.neutral[400],
         },
@@ -41,7 +38,7 @@ module.exports = {
           DEFAULT: colors.neutral[100],
           dark: colors.charcoal[800],
         },
-        'accent-foreground': {
+        "accent-foreground": {
           DEFAULT: colors.black,
           dark: colors.charcoal[100],
         },

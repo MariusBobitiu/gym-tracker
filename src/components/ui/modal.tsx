@@ -28,18 +28,15 @@
  *
  */
 
-import type {
-  BottomSheetBackdropProps,
-  BottomSheetModalProps,
-} from '@gorhom/bottom-sheet';
-import { BottomSheetModal, useBottomSheet } from '@gorhom/bottom-sheet';
-import * as React from 'react';
-import { Pressable, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
-import { Path, Svg } from 'react-native-svg';
+import type { BottomSheetBackdropProps, BottomSheetModalProps } from "@gorhom/bottom-sheet";
+import { BottomSheetModal, useBottomSheet } from "@gorhom/bottom-sheet";
+import * as React from "react";
+import { Pressable, View } from "react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { Path, Svg } from "react-native-svg";
 
-import { useTheme } from '@/lib/theme-context';
-import { Text } from './text';
+import { useTheme } from "@/lib/theme-context";
+import { Text } from "./text";
 
 type ModalProps = BottomSheetModalProps & {
   title?: string;
@@ -65,28 +62,17 @@ export const useModal = () => {
 
 export const Modal = React.forwardRef(
   (
-    {
-      snapPoints: _snapPoints = ['60%'],
-      title,
-      detached = false,
-      ...props
-    }: ModalProps,
+    { snapPoints: _snapPoints = ["60%"], title, detached = false, ...props }: ModalProps,
     ref: ModalRef
   ) => {
-    const detachedProps = React.useMemo(
-      () => getDetachedProps(detached),
-      [detached]
-    );
+    const detachedProps = React.useMemo(() => getDetachedProps(detached), [detached]);
     const modal = useModal();
     const snapPoints = React.useMemo(() => _snapPoints, [_snapPoints]);
 
-    React.useImperativeHandle(
-      ref,
-      () => (modal.ref.current as BottomSheetModal) || null
-    );
+    React.useImperativeHandle(ref, () => (modal.ref.current as BottomSheetModal) || null);
 
     const { colors: themeColors, tokens } = useTheme();
-    
+
     const renderHandleComponent = React.useCallback(
       () => (
         <>
@@ -135,14 +121,12 @@ const CustomBackdrop = ({ style }: BottomSheetBackdropProps) => {
       onPress={() => close()}
       entering={FadeIn.duration(50)}
       exiting={FadeOut.duration(20)}
-      style={[style, { backgroundColor: 'rgba(0, 0, 0, 0.4)' }]}
+      style={[style, { backgroundColor: "rgba(0, 0, 0, 0.4)" }]}
     />
   );
 };
 
-export const renderBackdrop = (props: BottomSheetBackdropProps) => (
-  <CustomBackdrop {...props} />
-);
+export const renderBackdrop = (props: BottomSheetBackdropProps) => <CustomBackdrop {...props} />;
 
 /**
  *
@@ -158,7 +142,7 @@ const getDetachedProps = (detached: boolean) => {
     return {
       detached: true,
       bottomInset: 46,
-      style: { marginHorizontal: 16, overflow: 'hidden' },
+      style: { marginHorizontal: 16, overflow: "hidden" },
     } as Partial<BottomSheetModalProps>;
   }
   return {} as Partial<BottomSheetModalProps>;
@@ -178,8 +162,7 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
           style={{
             paddingHorizontal: tokens.spacing.sm,
             paddingVertical: tokens.spacing.lg,
-          }}
-        >
+          }}>
           <View style={{ height: 24, width: 24 }} />
           <View className="flex-1">
             <Text
@@ -189,8 +172,7 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
                 fontSize: tokens.typography.sizes.md,
                 lineHeight: tokens.typography.lineHeights.md,
                 fontWeight: tokens.typography.weights.bold,
-              }}
-            >
+              }}>
               {title}
             </Text>
           </View>
@@ -217,14 +199,8 @@ const CloseButton = ({ close }: { close: () => void }) => {
       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       accessibilityLabel="close modal"
       accessibilityRole="button"
-      accessibilityHint="closes the modal"
-    >
-      <Svg
-        width={24}
-        height={24}
-        fill="none"
-        viewBox="0 0 24 24"
-      >
+      accessibilityHint="closes the modal">
+      <Svg width={24} height={24} fill="none" viewBox="0 0 24 24">
         <Path
           d="M18.707 6.707a1 1 0 0 0-1.414-1.414L12 10.586 6.707 5.293a1 1 0 0 0-1.414 1.414L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12l5.293-5.293Z"
           fill={themeColors.foreground}

@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, type ViewProps } from 'react-native';
+import React from "react";
+import { View, type ViewProps } from "react-native";
 
-import { Text } from '@/components/ui';
-import { useTheme } from '@/lib/theme-context';
+import { Text } from "@/components/ui";
+import { useTheme } from "@/lib/theme-context";
 
 export type FormFieldProps = ViewProps & {
   label?: string;
@@ -41,10 +41,9 @@ export function FormField({
             lineHeight: tokens.typography.lineHeights.md,
             fontWeight: tokens.typography.weights.medium,
             marginBottom: tokens.spacing.xs,
-          }}
-        >
+          }}>
           {label}
-          {required ? ' *' : ''}
+          {required ? " *" : ""}
         </Text>
       )}
       {children}
@@ -56,8 +55,7 @@ export function FormField({
             fontSize: tokens.typography.sizes.sm,
             lineHeight: tokens.typography.lineHeights.sm,
             marginTop: tokens.spacing.xs,
-          }}
-        >
+          }}>
           {helper}
         </Text>
       )}
@@ -69,8 +67,7 @@ export function FormField({
             fontSize: tokens.typography.sizes.sm,
             lineHeight: tokens.typography.lineHeights.sm,
             marginTop: tokens.spacing.xs,
-          }}
-        >
+          }}>
           {error}
         </Text>
       )}

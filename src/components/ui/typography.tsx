@@ -1,32 +1,25 @@
-import * as React from 'react';
-import type { TextProps, TextStyle } from 'react-native';
-import { StyleSheet, Text as RNText } from 'react-native';
-import { twMerge } from 'tailwind-merge';
-import { useTheme } from '@/lib/theme-context';
+import * as React from "react";
+import type { TextProps, TextStyle } from "react-native";
+import { StyleSheet, Text as RNText } from "react-native";
+import { twMerge } from "tailwind-merge";
+import { useTheme } from "@/lib/theme-context";
 
 type TypographyProps = TextProps & {
   className?: string;
 };
 
-export function H1({ className = '', style, children, ...props }: TypographyProps) {
+export function H1({ className = "", style, children, ...props }: TypographyProps) {
   const { colors, tokens } = useTheme();
-  
-  const textStyle = React.useMemo(
-    () =>
-      twMerge(
-        'tracking-tight',
-        className
-      ),
-    [className]
-  );
+
+  const textStyle = React.useMemo(() => twMerge("tracking-tight", className), [className]);
 
   const nStyle = React.useMemo(
     () =>
       StyleSheet.flatten([
         {
           color: colors.foreground,
-          fontSize: tokens.typography.sizes['4xl'],
-          lineHeight: tokens.typography.lineHeights['4xl'],
+          fontSize: tokens.typography.sizes["4xl"],
+          lineHeight: tokens.typography.lineHeights["4xl"],
           fontWeight: tokens.typography.weights.bold,
           letterSpacing: tokens.typography.letterSpacing.tight,
         },
@@ -42,25 +35,18 @@ export function H1({ className = '', style, children, ...props }: TypographyProp
   );
 }
 
-export function H2({ className = '', style, children, ...props }: TypographyProps) {
+export function H2({ className = "", style, children, ...props }: TypographyProps) {
   const { colors, tokens } = useTheme();
-  
-  const textStyle = React.useMemo(
-    () =>
-      twMerge(
-        'tracking-tight',
-        className
-      ),
-    [className]
-  );
+
+  const textStyle = React.useMemo(() => twMerge("tracking-tight", className), [className]);
 
   const nStyle = React.useMemo(
     () =>
       StyleSheet.flatten([
         {
           color: colors.foreground,
-          fontSize: tokens.typography.sizes['3xl'],
-          lineHeight: tokens.typography.lineHeights['3xl'],
+          fontSize: tokens.typography.sizes["3xl"],
+          lineHeight: tokens.typography.lineHeights["3xl"],
           fontWeight: tokens.typography.weights.semibold,
           letterSpacing: tokens.typography.letterSpacing.tight,
         },
@@ -76,25 +62,18 @@ export function H2({ className = '', style, children, ...props }: TypographyProp
   );
 }
 
-export function H3({ className = '', style, children, ...props }: TypographyProps) {
+export function H3({ className = "", style, children, ...props }: TypographyProps) {
   const { colors, tokens } = useTheme();
-  
-  const textStyle = React.useMemo(
-    () =>
-      twMerge(
-        'tracking-tight',
-        className
-      ),
-    [className]
-  );
+
+  const textStyle = React.useMemo(() => twMerge("tracking-tight", className), [className]);
 
   const nStyle = React.useMemo(
     () =>
       StyleSheet.flatten([
         {
           color: colors.foreground,
-          fontSize: tokens.typography.sizes['2xl'],
-          lineHeight: tokens.typography.lineHeights['2xl'],
+          fontSize: tokens.typography.sizes["2xl"],
+          lineHeight: tokens.typography.lineHeights["2xl"],
           fontWeight: tokens.typography.weights.semibold,
           letterSpacing: tokens.typography.letterSpacing.tight,
         },
@@ -110,17 +89,10 @@ export function H3({ className = '', style, children, ...props }: TypographyProp
   );
 }
 
-export function P({ className = '', style, children, ...props }: TypographyProps) {
+export function P({ className = "", style, children, ...props }: TypographyProps) {
   const { colors, tokens } = useTheme();
-  
-  const textStyle = React.useMemo(
-    () =>
-      twMerge(
-        '',
-        className
-      ),
-    [className]
-  );
+
+  const textStyle = React.useMemo(() => twMerge("", className), [className]);
 
   const nStyle = React.useMemo(
     () =>
@@ -143,17 +115,10 @@ export function P({ className = '', style, children, ...props }: TypographyProps
   );
 }
 
-export function Small({ className = '', style, children, ...props }: TypographyProps) {
+export function Small({ className = "", style, children, ...props }: TypographyProps) {
   const { colors, tokens } = useTheme();
-  
-  const textStyle = React.useMemo(
-    () =>
-      twMerge(
-        '',
-        className
-      ),
-    [className]
-  );
+
+  const textStyle = React.useMemo(() => twMerge("", className), [className]);
 
   const nStyle = React.useMemo(
     () =>

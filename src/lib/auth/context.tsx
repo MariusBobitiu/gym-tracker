@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
   type PropsWithChildren,
-} from 'react';
+} from "react";
 
 import {
   getSecureItem,
@@ -19,9 +19,9 @@ import {
   SECURE_STORAGE_KEYS,
   STORAGE_KEYS,
   type TokenType,
-} from '@/lib/storage';
+} from "@/lib/storage";
 
-export type AuthStatus = 'loading' | 'authed' | 'guest';
+export type AuthStatus = "loading" | "authed" | "guest";
 export type AuthUser = Record<string, unknown>;
 export type AuthCredentials = Record<string, unknown>;
 export type AuthSession = {
@@ -46,9 +46,7 @@ type SessionProviderProps = PropsWithChildren<{
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function readStoredToken(): TokenType | null {
-  const secureToken = secureStorage
-    ? getSecureItem(SECURE_STORAGE_KEYS.authToken)
-    : null;
+  const secureToken = secureStorage ? getSecureItem(SECURE_STORAGE_KEYS.authToken) : null;
   return secureToken ?? getStorageItem(STORAGE_KEYS.token);
 }
 
@@ -68,19 +66,14 @@ function clearStoredToken(): void {
 }
 
 function isAuthSession(value: AuthCredentials | AuthSession): value is AuthSession {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    'token' in value &&
-    'user' in value
-  );
+  return typeof value === "object" && value !== null && "token" in value && "user" in value;
 }
 
 // Use this hook to access the auth user/session data.
 export function useSession() {
   const value = use(AuthContext);
   if (!value) {
-    throw new Error('useSession must be wrapped in a <SessionProvider />');
+    throw new Error("useSession must be wrapped in a <SessionProvider />");
   }
 
   const { user, token, status } = value;
@@ -90,20 +83,16 @@ export function useSession() {
 export function useAuth() {
   const value = use(AuthContext);
   if (!value) {
-    throw new Error('useAuth must be wrapped in a <SessionProvider />');
+    throw new Error("useAuth must be wrapped in a <SessionProvider />");
   }
 
   return value;
 }
 
-export function SessionProvider({
-  children,
-  authenticate,
-  onSignOut,
-}: SessionProviderProps) {
+export function SessionProvider({ children, authenticate, onSignOut }: SessionProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<TokenType | null>(null);
-  const [status, setStatus] = useState<AuthStatus>('loading');
+  const [status, setStatus] = useState<AuthStatus>("loading");
 
   const hydrateFromStorage = useCallback(() => {
     const storedUser = getStorageItem(STORAGE_KEYS.user);
@@ -111,7 +100,7 @@ export function SessionProvider({
 
     setUser(storedUser ?? null);
     setToken(storedToken ?? null);
-    setStatus(storedToken ? 'authed' : 'guest');
+    setStatus(storedToken ? "authed" : "guest");
   }, []);
 
   useEffect(() => {
@@ -120,7 +109,7 @@ export function SessionProvider({
 
   const signIn = useCallback(
     async (credentials: AuthCredentials): Promise<AuthSession> => {
-      setStatus('loading');
+      setStatus("loading");
 
       try {
         const session = authenticate
@@ -130,17 +119,17 @@ export function SessionProvider({
             : null;
 
         if (!session) {
-          throw new Error('Auth signIn not configured. Provide an authenticate handler.');
+          throw new Error("Auth signIn not configured. Provide an authenticate handler.");
         }
 
         setUser(session.user ?? null);
         setToken(session.token ?? null);
         setStorageItem(STORAGE_KEYS.user, session.user ?? null);
         writeStoredToken(session.token ?? null);
-        setStatus(session.token ? 'authed' : 'guest');
+        setStatus(session.token ? "authed" : "guest");
         return session;
       } catch (error) {
-        setStatus('guest');
+        setStatus("guest");
         throw error;
       }
     },
@@ -148,7 +137,7 @@ export function SessionProvider({
   );
 
   const signOut = useCallback(async () => {
-    setStatus('loading');
+    setStatus("loading");
     if (onSignOut) {
       await onSignOut();
     }
@@ -156,7 +145,7 @@ export function SessionProvider({
     setToken(null);
     removeStorageItem(STORAGE_KEYS.user);
     clearStoredToken();
-    setStatus('guest');
+    setStatus("guest");
   }, [onSignOut]);
 
   const value = useMemo<AuthContextValue>(

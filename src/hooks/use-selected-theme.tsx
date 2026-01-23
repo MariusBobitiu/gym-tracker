@@ -1,8 +1,8 @@
-import { colorScheme, useColorScheme } from 'nativewind';
-import React from 'react';
-import { useMMKVString } from 'react-native-mmkv';
+import { colorScheme, useColorScheme } from "nativewind";
+import React from "react";
+import { useMMKVString } from "react-native-mmkv";
 
-import { storage, STORAGE_KEYS, type ThemePreference } from '@/lib/storage';
+import { storage, STORAGE_KEYS, type ThemePreference } from "@/lib/storage";
 
 const SELECTED_THEME = STORAGE_KEYS.selectedTheme;
 export type ColorSchemeType = ThemePreference;
@@ -14,7 +14,7 @@ export type ColorSchemeType = ThemePreference;
  *
  */
 export const useSelectedTheme = () => {
-  const { colorScheme: _color, setColorScheme } = useColorScheme();
+  const { setColorScheme } = useColorScheme();
   const [theme, _setTheme] = useMMKVString(SELECTED_THEME, storage);
 
   const setSelectedTheme = React.useCallback(
@@ -25,12 +25,12 @@ export const useSelectedTheme = () => {
     [setColorScheme, _setTheme]
   );
 
-  const selectedTheme = (theme ?? 'system') as ColorSchemeType;
+  const selectedTheme = (theme ?? "system") as ColorSchemeType;
   return { selectedTheme, setSelectedTheme } as const;
 };
 // to be used in the root file to load the selected theme from MMKV
 export const loadSelectedTheme = () => {
   const theme = storage.getString(SELECTED_THEME);
-  const themeToUse = (theme ?? 'system') as ColorSchemeType;
+  const themeToUse = (theme ?? "system") as ColorSchemeType;
   colorScheme.set(themeToUse);
 };

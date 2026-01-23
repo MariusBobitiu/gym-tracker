@@ -1,11 +1,11 @@
-import { Env } from '@/lib/env';
+import { Env } from "@/lib/env";
 import {
   getSecureItem,
   getStorageItem,
   SECURE_STORAGE_KEYS,
   STORAGE_KEYS,
   secureStorage,
-} from '@/lib/storage';
+} from "@/lib/storage";
 
 export type ApiSuccess<T> = {
   ok: true;
@@ -46,18 +46,13 @@ type ApiClientConfig = {
 };
 
 type ApiClient = {
-  request: <T, E = ApiError>(
-    path: string,
-    options?: ApiRequestOptions
-  ) => Promise<ApiResult<T, E>>;
+  request: <T, E = ApiError>(path: string, options?: ApiRequestOptions) => Promise<ApiResult<T, E>>;
 };
 
-const API_BASE_URL = Env.EXPO_PUBLIC_API_URL ?? '';
+const API_BASE_URL = Env.EXPO_PUBLIC_API_URL ?? "";
 
 function getAccessToken(): string | null {
-  const secureToken = secureStorage
-    ? getSecureItem(SECURE_STORAGE_KEYS.authToken)
-    : null;
+  const secureToken = secureStorage ? getSecureItem(SECURE_STORAGE_KEYS.authToken) : null;
   const token = secureToken ?? getStorageItem(STORAGE_KEYS.token);
   return token?.access ?? null;
 }
@@ -65,44 +60,44 @@ function getAccessToken(): string | null {
 function buildUrl(baseUrl: string, path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
   if (!baseUrl) return path;
-  const normalizedBase = baseUrl.replace(/\/+$/, '');
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  const normalizedBase = baseUrl.replace(/\/+$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${normalizedBase}${normalizedPath}`;
 }
 
 function resolveBody(body: unknown, headers: Headers): BodyInit | undefined {
   if (body === null || body === undefined) return undefined;
   if (
-    typeof body === 'string' ||
+    typeof body === "string" ||
     body instanceof FormData ||
     body instanceof ArrayBuffer ||
     body instanceof Blob
   ) {
     if (body instanceof FormData) {
-      headers.delete('Content-Type');
+      headers.delete("Content-Type");
     }
     return body;
   }
 
-  if (!headers.has('Content-Type')) {
-    headers.set('Content-Type', 'application/json');
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
 
   return JSON.stringify(body);
 }
 
 function buildError(status: number, payload: unknown): ApiError {
-  if (payload && typeof payload === 'object' && 'message' in payload) {
-    const message = String((payload as { message?: string }).message ?? 'Request failed');
+  if (payload && typeof payload === "object" && "message" in payload) {
+    const message = String((payload as { message?: string }).message ?? "Request failed");
     const code = (payload as { code?: string }).code;
     return { message, status, code, details: payload };
   }
 
-  if (typeof payload === 'string' && payload.trim().length > 0) {
+  if (typeof payload === "string" && payload.trim().length > 0) {
     return { message: payload, status, details: payload };
   }
 
-  return { message: 'Request failed', status };
+  return { message: "Request failed", status };
 }
 
 export function createApiClient(config: ApiClientConfig): ApiClient {
@@ -113,12 +108,12 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
     ): Promise<ApiResult<T, E>> {
       const url = buildUrl(config.baseUrl, path);
       const headers = new Headers(config.headers);
-      const { method = 'GET', body, signal, auth = true, parse } = options;
+      const { method = "GET", body, signal, auth = true, parse } = options;
 
       if (auth && config.getToken) {
         const token = config.getToken();
         if (token) {
-          headers.set('Authorization', `Bearer ${token}`);
+          headers.set("Authorization", `Bearer ${token}`);
         }
       }
 
@@ -139,13 +134,13 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
         });
 
         const status = response.status;
-        const contentType = response.headers.get('content-type') ?? '';
+        const contentType = response.headers.get("content-type") ?? "";
         let payload: unknown = null;
 
         if (parse) {
           payload = await parse(response);
         } else if (status !== 204) {
-          if (contentType.includes('application/json')) {
+          if (contentType.includes("application/json")) {
             payload = await response.json().catch(() => null);
           } else {
             payload = await response.text().catch(() => null);
@@ -163,8 +158,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
           headers: response.headers,
         };
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'Network request failed';
+        const message = error instanceof Error ? error.message : "Network request failed";
         return { ok: false, error: { message } as E, status: 0 };
       }
     },
@@ -173,7 +167,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 
 export const apiClient = createApiClient({
   baseUrl: API_BASE_URL,
-  headers: { Accept: 'application/json' },
+  headers: { Accept: "application/json" },
   getToken: getAccessToken,
 });
 

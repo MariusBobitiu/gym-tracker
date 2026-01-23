@@ -1,52 +1,45 @@
-/* eslint-disable max-lines-per-function */
-import {
-  BottomSheetFlatList,
-  type BottomSheetModal,
-} from '@gorhom/bottom-sheet';
-import { FlashList } from '@shopify/flash-list';
-import * as React from 'react';
-import type { FieldValues } from 'react-hook-form';
-import { useController } from 'react-hook-form';
-import { Platform, View } from 'react-native';
-import { Pressable, type PressableProps } from 'react-native';
-import type { SvgProps } from 'react-native-svg';
-import Svg, { Path } from 'react-native-svg';
-import { tv } from 'tailwind-variants';
+import { BottomSheetFlatList, type BottomSheetModal } from "@gorhom/bottom-sheet";
+import { FlashList } from "@shopify/flash-list";
+import * as React from "react";
+import type { FieldValues } from "react-hook-form";
+import { useController } from "react-hook-form";
+import { Platform, View } from "react-native";
+import { Pressable, type PressableProps } from "react-native";
+import type { SvgProps } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
+import { tv } from "tailwind-variants";
 
-import colors from '@/components/ui/colors';
 // import { CaretDown } from '@/components/ui/icons';
 
-import { useTheme } from '@/lib/theme-context';
-import type { InputControllerType } from './input';
-import { useModal } from './modal';
-import { Modal } from './modal';
-import { Text } from './text';
+import { useTheme } from "@/lib/theme-context";
+import type { InputControllerType } from "./input";
+import { Modal, useModal } from "./modal";
+import { Text } from "./text";
 
 const selectTv = tv({
   slots: {
-    container: 'mb-4',
-    label: 'text-grey-100 mb-1 text-lg',
-    input:
-      'border-grey-50 mt-0 flex-row items-center justify-center rounded-xl border-[0.5px] p-3',
-    inputValue: '',
+    container: "mb-4",
+    label: "text-grey-100 mb-1 text-lg",
+    input: "border-grey-50 mt-0 flex-row items-center justify-center rounded-xl border-[0.5px] p-3",
+    inputValue: "",
   },
 
   variants: {
     focused: {
       true: {
-        input: 'border-neutral-600',
+        input: "border-neutral-600",
       },
     },
     error: {
       true: {
-        input: 'border-danger-600',
-        label: 'text-danger-600',
-        inputValue: 'text-danger-600',
+        input: "border-danger-600",
+        label: "text-danger-600",
+        inputValue: "text-danger-600",
       },
     },
     disabled: {
       true: {
-        input: 'bg-neutral-200',
+        input: "bg-neutral-200",
       },
     },
   },
@@ -56,7 +49,7 @@ const selectTv = tv({
   },
 });
 
-const List = Platform.OS === 'web' ? FlashList : BottomSheetFlatList;
+const List = Platform.OS === "web" ? FlashList : BottomSheetFlatList;
 
 export type OptionType = { label: string; value: string | number };
 
@@ -99,8 +92,7 @@ export const Options = React.forwardRef<BottomSheetModal, OptionsProps>(
           backgroundColor: themeColors.card,
           borderTopLeftRadius: tokens.radius.lg,
           borderTopRightRadius: tokens.radius.lg,
-        }}
-      >
+        }}>
         <List
           data={options}
           keyExtractor={keyExtractor}
@@ -132,8 +124,7 @@ const Option = React.memo(
           paddingHorizontal: tokens.spacing.md,
           paddingVertical: tokens.spacing.sm,
         }}
-        {...props}
-      >
+        {...props}>
         <Text className="flex-1" style={{ color: themeColors.foreground }}>
           {label}
         </Text>
@@ -155,8 +146,7 @@ export interface SelectProps {
   testID?: string;
 }
 interface ControlledSelectProps<T extends FieldValues>
-  extends SelectProps,
-    InputControllerType<T> {}
+  extends SelectProps, InputControllerType<T> {}
 
 export const Select = (props: SelectProps) => {
   const {
@@ -165,7 +155,7 @@ export const Select = (props: SelectProps) => {
     error,
     hideError,
     options = [],
-    placeholder = 'select...',
+    placeholder = "select...",
     disabled = false,
     onSelect,
     testID,
@@ -206,14 +196,11 @@ export const Select = (props: SelectProps) => {
             testID={testID ? `${testID}-label` : undefined}
             className={styles.label()}
             style={{
-              color: error
-                ? themeColors.destructive
-                : themeColors.foreground,
+              color: error ? themeColors.destructive : themeColors.foreground,
               fontSize: tokens.typography.sizes.md,
               lineHeight: tokens.typography.lineHeights.md,
               fontWeight: tokens.typography.weights.medium,
-            }}
-          >
+            }}>
             {label}
           </Text>
         )}
@@ -224,24 +211,18 @@ export const Select = (props: SelectProps) => {
           testID={testID ? `${testID}-trigger` : undefined}
           style={{
             backgroundColor: themeColors.input,
-            borderColor: error
-              ? themeColors.destructive
-              : themeColors.border,
+            borderColor: error ? themeColors.destructive : themeColors.border,
             borderRadius: tokens.radius.md,
             padding: tokens.spacing.md,
-          }}
-        >
+          }}>
           <View className="flex-1">
             <Text
               className={styles.inputValue()}
               style={{
-                color: error
-                  ? themeColors.destructive
-                  : themeColors.foreground,
+                color: error ? themeColors.destructive : themeColors.foreground,
                 fontSize: tokens.typography.sizes.md,
                 lineHeight: tokens.typography.lineHeights.md,
-              }}
-            >
+              }}>
               {textValue}
             </Text>
           </View>
@@ -255,26 +236,18 @@ export const Select = (props: SelectProps) => {
               color: themeColors.destructive,
               fontSize: tokens.typography.sizes.sm,
               lineHeight: tokens.typography.lineHeights.sm,
-            }}
-          >
+            }}>
             {error}
           </Text>
         )}
       </View>
-      <Options
-        testID={testID}
-        ref={modal.ref}
-        options={options}
-        onSelect={onSelectOption}
-      />
+      <Options testID={testID} ref={modal.ref} options={options} onSelect={onSelectOption} />
     </>
   );
 };
 
 // only used with react-hook-form
-export function ControlledSelect<T extends FieldValues>(
-  props: ControlledSelectProps<T>
-) {
+export function ControlledSelect<T extends FieldValues>(props: ControlledSelectProps<T>) {
   const { name, control, rules, onSelect: onNSelect, ...selectProps } = props;
 
   const { field, fieldState } = useController({ control, name, rules });
@@ -298,13 +271,7 @@ export function ControlledSelect<T extends FieldValues>(
 const Check = ({ ...props }: SvgProps) => {
   const { colors: themeColors } = useTheme();
   return (
-    <Svg
-      width={25}
-      height={24}
-      fill="none"
-      viewBox="0 0 25 24"
-      {...props}
-    >
+    <Svg width={25} height={24} fill="none" viewBox="0 0 25 24" {...props}>
       <Path
         d="m20.256 6.75-10.5 10.5L4.506 12"
         strokeWidth={2.438}

@@ -1,8 +1,8 @@
-import { Stack } from 'expo-router';
-import AppHeader, { headerOptions } from '@/components/app-header';
-import { Screen } from '@/components/screen';
-import { P, Text, View } from '@/components/ui';
-import { EmptyState, Skeleton } from '@/components/feedback-states';
+import { Stack } from "expo-router";
+import AppHeader, { headerOptions } from "@/components/app-header";
+import { Screen } from "@/components/screen";
+import { P, View } from "@/components/ui";
+import { EmptyState, Skeleton } from "@/components/feedback-states";
 
 export default function Planner() {
   return (

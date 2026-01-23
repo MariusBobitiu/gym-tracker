@@ -1,26 +1,26 @@
-import { useEffect, useCallback, useReducer } from 'react';
-import { createMMKV } from 'react-native-mmkv';
+import { useEffect, useCallback, useReducer } from "react";
+import { createMMKV } from "react-native-mmkv";
 
-export const storage = createMMKV({ id: 'gym-tracker' });
+export const storage = createMMKV({ id: "gym-tracker" });
 
 const ENCRYPTION_KEY = process.env.EXPO_PUBLIC_MMKV_ENCRYPTION_KEY;
 export const secureStorage = ENCRYPTION_KEY
-  ? createMMKV({ id: 'gym-tracker-secure', encryptionKey: ENCRYPTION_KEY })
+  ? createMMKV({ id: "gym-tracker-secure", encryptionKey: ENCRYPTION_KEY })
   : null;
 
 export const STORAGE_KEYS = {
-  storageVersion: 'storage_version',
-  selectedTheme: 'selected_theme',
-  session: 'session',
-  token: 'token',
-  user: 'user',
+  storageVersion: "storage_version",
+  selectedTheme: "selected_theme",
+  session: "session",
+  token: "token",
+  user: "user",
 } as const;
 
 export const SECURE_STORAGE_KEYS = {
-  authToken: 'secure_auth_token',
+  authToken: "secure_auth_token",
 } as const;
 
-export type ThemePreference = 'light' | 'dark' | 'system';
+export type ThemePreference = "light" | "dark" | "system";
 
 export type TokenType = {
   access: string;
@@ -40,29 +40,20 @@ export type SecureStorageSchema = {
 };
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
-export type SecureStorageKey =
-  (typeof SECURE_STORAGE_KEYS)[keyof typeof SECURE_STORAGE_KEYS];
+export type SecureStorageKey = (typeof SECURE_STORAGE_KEYS)[keyof typeof SECURE_STORAGE_KEYS];
 
 type UseStateHook<T> = [[boolean, T | null], (value: T | null) => void];
 
 const STORAGE_VERSION = 1;
 
-function useAsyncState<T>(
-  initialValue: [boolean, T | null] = [true, null]
-): UseStateHook<T> {
+function useAsyncState<T>(initialValue: [boolean, T | null] = [true, null]): UseStateHook<T> {
   return useReducer(
-    (
-      state: [boolean, T | null],
-      action: T | null = null
-    ): [boolean, T | null] => [false, action],
+    (state: [boolean, T | null], action: T | null = null): [boolean, T | null] => [false, action],
     initialValue
   ) as UseStateHook<T>;
 }
 
-function readRawValue(
-  store: typeof storage,
-  key: string
-): string | number | boolean | undefined {
+function readRawValue(store: typeof storage, key: string): string | number | boolean | undefined {
   const stringValue = store.getString(key);
   if (stringValue !== undefined) return stringValue;
   const numberValue = store.getNumber(key);
@@ -73,7 +64,7 @@ function readRawValue(
 }
 
 function parseStoredValue<T>(raw: string | number | boolean): T {
-  if (typeof raw === 'string') {
+  if (typeof raw === "string") {
     try {
       return JSON.parse(raw) as T;
     } catch {
@@ -84,22 +75,18 @@ function parseStoredValue<T>(raw: string | number | boolean): T {
   return raw as T;
 }
 
-function setStoreValue(
-  store: typeof storage,
-  key: string,
-  value: unknown
-): void {
+function setStoreValue(store: typeof storage, key: string, value: unknown): void {
   if (value === null || value === undefined) {
     store.remove(key);
     return;
   }
 
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     store.set(key, value);
     return;
   }
 
-  if (typeof value === 'number' || typeof value === 'boolean') {
+  if (typeof value === "number" || typeof value === "boolean") {
     store.set(key, value);
     return;
   }
@@ -107,9 +94,7 @@ function setStoreValue(
   store.set(key, JSON.stringify(value));
 }
 
-export function getStorageItem<K extends StorageKey>(
-  key: K
-): StorageSchema[K] | null {
+export function getStorageItem<K extends StorageKey>(key: K): StorageSchema[K] | null {
   try {
     const rawValue = readRawValue(storage, key);
     if (rawValue === undefined) {
@@ -117,19 +102,16 @@ export function getStorageItem<K extends StorageKey>(
     }
     return parseStoredValue<StorageSchema[K]>(rawValue);
   } catch (e) {
-    console.error('MMKV storage error:', e);
+    console.error("MMKV storage error:", e);
     return null;
   }
 }
 
-export function setStorageItem<K extends StorageKey>(
-  key: K,
-  value: StorageSchema[K] | null
-): void {
+export function setStorageItem<K extends StorageKey>(key: K, value: StorageSchema[K] | null): void {
   try {
     setStoreValue(storage, key, value);
   } catch (e) {
-    console.error('MMKV storage error:', e);
+    console.error("MMKV storage error:", e);
   }
 }
 
@@ -137,7 +119,7 @@ export function removeStorageItem(key: StorageKey): void {
   try {
     storage.remove(key);
   } catch (e) {
-    console.error('MMKV storage error:', e);
+    console.error("MMKV storage error:", e);
   }
 }
 
@@ -148,11 +130,9 @@ export async function setStorageItemAsync<K extends StorageKey>(
   setStorageItem(key, value);
 }
 
-export function getSecureItem<K extends SecureStorageKey>(
-  key: K
-): SecureStorageSchema[K] | null {
+export function getSecureItem<K extends SecureStorageKey>(key: K): SecureStorageSchema[K] | null {
   if (!secureStorage) {
-    console.warn('Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.');
+    console.warn("Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.");
     return null;
   }
 
@@ -163,7 +143,7 @@ export function getSecureItem<K extends SecureStorageKey>(
     }
     return parseStoredValue<SecureStorageSchema[K]>(rawValue);
   } catch (e) {
-    console.error('MMKV secure storage error:', e);
+    console.error("MMKV secure storage error:", e);
     return null;
   }
 }
@@ -173,27 +153,27 @@ export function setSecureItem<K extends SecureStorageKey>(
   value: SecureStorageSchema[K] | null
 ): void {
   if (!secureStorage) {
-    console.warn('Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.');
+    console.warn("Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.");
     return;
   }
 
   try {
     setStoreValue(secureStorage, key, value);
   } catch (e) {
-    console.error('MMKV secure storage error:', e);
+    console.error("MMKV secure storage error:", e);
   }
 }
 
 export function removeSecureItem(key: SecureStorageKey): void {
   if (!secureStorage) {
-    console.warn('Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.');
+    console.warn("Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.");
     return;
   }
 
   try {
     secureStorage.remove(key);
   } catch (e) {
-    console.error('MMKV secure storage error:', e);
+    console.error("MMKV secure storage error:", e);
   }
 }
 
@@ -210,13 +190,13 @@ const migrations: Record<number, (helpers: StorageMigrationHelpers) => void> = {
 function readStorageVersion(): number {
   const rawValue = readRawValue(storage, STORAGE_KEYS.storageVersion);
   if (rawValue === undefined) return 0;
-  if (typeof rawValue === 'number') return rawValue;
-  if (typeof rawValue === 'boolean') return rawValue ? 1 : 0;
+  if (typeof rawValue === "number") return rawValue;
+  if (typeof rawValue === "boolean") return rawValue ? 1 : 0;
   const parsedNumber = Number(rawValue);
   if (!Number.isNaN(parsedNumber)) return parsedNumber;
   try {
     const parsed = JSON.parse(rawValue);
-    return typeof parsed === 'number' ? parsed : 0;
+    return typeof parsed === "number" ? parsed : 0;
   } catch {
     return 0;
   }
@@ -244,22 +224,20 @@ export function runStorageMigrations(): void {
   storage.set(STORAGE_KEYS.storageVersion, STORAGE_VERSION);
 }
 
-export function useStorageState<K extends StorageKey>(
-  key: K
-): UseStateHook<StorageSchema[K]> {
+export function useStorageState<K extends StorageKey>(key: K): UseStateHook<StorageSchema[K]> {
   const [state, setState] = useAsyncState<StorageSchema[K]>();
 
   useEffect(() => {
     const value = getStorageItem(key);
     setState(value ?? null);
-  }, [key]);
+  }, [key, setState]);
 
   const setValue = useCallback(
     (value: StorageSchema[K] | null) => {
       setState(value);
       setStorageItemAsync(key, value);
     },
-    [key]
+    [key, setState]
   );
 
   return [state, setValue];
