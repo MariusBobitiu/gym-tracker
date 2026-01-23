@@ -10,6 +10,7 @@
 - Added typed MMKV storage layer with safe get/set/remove, migrations, and optional encrypted store.
 - Added networking layer with a base `apiClient`, typed request helper, MMKV token injection, and refresh-token hook placeholder.
 - Added TanStack Query provider, query key helpers, and standardized error-to-toast mapping.
+- Added RHF + Zod form foundation with FormField, controlled field components, and shared schemas.
 
 ## Notes
 

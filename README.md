@@ -168,6 +168,31 @@ Notes:
 - Standard error mapping to toast is handled in `src/lib/query-error.ts`.
 - `queryClient` is provided in `src/app/_layout.tsx`.
 
+## Forms (RHF + Zod)
+
+Form helpers live in `src/components/forms` and `src/lib` with a baked-in Zod resolver.
+
+```tsx
+import { ControlledTextField } from '@/components/forms';
+import { useZodForm } from '@/lib/use-zod-form';
+import { emailSchema, passwordSchema } from '@/lib/form-schemas';
+import * as z from 'zod';
+
+const schema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+type FormValues = z.infer<typeof schema>;
+
+const { control, handleSubmit } = useZodForm<FormValues>(schema);
+```
+
+Field components:
+
+- `FormField` for label/helper/error layout.
+- `ControlledTextField`, `ControlledSelectField`, `ControlledCheckboxField`.
+
 ## Navigation + Access Control
 
 Protected groups live in `src/app/_layout.tsx` via `Stack.Protected` guards.

@@ -52,6 +52,7 @@ export interface NInputProps extends TextInputProps {
   label?: string;
   disabled?: boolean;
   error?: string;
+  hideError?: boolean;
 }
 
 type TRule<T extends FieldValues> =
@@ -73,7 +74,7 @@ interface ControlledInputProps<T extends FieldValues>
     InputControllerType<T> {}
 
 export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
-  const { label, error, testID, ...inputProps } = props;
+  const { label, error, hideError, testID, ...inputProps } = props;
   const { colors: themeColors, tokens } = useTheme();
   const [isFocussed, setIsFocussed] = React.useState(false);
   const onBlur = React.useCallback(() => setIsFocussed(false), []);
@@ -138,7 +139,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
         {...inputProps}
         style={inputStyle}
       />
-      {error && (
+      {error && !hideError && (
         <Text
           testID={testID ? `${testID}-error` : undefined}
           className="text-sm"

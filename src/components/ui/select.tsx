@@ -148,6 +148,7 @@ export interface SelectProps {
   label?: string;
   disabled?: boolean;
   error?: string;
+  hideError?: boolean;
   options?: OptionType[];
   onSelect?: (value: string | number) => void;
   placeholder?: string;
@@ -162,6 +163,7 @@ export const Select = (props: SelectProps) => {
     label,
     value,
     error,
+    hideError,
     options = [],
     placeholder = 'select...',
     disabled = false,
@@ -245,7 +247,7 @@ export const Select = (props: SelectProps) => {
           </View>
           {/* <CaretDown /> */}
         </Pressable>
-        {error && (
+        {error && !hideError && (
           <Text
             testID={`${testID}-error`}
             className="text-sm"

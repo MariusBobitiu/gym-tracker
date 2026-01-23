@@ -1,24 +1,17 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import type { SubmitHandler } from 'react-hook-form';
-import { useForm } from 'react-hook-form';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import * as z from 'zod';
 
-import { Button, ControlledInput, Text, View } from '@/components/ui';
+import { Button, Text, View } from '@/components/ui';
+import { ControlledTextField } from '@/components/forms';
+import { emailSchema, passwordSchema } from '@/lib/form-schemas';
+import { useZodForm } from '@/lib/use-zod-form';
 
 const schema = z.object({
   name: z.string().optional(),
-  email: z
-    .string({
-      required_error: 'Email is required',
-    })
-    .email('Invalid email format'),
-  password: z
-    .string({
-      required_error: 'Password is required',
-    })
-    .min(6, 'Password must be at least 6 characters'),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 export type FormType = z.infer<typeof schema>;
@@ -28,9 +21,7 @@ export type LoginFormProps = {
 };
 
 export const LoginForm = ({ onSubmit = () => {} }: LoginFormProps) => {
-  const { handleSubmit, control } = useForm<FormType>({
-    resolver: zodResolver(schema),
-  });
+  const { handleSubmit, control } = useZodForm<FormType>(schema);
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -52,20 +43,20 @@ export const LoginForm = ({ onSubmit = () => {} }: LoginFormProps) => {
           </Text>
         </View>
 
-        <ControlledInput
+        <ControlledTextField
           testID="name"
           control={control}
           name="name"
           label="Name"
         />
 
-        <ControlledInput
+        <ControlledTextField
           testID="email-input"
           control={control}
           name="email"
           label="Email"
         />
-        <ControlledInput
+        <ControlledTextField
           testID="password-input"
           control={control}
           name="password"
