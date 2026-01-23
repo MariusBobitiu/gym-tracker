@@ -2,7 +2,8 @@ import { Link, Stack } from 'expo-router';
 import AppHeader, { headerOptions } from '@/components/app-header';
 import { ThemeToggler } from '@/components/theme-toggler';
 import { Screen } from '@/components/screen';
-import { Button, H1 } from '@/components/ui';
+import { Button, H1, View } from '@/components/ui';
+import { ErrorState } from '@/components/feedback-states';
 
 export default function Profile() {
 
@@ -10,10 +11,12 @@ export default function Profile() {
     <Screen>
       <Stack.Screen options={headerOptions({ title: 'Profile' })} />
       <AppHeader showBackButton={false} title="Profile" isMainScreen />
-      <ThemeToggler />
-      <Link href="/profile/account" asChild>
-        <Button label="Account" variant="outline" />
-      </Link>
+      <View className="flex-1 items-center justify-center pb-48">
+        <ErrorState
+          title="Unable to Load Profile"
+          description="There was an error loading your profile information. Please try again later."
+        />
+      </View>
     </Screen>
   );
 }

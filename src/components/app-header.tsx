@@ -66,6 +66,7 @@ const AppHeader = ({
         icon={<Settings color={colors.foreground} />}
         className="p-0"
         size="icon"
+        onPress={() => router.push('/(app)/settings')}
       />
     </View>
   ) : (

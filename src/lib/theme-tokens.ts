@@ -8,6 +8,7 @@ export type ThemeTokens = {
     xl: number;
     '2xl': number;
     '3xl': number;
+    'navbarHeight': number;
   };
   radius: {
     sm: number;
@@ -61,6 +62,7 @@ export const themeTokens: ThemeTokens = {
     xl: 24,
     '2xl': 32,
     '3xl': 40,
+    navbarHeight: 96,
   },
   radius: {
     sm: 8,
