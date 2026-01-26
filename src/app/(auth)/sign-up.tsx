@@ -1,20 +1,54 @@
-import { Button, ControlledInput, View, P, Small } from "@/components/ui";
+import { SignUpForm } from "@/components/auth/sign-up-form";
 import { useAuth } from "@/lib/auth/context";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { Platform } from "react-native";
 import { useZodForm } from "@/lib/use-zod-form";
 import { SignUpFormData, signUpSchema } from "@/lib/form-schemas";
-import { useTheme } from "@/lib/theme-context";
-import { Link, Stack } from "expo-router";
+import { Stack, router } from "expo-router";
+import { showMessage } from "react-native-flash-message";
+import { applyFieldErrors, resolveErrorMessage } from "@/lib/auth/auth-errors";
+import { register } from "@/lib/auth/auth-api";
 
-export default function SignUp() {
+export default function SignUp(): JSX.Element {
   const { signIn } = useAuth();
-  const { control, handleSubmit } = useZodForm<SignUpFormData>(signUpSchema);
-  const { colors } = useTheme();
+  const {
+    control,
+    handleSubmit,
+    setError,
+    formState: { isSubmitting },
+  } = useZodForm<SignUpFormData>(signUpSchema);
 
-  const onSubmit = handleSubmit(function handleFormSubmit(data) {
-    return signIn(data);
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      const result = await register({
+        name: data.name,
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+      });
+
+      if (!result.ok) {
+        throw result.error;
+      }
+
+      await signIn({ email: data.email, password: data.password });
+      router.replace("/(app)");
+    } catch (error) {
+      const hasFieldErrors = applyFieldErrors<SignUpFormData>(
+        error,
+        ["name", "username", "email", "password", "confirmPassword"],
+        setError
+      );
+      if (!hasFieldErrors) {
+        showMessage({
+          message: resolveErrorMessage(error, "Unable to sign up. Please try again."),
+          type: "danger",
+          duration: 3500,
+        });
+      }
+    }
   });
 
   return (
@@ -27,66 +61,7 @@ export default function SignUp() {
         })}
       />
       <AppHeader title="Create Account" />
-      <View className="flex-1">
-        <View className="mt-6 w-full">
-          <ControlledInput
-            name="name"
-            control={control}
-            label="Full Name"
-            placeholder="Enter your full name"
-            autoFocus
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="name"
-            className="mb-4"
-          />
-          <ControlledInput
-            name="email"
-            control={control}
-            label="Email"
-            placeholder="Enter your email"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            className="mb-4"
-          />
-          <ControlledInput
-            name="password"
-            control={control}
-            label="Password"
-            placeholder="Enter your password"
-            secureTextEntry
-            autoComplete="password-new"
-            autoCorrect={false}
-            autoCapitalize="none"
-            className="mb-4"
-          />
-          <ControlledInput
-            name="confirmPassword"
-            control={control}
-            label="Confirm Password"
-            placeholder="Re-enter your password"
-            secureTextEntry
-            autoComplete="password-new"
-            autoCorrect={false}
-            autoCapitalize="none"
-            className="mb-6"
-          />
-          <Button onPress={onSubmit} label="Continue" />
-          <P
-            className="mt-4 px-8 text-center"
-            style={{ color: colors.mutedForeground, fontSize: 14 }}>
-            Already have an account?{" "}
-            <Link href="/(auth)/sign-in" style={{ color: colors.primary, fontWeight: "600" }}>
-              Sign In
-            </Link>
-          </P>
-        </View>
-        <Small className="mt-4 px-8 pb-4 text-center" style={{ color: colors.mutedForeground }}>
-          By signing up, you agree to our Terms of Service and Privacy Policy.
-        </Small>
-      </View>
+      <SignUpForm control={control} isSubmitting={isSubmitting} onSubmit={onSubmit} />
     </Screen>
   );
 }

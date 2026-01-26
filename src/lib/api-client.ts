@@ -15,9 +15,8 @@ export type ApiSuccess<T> = {
 };
 
 export type ApiError = {
+  statusCode?: number;
   message: string;
-  status?: number;
-  code?: string;
   details?: unknown;
 };
 
@@ -50,15 +49,29 @@ type ApiClient = {
 };
 
 const API_BASE_URL = Env.EXPO_PUBLIC_API_URL ?? "";
+let hasWarnedMissingBaseUrl = false;
+
+type UnauthorizedHandler = (statusCode: number) => void;
+
+let unauthorizedHandler: UnauthorizedHandler | null = null;
+
+export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
+  unauthorizedHandler = handler;
+}
 
 function getAccessToken(): string | null {
   const secureToken = secureStorage ? getSecureItem(SECURE_STORAGE_KEYS.authToken) : null;
   const token = secureToken ?? getStorageItem(STORAGE_KEYS.token);
+  // Use the raw JWT/string as-is; do not base64-encode before sending.
   return token?.access ?? null;
 }
 
 function buildUrl(baseUrl: string, path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
+  if (!baseUrl && !hasWarnedMissingBaseUrl) {
+    hasWarnedMissingBaseUrl = true;
+    console.warn("Missing EXPO_PUBLIC_API_URL; API requests may not reach the backend.");
+  }
   if (!baseUrl) return path;
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
@@ -89,15 +102,14 @@ function resolveBody(body: unknown, headers: Headers): BodyInit | undefined {
 function buildError(status: number, payload: unknown): ApiError {
   if (payload && typeof payload === "object" && "message" in payload) {
     const message = String((payload as { message?: string }).message ?? "Request failed");
-    const code = (payload as { code?: string }).code;
-    return { message, status, code, details: payload };
+    return { message, statusCode: status, details: payload };
   }
 
   if (typeof payload === "string" && payload.trim().length > 0) {
-    return { message: payload, status, details: payload };
+    return { message: payload, statusCode: status, details: payload };
   }
 
-  return { message: "Request failed", status };
+  return { message: "Request failed", statusCode: status };
 }
 
 export function createApiClient(config: ApiClientConfig): ApiClient {
@@ -151,6 +163,10 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
           return { ok: true, data: payload as T, status, headers: response.headers };
         }
 
+        if (auth && status === 401 && unauthorizedHandler) {
+          unauthorizedHandler(status);
+        }
+
         return {
           ok: false,
           error: buildError(status, payload) as E,
@@ -159,7 +175,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Network request failed";
-        return { ok: false, error: { message } as E, status: 0 };
+        return { ok: false, error: { message, statusCode: 0 } as E, status: 0 };
       }
     },
   };

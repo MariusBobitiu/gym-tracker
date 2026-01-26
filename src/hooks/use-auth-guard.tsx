@@ -19,7 +19,7 @@ type ResolvedAuthGuardOptions = AuthGuardOptions & {
 
 const defaultOptions: ResolvedAuthGuardOptions = {
   enabled: true,
-  redirectTo: "/sign-in",
+  redirectTo: "/(auth)/sign-in",
   authenticatedRoute: "/(app)",
 };
 
@@ -64,7 +64,7 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
     const hasSession = status === "authed";
     const firstSegment = segments[0] ?? "";
     const isInAppGroup = firstSegment === "(app)";
-    const isAuthScreen = firstSegment === "sign-in";
+    const isAuthScreen = firstSegment === "(auth)";
     const redirectPath = hrefToPathname(mergedOptions.redirectTo);
     const authenticatedPath = hrefToPathname(mergedOptions.authenticatedRoute);
     const onboardingHref = mergedOptions.onboardingRoute ?? null;

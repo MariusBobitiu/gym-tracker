@@ -4,9 +4,11 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
+import { router } from "expo-router";
 
 import {
   getSecureItem,
@@ -20,10 +22,16 @@ import {
   STORAGE_KEYS,
   type TokenType,
 } from "@/lib/storage";
+import { setUnauthorizedHandler } from "@/lib/api-client";
+import { getMe, login, logout } from "@/lib/auth/auth-api";
+import type { User } from "@/types";
 
 export type AuthStatus = "loading" | "authed" | "guest";
-export type AuthUser = Record<string, unknown>;
-export type AuthCredentials = Record<string, unknown>;
+export type AuthUser = User;
+export type AuthCredentials = {
+  email: string;
+  password: string;
+} & Record<string, unknown>;
 export type AuthSession = {
   user: AuthUser | null;
   token: TokenType | null;
@@ -35,7 +43,7 @@ type AuthContextValue = {
   status: AuthStatus;
   signIn: (credentials: AuthCredentials) => Promise<AuthSession>;
   signOut: () => Promise<void>;
-  hydrateFromStorage: () => void;
+  hydrateFromStorage: () => Promise<void>;
 };
 
 type SessionProviderProps = PropsWithChildren<{
@@ -93,18 +101,37 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<TokenType | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const hasHandledUnauthorized = useRef(false);
 
-  const hydrateFromStorage = useCallback(() => {
-    const storedUser = getStorageItem(STORAGE_KEYS.user);
+  const hydrateFromStorage = useCallback(async (): Promise<void> => {
+    setStatus("loading");
     const storedToken = readStoredToken();
 
-    setUser(storedUser ?? null);
-    setToken(storedToken ?? null);
-    setStatus(storedToken ? "authed" : "guest");
+    if (!storedToken?.access) {
+      setUser(null);
+      setToken(null);
+      setStatus("guest");
+      return;
+    }
+
+    const meResult = await getMe();
+    if (!meResult.ok) {
+      setUser(null);
+      setToken(null);
+      removeStorageItem(STORAGE_KEYS.user);
+      clearStoredToken();
+      setStatus("guest");
+      return;
+    }
+
+    setUser(meResult.data);
+    setToken(storedToken);
+    setStorageItem(STORAGE_KEYS.user, meResult.data);
+    setStatus("authed");
   }, []);
 
   useEffect(() => {
-    hydrateFromStorage();
+    void hydrateFromStorage();
   }, [hydrateFromStorage]);
 
   const signIn = useCallback(
@@ -117,6 +144,36 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
           : isAuthSession(credentials)
             ? credentials
             : null;
+
+        if (!session && !authenticate) {
+          const email = credentials.email;
+          const password = credentials.password;
+          if (!email || !password) {
+            throw new Error("Email and password are required to sign in.");
+          }
+
+          const loginResult = await login({ email, password });
+          if (!loginResult.ok) {
+            throw loginResult.error;
+          }
+
+          const meResult = await getMe(loginResult.data.token.access);
+          if (!meResult.ok) {
+            throw meResult.error;
+          }
+
+          const apiSession: AuthSession = {
+            user: meResult.data,
+            token: loginResult.data.token,
+          };
+
+          setUser(apiSession.user);
+          setToken(apiSession.token);
+          setStorageItem(STORAGE_KEYS.user, apiSession.user);
+          writeStoredToken(apiSession.token);
+          setStatus("authed");
+          return apiSession;
+        }
 
         if (!session) {
           throw new Error("Auth signIn not configured. Provide an authenticate handler.");
@@ -140,6 +197,8 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
     setStatus("loading");
     if (onSignOut) {
       await onSignOut();
+    } else {
+      void logout();
     }
     setUser(null);
     setToken(null);
@@ -147,6 +206,25 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
     clearStoredToken();
     setStatus("guest");
   }, [onSignOut]);
+
+  useEffect(() => {
+    if (status === "authed") {
+      hasHandledUnauthorized.current = false;
+    }
+  }, [status]);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      if (status !== "authed" || hasHandledUnauthorized.current) {
+        return;
+      }
+      hasHandledUnauthorized.current = true;
+      void signOut();
+      router.replace("/(auth)/sign-in");
+    });
+
+    return () => setUnauthorizedHandler(null);
+  }, [signOut, status]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

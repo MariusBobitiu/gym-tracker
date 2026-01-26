@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useReducer } from "react";
 import { createMMKV } from "react-native-mmkv";
+import type { User } from "@/types";
 
 export const storage = createMMKV({ id: "gym-tracker" });
 
@@ -32,7 +33,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.selectedTheme]: ThemePreference;
   [STORAGE_KEYS.session]: string;
   [STORAGE_KEYS.token]: TokenType;
-  [STORAGE_KEYS.user]: Record<string, unknown>;
+  [STORAGE_KEYS.user]: User;
 };
 
 export type SecureStorageSchema = {
