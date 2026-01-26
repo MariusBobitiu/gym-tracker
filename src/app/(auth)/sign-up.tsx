@@ -1,12 +1,12 @@
 import { Button, ControlledInput, View, P, Small } from "@/components/ui";
 import { useAuth } from "@/lib/auth/context";
-import AppHeader from "@/components/app-header";
+import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { Platform } from "react-native";
 import { useZodForm } from "@/lib/use-zod-form";
 import { SignUpFormData, signUpSchema } from "@/lib/form-schemas";
 import { useTheme } from "@/lib/theme-context";
-import { Link } from "expo-router";
+import { Link, Stack } from "expo-router";
 
 export default function SignUp() {
   const { signIn } = useAuth();
@@ -19,6 +19,13 @@ export default function SignUp() {
 
   return (
     <Screen preset="scroll" keyboardAvoiding keyboardOffset={Platform.OS === "ios" ? 10 : 0}>
+      <Stack.Screen
+        options={headerOptions({
+          title: "Create Account",
+          animation: "ios_from_right",
+          animationDuration: 250,
+        })}
+      />
       <AppHeader title="Create Account" />
       <View className="flex-1">
         <View className="mt-6 w-full">

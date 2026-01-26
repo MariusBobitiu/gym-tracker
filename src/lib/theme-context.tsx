@@ -16,69 +16,77 @@ type ThemeColors = {
   ring: string;
   primary: string;
   primaryForeground: string;
+  primaryGradient?: [string, string, string];
   secondary: string;
   secondaryForeground: string;
   destructive: string;
   destructiveForeground: string;
-  gradient: string;
 };
 
 export const lightTheme: ThemeColors = {
-  background: "#F7F8FA",
+  // Neutral “paper” with a tiny warm lift (no blue cast)
+  background: "#F7F6F3",
   foreground: "#0B0D10",
 
   card: "#FFFFFF",
   cardForeground: "#0B0D10",
 
-  muted: "#EEF2F7",
-  mutedForeground: "#5A6676",
+  // Muted surfaces for inputs/cards (neutral gray, not icy)
+  muted: "#EFEDEA",
+  mutedForeground: "#5C6674",
 
-  accent: "#EAEFF6",
+  // Subtle accent surface (still neutral)
+  accent: "#E8E6E2",
   accentForeground: "#0B0D10",
 
-  border: "#D7DFEA",
+  border: "#DEDAD3",
   input: "#FFFFFF",
-  ring: "#ffa90a",
+  ring: "#F5B547",
 
-  primary: "#ffa90a",
+  primary: "#F5B547",
   primaryForeground: "#1A1203",
+  primaryGradient: ["#F7C35C", "#F5B547", "#E7A93A"],
 
-  secondary: "#111827",
+  // Secondary should be neutral charcoal, not navy
+  secondary: "#171A1F",
   secondaryForeground: "#FFFFFF",
 
   destructive: "#DC2626",
   destructiveForeground: "#FFFFFF",
-
-  gradient: "linear-gradient(180deg, #F7F8FA 0%, #FFFFFF 100%)",
 };
 
 export const darkTheme: ThemeColors = {
+  // True charcoal base, slightly warm/graphite (kills blue tint)
   background: "#0B0D10",
   foreground: "#F5F7FA",
 
-  card: "#111317",
+  // Card = graphite, not blue-black
+  card: "#121317",
   cardForeground: "#F5F7FA",
 
-  muted: "#151B24",
-  mutedForeground: "#9AA4B2",
+  // Muted surfaces for inputs (neutral graphite)
+  muted: "#15161A",
+  mutedForeground: "#A1A9B6",
 
-  accent: "#1A2230",
+  // Accent is a slightly lifted graphite (no navy)
+  accent: "#1B1C21",
   accentForeground: "#F5F7FA",
 
-  border: "#171a1e",
-  input: "#121824",
-  ring: "#ffa90a",
+  // Border should be neutral, low-contrast
+  border: "#23252B",
+  input: "#15161A",
+  ring: "#F5B547",
 
-  primary: "#ffa90a",
+  primary: "#F5B547",
   primaryForeground: "#140F03",
+  primaryGradient: ["#F7C35C", "#F5B547", "#E7A93A"],
 
-  secondary: "#1A2330",
-  secondaryForeground: "#E7ECF3",
+  // Secondary stays neutral; avoid blue
+  secondary: "#1A1C22",
+  secondaryForeground: "#EDEFF4",
 
   destructive: "#EF4444",
   destructiveForeground: "#FFFFFF",
-
-  gradient: "linear-gradient(180deg, #111317 0%, #171a1e 100%)",
 };
 
 type ThemeContextType = {

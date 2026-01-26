@@ -98,6 +98,7 @@ interface Props extends ButtonVariants, Omit<PressableProps, "disabled"> {
   className?: string;
   textClassName?: string;
   icon?: React.ReactNode;
+  iconPlacement?: "left" | "right";
 }
 
 export const Button = React.forwardRef<View, Props>(
@@ -112,6 +113,7 @@ export const Button = React.forwardRef<View, Props>(
       testID,
       textClassName = "",
       icon,
+      iconPlacement,
       style: propStyle,
       accessibilityLabel,
       accessibilityRole,
@@ -347,6 +349,12 @@ export const Button = React.forwardRef<View, Props>(
           getContainerStyle(),
           sizeStyle,
           { borderRadius: tokens.radius.pill },
+          {
+            shadowColor: "#000",
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 6 },
+          },
           propStyle,
         ]),
       [getContainerStyle, propStyle, sizeStyle, tokens.radius.pill]
@@ -372,7 +380,7 @@ export const Button = React.forwardRef<View, Props>(
           props.children
         ) : (
           <>
-            {icon && icon}
+            {iconPlacement !== "right" && icon && icon}
             {loading ? (
               <ActivityIndicator
                 size="small"
@@ -388,6 +396,7 @@ export const Button = React.forwardRef<View, Props>(
                 {text}
               </Text>
             )}
+            {iconPlacement === "right" && icon && icon}
           </>
         )}
       </Pressable>

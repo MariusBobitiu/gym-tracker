@@ -9,6 +9,9 @@ import { loadSelectedTheme } from "@/hooks";
 import { runStorageMigrations } from "@/lib/storage";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query/query-client";
+import { Screen } from "@/components/screen";
+import { View } from "@/components/ui";
+import { LoadingState } from "@/components/feedback-states";
 
 export default function Root() {
   // Set up the auth context and render your layout inside of it.
@@ -29,11 +32,22 @@ function RootNavigator() {
   const { status } = useSession();
   const isAuthed = status === "authed";
   const isGuest = status === "guest";
+  const isLoading = status === "loading";
 
   useEffect(() => {
     runStorageMigrations();
     loadSelectedTheme();
   }, []);
+
+  if (isLoading) {
+    return (
+      <Screen className="pb-24">
+        <View className="flex-1 items-center justify-center">
+          <LoadingState label="Loading History..." style={{ marginTop: 48 }} />
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Stack
@@ -47,7 +61,7 @@ function RootNavigator() {
       </Stack.Protected>
 
       <Stack.Protected guard={isGuest}>
-        <Stack.Screen name="(auth)/index" />
+        <Stack.Screen name="(auth)" />
       </Stack.Protected>
     </Stack>
   );
