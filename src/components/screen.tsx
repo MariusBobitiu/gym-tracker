@@ -10,7 +10,7 @@ import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { BackgroundGradient } from "@/components/background-gradient";
 import { useTheme } from "@/lib/theme-context";
 
-type ScreenPreset = "fixed" | "scroll";
+type ScreenPreset = "fixed" | "scroll" | "modal";
 type PaddingPreset = "none" | "sm" | "md" | "lg";
 type ScreenBackground = "gradient" | "none";
 
@@ -29,6 +29,24 @@ type ScreenProps = {
 
 const joinClassName = (...values: (string | undefined)[]) => values.filter(Boolean).join(" ");
 
+function ModalGrabber(): React.ReactElement {
+  const { colors } = useTheme();
+
+  return (
+    <View className="items-center pb-2 pt-4" style={{ backgroundColor: "transparent" }}>
+      <View
+        className="rounded-full"
+        style={{
+          width: 96,
+          height: 4,
+          backgroundColor: colors.mutedForeground,
+          opacity: 0.5,
+        }}
+      />
+    </View>
+  );
+}
+
 export function Screen({
   children,
   preset = "fixed",
@@ -41,7 +59,7 @@ export function Screen({
   contentContainerClassName,
   scrollProps,
 }: ScreenProps) {
-  const { tokens } = useTheme();
+  const { tokens, colors } = useTheme();
   const containerClassName = joinClassName("flex-1", className);
   const scrollContainerClassName = joinClassName("flex-grow", contentContainerClassName);
 
@@ -66,8 +84,11 @@ export function Screen({
   // Add extra bottom padding to avoid content being hidden behind bottom navigation
   const scrollContentStyle = React.useMemo(() => ({ padding: paddingValue }), [paddingValue]);
 
+  const isModal = preset === "modal";
+  const modalSafeAreaEdges = isModal ? (["top", "bottom"] as Edge[]) : safeAreaEdges;
+
   const content =
-    preset === "scroll" ? (
+    preset === "scroll" || preset === "modal" ? (
       <ScrollView
         className="flex-1"
         contentContainerClassName={scrollContainerClassName}
@@ -94,9 +115,10 @@ export function Screen({
   );
 
   return (
-    <View className="flex-1">
-      {background === "gradient" ? <BackgroundGradient /> : null}
-      <SafeAreaView edges={safeAreaEdges} className="flex-1">
+    <View className="flex-1" style={isModal ? { backgroundColor: colors.background } : undefined}>
+      {background === "gradient" && !isModal ? <BackgroundGradient /> : null}
+      <SafeAreaView edges={modalSafeAreaEdges} className="flex-1">
+        {isModal && <ModalGrabber />}
         {wrappedContent}
       </SafeAreaView>
     </View>

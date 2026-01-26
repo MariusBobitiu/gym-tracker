@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Stack } from "expo-router";
+import { Link, Stack } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
 import { Button, Text, View } from "@/components/ui";
 import AppHeader from "@/components/app-header";
@@ -166,16 +166,18 @@ function ReadyToTrainCard(): React.ReactElement {
       <Text className="mt-1 text-base" style={{ color: colors.mutedForeground }}>
         Back & biceps
       </Text>
-      <Button
-        label="Start workout"
-        icon={<ChevronRight size={18} color={colors.primaryForeground} />}
-        iconPlacement="right"
-        className="mt-6"
-        variant="primary"
-        size="lg"
-        textClassName="font-semibold"
-        accessibilityLabel="Start workout"
-      />
+      <Link href="/workout" asChild>
+        <Button
+          label="Start workout"
+          icon={<ChevronRight size={18} color={colors.primaryForeground} />}
+          iconPlacement="right"
+          className="mt-6"
+          variant="primary"
+          size="lg"
+          textClassName="font-semibold"
+          accessibilityLabel="Start workout"
+        />
+      </Link>
     </View>
   );
 }
