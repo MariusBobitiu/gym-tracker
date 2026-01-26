@@ -6,6 +6,7 @@ import AppHeader from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { useTheme } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth/context";
+import { AmbientBackground } from "@/components/ambient-background";
 
 type WeekDot = {
   id: string;
