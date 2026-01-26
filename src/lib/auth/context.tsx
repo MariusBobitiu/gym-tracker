@@ -22,8 +22,8 @@ import {
   STORAGE_KEYS,
   type TokenType,
 } from "@/lib/storage";
-import { setUnauthorizedHandler } from "@/lib/api-client";
-import { getMe, login, logout } from "@/lib/auth/auth-api";
+import { setRefreshHandler, setUnauthorizedHandler } from "@/lib/api-client";
+import { getMe, login, logout, refreshSession } from "@/lib/auth/auth-api";
 import type { User } from "@/types";
 
 export type AuthStatus = "loading" | "authed" | "guest";
@@ -214,6 +214,31 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
   }, [status]);
 
   useEffect(() => {
+    async function handleRefresh(currentToken: string | null): Promise<string | null> {
+      const storedToken = token ?? readStoredToken();
+      const refreshToken = storedToken?.refresh ?? null;
+      const tokenToRefresh = refreshToken || currentToken || storedToken?.access || null;
+
+      if (!tokenToRefresh) {
+        return null;
+      }
+
+      const refreshResult = await refreshSession(tokenToRefresh);
+      if (!refreshResult.ok) {
+        return null;
+      }
+
+      const nextToken: TokenType = {
+        access: refreshResult.data.token.access,
+        refresh: refreshResult.data.token.refresh ?? storedToken?.refresh ?? "",
+      };
+
+      setToken(nextToken);
+      writeStoredToken(nextToken);
+      return nextToken.access;
+    }
+
+    setRefreshHandler(handleRefresh);
     setUnauthorizedHandler(() => {
       if (status !== "authed" || hasHandledUnauthorized.current) {
         return;
@@ -223,8 +248,11 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
       router.replace("/(auth)/sign-in");
     });
 
-    return () => setUnauthorizedHandler(null);
-  }, [signOut, status]);
+    return () => {
+      setRefreshHandler(null);
+      setUnauthorizedHandler(null);
+    };
+  }, [signOut, status, token]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

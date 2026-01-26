@@ -6,7 +6,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  H1,
   H2,
   H3,
   P,
@@ -22,6 +21,7 @@ import { useTheme } from "@/lib/theme-context";
 export default function Home() {
   const { signOut } = useAuth();
   const { isDark } = useTheme();
+
   return (
     <>
       <Screen>

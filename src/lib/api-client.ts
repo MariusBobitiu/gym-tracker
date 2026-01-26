@@ -52,11 +52,17 @@ const API_BASE_URL = Env.EXPO_PUBLIC_API_URL ?? "";
 let hasWarnedMissingBaseUrl = false;
 
 type UnauthorizedHandler = (statusCode: number) => void;
+type RefreshHandler = (token: string | null) => Promise<string | null>;
 
 let unauthorizedHandler: UnauthorizedHandler | null = null;
+let refreshHandler: RefreshHandler | null = null;
 
 export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): void {
   unauthorizedHandler = handler;
+}
+
+export function setRefreshHandler(handler: RefreshHandler | null): void {
+  refreshHandler = handler;
 }
 
 function getAccessToken(): string | null {
@@ -137,13 +143,17 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 
       const resolvedBody = resolveBody(body, headers);
 
-      try {
-        const response = await fetch(url, {
+      async function executeRequest(requestHeaders: Headers): Promise<Response> {
+        return fetch(url, {
           method,
-          headers,
+          headers: requestHeaders,
           body: resolvedBody,
           signal,
         });
+      }
+
+      try {
+        let response = await executeRequest(headers);
 
         const status = response.status;
         const contentType = response.headers.get("content-type") ?? "";
@@ -161,6 +171,49 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 
         if (response.ok) {
           return { ok: true, data: payload as T, status, headers: response.headers };
+        }
+
+        if (auth && status === 401 && refreshHandler) {
+          const refreshedToken = await refreshHandler(config.getToken?.() ?? null);
+          if (refreshedToken) {
+            const retryHeaders = new Headers(headers);
+            retryHeaders.set("Authorization", `Bearer ${refreshedToken}`);
+            response = await executeRequest(retryHeaders);
+
+            const retryStatus = response.status;
+            const retryContentType = response.headers.get("content-type") ?? "";
+            let retryPayload: unknown = null;
+
+            if (parse) {
+              retryPayload = await parse(response);
+            } else if (retryStatus !== 204) {
+              if (retryContentType.includes("application/json")) {
+                retryPayload = await response.json().catch(() => null);
+              } else {
+                retryPayload = await response.text().catch(() => null);
+              }
+            }
+
+            if (response.ok) {
+              return {
+                ok: true,
+                data: retryPayload as T,
+                status: retryStatus,
+                headers: response.headers,
+              };
+            }
+
+            if (retryStatus === 401 && unauthorizedHandler) {
+              unauthorizedHandler(retryStatus);
+            }
+
+            return {
+              ok: false,
+              error: buildError(retryStatus, retryPayload) as E,
+              status: retryStatus,
+              headers: response.headers,
+            };
+          }
         }
 
         if (auth && status === 401 && unauthorizedHandler) {

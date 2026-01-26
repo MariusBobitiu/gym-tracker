@@ -11,6 +11,7 @@ import type { User } from "@/types";
 export const AUTH_ENDPOINTS = {
   signup: "/v1/auth/signup",
   login: "/v1/auth/login",
+  refresh: "/v1/auth/refresh",
   me: "/v1/me",
   logout: "/v1/auth/logout",
 } as const;
@@ -128,6 +129,30 @@ export async function register(
     status: result.status,
     headers: result.headers,
     data: { token },
+  } satisfies ApiSuccess<LoginResult>;
+}
+
+export async function refreshSession(token: string): Promise<ApiResult<LoginResult, ApiError>> {
+  const result = await request<LoginResponse>(AUTH_ENDPOINTS.refresh, {
+    method: "POST",
+    body: { token },
+    auth: false,
+  });
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const refreshed = normalizeToken(result.data);
+  if (!refreshed?.access) {
+    return buildTokenFailure(result.status, result.data);
+  }
+
+  return {
+    ok: true,
+    status: result.status,
+    headers: result.headers,
+    data: { token: refreshed },
   } satisfies ApiSuccess<LoginResult>;
 }
 
