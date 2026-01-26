@@ -160,7 +160,7 @@ export function BottomNavigation({ className = "" }: Props): React.ReactElement 
           shadowOpacity: 0.3,
           shadowRadius: 12,
           elevation: 10,
-          borderColor: isDark ? `${colors.border}30` : `${colors.border}30`,
+          borderColor: isDark ? `${colors.border}90` : `${colors.border}70`,
           backgroundColor: isDark ? `${colors.background}95` : `${colors.background}95`,
         }}>
         <View className="relative flex-row items-center px-2 py-1">
