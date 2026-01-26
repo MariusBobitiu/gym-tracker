@@ -1,48 +1,141 @@
 import * as React from "react";
 import { Stack } from "expo-router";
-import { Bell, ChevronRight, Settings } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import { Button, Text, View } from "@/components/ui";
 import AppHeader from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { useTheme } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth/context";
-import { AmbientBackground } from "@/components/ambient-background";
+import { AmbientBackground, NoiseOverlay } from "@/components/ambient-background";
 
 type WeekDot = {
   id: string;
+  label: string;
   isActive?: boolean;
+  isToday?: boolean;
 };
 
 const WEEK_DOTS: WeekDot[] = [
-  { id: "mon" },
-  { id: "tue" },
-  { id: "wed" },
-  { id: "thu" },
-  { id: "fri", isActive: true },
-  { id: "sat" },
-  { id: "sun" },
+  { id: "mon", label: "M" },
+  { id: "tue", label: "T", isActive: true },
+  { id: "wed", label: "W", isActive: true },
+  { id: "thu", label: "T" },
+  { id: "fri", label: "F" },
+  { id: "sat", label: "S" },
+  { id: "sun", label: "S" },
 ];
 
+const workoutsThisWeek = 4;
+
 function WeekSummary(): React.ReactElement {
-  const { colors } = useTheme();
+  const { colors, tokens, isDark } = useTheme();
+  const completedCount = WEEK_DOTS.filter((dot) => dot.isActive).length;
+  const progressPercentage = (completedCount / workoutsThisWeek) * 100;
+  const today = new Date().toLocaleDateString("en-US", { weekday: "short" }).toLowerCase();
+  const todayDot = WEEK_DOTS.find((dot) => dot.id === today);
+  if (todayDot) {
+    // todayDot.isActive = true;
+    todayDot.isToday = true;
+  }
 
   return (
-    <View className="mt-12 flex-1">
-      <View className="flex-row items-center gap-6">
-        <Text style={{ color: colors.mutedForeground }}>This week</Text>
-        <View className="flex-1 flex-row items-center gap-2">
-          {WEEK_DOTS.map((dot) => (
-            <View
-              key={dot.id}
-              className="size-2.5 rounded-full"
-              style={{ backgroundColor: dot.isActive ? colors.primary : colors.border }}
-            />
-          ))}
-        </View>
+    <View className="mt-12">
+      <View className="mb-4 flex-row items-center justify-between">
+        <Text className="uppercase tracking-[2px]" style={{ color: colors.mutedForeground }}>
+          This week
+        </Text>
+        <Text
+          style={{
+            fontSize: tokens.typography.sizes.xs,
+            color: colors.mutedForeground,
+            opacity: 0.6,
+          }}>
+          {completedCount}/{WEEK_DOTS.length}
+        </Text>
       </View>
-      <Text className="text-sm" style={{ color: colors.mutedForeground }}>
-        2 sessions completed · Push yesterday
-      </Text>
+
+      {/* Week dots with labels */}
+      <View className="mb-4 flex-row items-center justify-between">
+        {WEEK_DOTS.map((dot) => (
+          <View key={dot.id} className="items-center gap-1.5">
+            <View
+              className="size-3 rounded-full"
+              style={{
+                backgroundColor: dot.isActive
+                  ? colors.primary
+                  : dot.isToday
+                    ? colors.foreground
+                    : isDark
+                      ? colors.border
+                      : colors.foreground,
+                opacity: dot.isActive ? 1 : dot.isToday ? 0.45 : isDark ? 0.6 : 0.15,
+              }}
+            />
+            <Text
+              className="text-[10px] font-medium"
+              style={{
+                color: dot.isActive
+                  ? colors.foreground
+                  : dot.isToday
+                    ? colors.foreground
+                    : colors.mutedForeground,
+                opacity: dot.isActive ? 1 : dot.isToday ? 0.6 : 0.6,
+              }}>
+              {dot.label}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Subtle progress bar */}
+      <View
+        className="mb-3 h-[0.75px] overflow-hidden rounded-full"
+        style={{ backgroundColor: colors.border, opacity: 0.8 }}>
+        <View
+          className="h-full rounded-full"
+          style={{
+            width: `${progressPercentage}%`,
+            backgroundColor: colors.primary,
+            opacity: 1,
+          }}
+        />
+      </View>
+
+      {/* Stats */}
+      <View className="flex-row items-center gap-3">
+        <Text
+          className="text-xs font-medium"
+          style={{
+            color: colors.mutedForeground,
+            opacity: 0.8,
+          }}>
+          2 sessions
+        </Text>
+        <View
+          className="size-1 rounded-full"
+          style={{ backgroundColor: colors.mutedForeground, opacity: 0.5 }}
+        />
+        <Text
+          className="text-xs font-medium"
+          style={{
+            color: colors.mutedForeground,
+            opacity: 0.8,
+          }}>
+          120 min
+        </Text>
+        <View
+          className="size-1 rounded-full"
+          style={{ backgroundColor: colors.mutedForeground, opacity: 0.5 }}
+        />
+        <Text
+          className="text-xs font-medium"
+          style={{
+            color: colors.mutedForeground,
+            opacity: 0.8,
+          }}>
+          12.4k kg
+        </Text>
+      </View>
     </View>
   );
 }
@@ -98,11 +191,23 @@ export default function Home(): React.ReactElement {
   }, [user?.name]);
 
   return (
-    <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerClassName="pb-28 pt-4">
+    <>
       <Stack.Screen options={{ headerShown: false }} />
-      <AppHeader showBackButton={false} title={greeting} isMainScreen />
-      <WeekSummary />
-      <ReadyToTrainCard />
-    </Screen>
+      <View className="flex-1">
+        <AmbientBackground />
+        <NoiseOverlay />
+        <Screen
+          preset="scroll"
+          safeAreaEdges={["top"]}
+          contentContainerClassName="pb-28 pt-4"
+          background="none">
+          <AppHeader showBackButton={false} title={greeting} isMainScreen />
+          <View className="mt-4 flex-1">
+            <WeekSummary />
+          </View>
+          <ReadyToTrainCard />
+        </Screen>
+      </View>
+    </>
   );
 }
