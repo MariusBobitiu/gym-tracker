@@ -7,6 +7,11 @@ import { Screen } from "@/components/screen";
 import { useTheme } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth/context";
 import { AmbientBackground, NoiseOverlay } from "@/components/ambient-background";
+import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
+import { formatElapsedMs } from "@/lib/format-elapsed";
+import { STORAGE_KEYS, useStorageState } from "@/lib/storage";
+import type { WorkoutSession } from "@/types/workout-session";
+import { SESSION_PHASES } from "@/types/workout-session";
 
 type WeekDot = {
   id: string;
@@ -182,8 +187,132 @@ function ReadyToTrainCard(): React.ReactElement {
   );
 }
 
+function ActiveSessionCard({ session }: { session: WorkoutSession }): React.ReactElement {
+  const { colors } = useTheme();
+  const [elapsedMs, setElapsedMs] = React.useState(() => Date.now() - session.startedAt);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedMs(Date.now() - session.startedAt);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [session.startedAt]);
+
+  const exercise = getExerciseById(DEFAULT_WORKOUT_EXERCISES, session.currentExerciseId);
+  const exerciseName = exercise?.name ?? "Unknown exercise";
+  const setsTotal = exercise?.sets ?? 0;
+  const setLabel =
+    setsTotal > 0
+      ? `Set ${session.currentSetNumber} of ${setsTotal}`
+      : `Set ${session.currentSetNumber}`;
+
+  return (
+    <View
+      className="mb-4 rounded-3xl border p-6"
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 6,
+      }}>
+      <Text className="uppercase tracking-[2px]" style={{ color: colors.mutedForeground }}>
+        Workout in progress
+      </Text>
+      <Text
+        className="font-inter mt-3 font-semibold"
+        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}>
+        {formatElapsedMs(elapsedMs)} elapsed
+      </Text>
+      <Text className="mt-1 text-base" style={{ color: colors.mutedForeground }}>
+        {exerciseName} · {setLabel}
+      </Text>
+      <Link href="/workout" asChild>
+        <Button
+          label="Resume workout"
+          icon={<ChevronRight size={18} color={colors.primaryForeground} />}
+          iconPlacement="right"
+          className="mt-6"
+          variant="primary"
+          size="lg"
+          textClassName="font-semibold"
+          accessibilityLabel="Resume workout"
+        />
+      </Link>
+    </View>
+  );
+}
+
+function CompletedSessionCard({
+  session,
+  onDone,
+}: {
+  session: WorkoutSession;
+  onDone: () => void;
+}): React.ReactElement {
+  const { colors } = useTheme();
+  const totalMs = Date.now() - session.startedAt;
+
+  return (
+    <View
+      className="mb-4 rounded-3xl border p-6"
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 6,
+      }}>
+      <Text className="uppercase tracking-[2px]" style={{ color: colors.mutedForeground }}>
+        Session complete
+      </Text>
+      <Text
+        className="font-inter mt-3 font-semibold"
+        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}>
+        {formatElapsedMs(totalMs)} total
+      </Text>
+      <Text className="mt-1 text-base" style={{ color: colors.mutedForeground }}>
+        Great work. Tap Done to start a new session later.
+      </Text>
+      <Button
+        label="Done"
+        variant="primary"
+        size="lg"
+        className="mt-6"
+        onPress={onDone}
+        accessibilityLabel="Done, clear session"
+      />
+    </View>
+  );
+}
+
+function renderMainCard(
+  session: WorkoutSession | null,
+  setSession: (value: WorkoutSession | null) => void
+): React.ReactElement {
+  if (!session || session.phase === SESSION_PHASES.idle) {
+    return <ReadyToTrainCard />;
+  }
+  if (
+    session.phase === SESSION_PHASES.inWorkout ||
+    session.phase === SESSION_PHASES.inExercise ||
+    session.phase === SESSION_PHASES.resting
+  ) {
+    return <ActiveSessionCard session={session} />;
+  }
+  if (session.phase === SESSION_PHASES.completed) {
+    return <CompletedSessionCard session={session} onDone={() => setSession(null)} />;
+  }
+  return <ReadyToTrainCard />;
+}
+
 export default function Home(): React.ReactElement {
   const { user } = useAuth();
+  const [[, session], setSession] = useStorageState(STORAGE_KEYS.workoutSession);
 
   const greeting = React.useMemo(() => {
     const hour = new Date().getHours();
@@ -207,7 +336,7 @@ export default function Home(): React.ReactElement {
           <View className="mt-4 flex-1">
             <WeekSummary />
           </View>
-          <ReadyToTrainCard />
+          {renderMainCard(session, setSession)}
         </Screen>
       </View>
     </>

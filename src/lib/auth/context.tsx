@@ -105,22 +105,51 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
 
   const hydrateFromStorage = useCallback(async (): Promise<void> => {
     setStatus("loading");
-    const storedToken = readStoredToken();
+    let storedToken = readStoredToken();
 
-    if (!storedToken?.access) {
+    if (!storedToken?.access && !storedToken?.refresh) {
       setUser(null);
       setToken(null);
       setStatus("guest");
       return;
     }
 
-    const meResult = await getMe();
-    if (!meResult.ok) {
+    if (storedToken?.refresh) {
+      const refreshResult = await refreshSession(storedToken.refresh);
+      if (refreshResult.ok && refreshResult.data.token?.access) {
+        const nextToken: TokenType = {
+          access: refreshResult.data.token.access,
+          refresh: refreshResult.data.token.refresh ?? storedToken.refresh,
+        };
+        storedToken = nextToken;
+        writeStoredToken(nextToken);
+      }
+    }
+
+    if (!storedToken?.access) {
       setUser(null);
       setToken(null);
-      removeStorageItem(STORAGE_KEYS.user);
       clearStoredToken();
       setStatus("guest");
+      return;
+    }
+
+    const meResult = await getMe();
+    if (!meResult.ok) {
+      const isUnauthorized = meResult.status === 401;
+      if (isUnauthorized) {
+        setUser(null);
+        setToken(null);
+        removeStorageItem(STORAGE_KEYS.user);
+        clearStoredToken();
+        setStatus("guest");
+        return;
+      }
+      // Network or server error: keep session from cache so we don't force login
+      const storedUser = getStorageItem(STORAGE_KEYS.user);
+      setUser(storedUser ?? null);
+      setToken(storedToken);
+      setStatus("authed");
       return;
     }
 
