@@ -1,231 +1,200 @@
-import React, { useEffect } from "react";
-import { Screen } from "@/components/screen";
-import { Button, Card, H1, H2, P, Text, View } from "@/components/ui";
-import { useTheme } from "@/lib/theme-context";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Dimensions, StyleSheet } from "react-native";
+import Animated, { Easing, FadeIn, FadeInDown } from "react-native-reanimated";
 import { Stack, useRouter } from "expo-router";
-import { cn } from "@/lib/cn";
-import { ChevronRight } from "lucide-react-native";
+import ConfettiCannon from "react-native-confetti-cannon";
+import { H1, H2, P, View } from "@/components/ui";
+import { Screen } from "@/components/screen";
 import { BackgroundGradient } from "@/components/background-gradient";
+import {
+  SetsProgressIndicator,
+  WorkoutActions,
+  WorkoutCurrentExercise,
+  WorkoutExerciseList,
+  WorkoutHeader,
+  WorkoutLogSetContent,
+  WorkoutRestContent,
+} from "@/components/workout";
+import { useWorkoutSession } from "@/hooks/use-workout-session";
 import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
-import { formatElapsedMs } from "@/lib/format-elapsed";
-import { setStorageItem, STORAGE_KEYS, useStorageState } from "@/lib/storage";
+import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import { SESSION_PHASES } from "@/types/workout-session";
+import { useTheme } from "@/lib/theme-context";
+import { formatElapsedMs } from "@/lib/format-elapsed";
+import { NoiseOverlay } from "@/components/ambient-background";
+
+type WorkoutView = "list" | "log-set" | "rest";
 
 export default function Workout(): React.ReactElement {
-  const { colors, tokens } = useTheme();
   const router = useRouter();
-  const [[loading, session], setSession] = useStorageState(STORAGE_KEYS.workoutSession);
+  const { colors } = useTheme();
+  const {
+    session,
+    elapsedMs,
+    exerciseName,
+    setsTotal,
+    isCompleted,
+    completedExerciseIds,
+    currentExercise,
+    completeSetAndAdvance,
+    handleFinish,
+  } = useWorkoutSession();
 
-  useEffect(() => {
-    if (loading) return;
-    if (!session || session.phase === SESSION_PHASES.idle) {
-      const first = DEFAULT_WORKOUT_EXERCISES[0];
-      if (first) {
-        setSession({
-          phase: SESSION_PHASES.inWorkout,
-          startedAt: Date.now(),
-          currentExerciseId: first.id,
-          currentSetNumber: 1,
-        });
+  const [view, setView] = useState<WorkoutView>("list");
+  const [showConfetti, setShowConfetti] = useState(false);
+
+  const handleContinue = useCallback(() => setView("log-set"), []);
+
+  const handleCompleteSet = useCallback(
+    (weight: number, reps: number) => {
+      const result = completeSetAndAdvance(weight, reps);
+      if (result === "done") {
+        setView("list");
+        return;
       }
-    }
-  }, [loading, session, setSession]);
-
-  const currentExercise = session
-    ? getExerciseById(DEFAULT_WORKOUT_EXERCISES, session.currentExerciseId)
-    : undefined;
-  const exerciseName = currentExercise?.name ?? "—";
-  const setsTotal = currentExercise?.sets ?? 0;
-  const [elapsedMs, setElapsedMs] = React.useState(() =>
-    session ? Date.now() - session.startedAt : 0
+      if (result === "workout") {
+        setView("list");
+        return;
+      }
+      if (result === "rest") {
+        setView("rest");
+      }
+    },
+    [completeSetAndAdvance]
   );
-  useEffect(() => {
-    if (!session) return;
-    setElapsedMs(Date.now() - session.startedAt);
-    const interval = setInterval(() => {
-      setElapsedMs(Date.now() - session.startedAt);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [session]);
 
-  function handleContinue(): void {
-    if (!session) return;
-    const exercise = getExerciseById(DEFAULT_WORKOUT_EXERCISES, session.currentExerciseId);
-    if (!exercise) {
-      const first = DEFAULT_WORKOUT_EXERCISES[0];
-      if (first) {
-        setSession({
-          ...session,
-          currentExerciseId: first.id,
-          currentSetNumber: 1,
-        });
-      }
-      return;
-    }
-    if (session.currentSetNumber < exercise.sets) {
-      setSession({
-        ...session,
-        phase: SESSION_PHASES.inExercise,
-        currentSetNumber: session.currentSetNumber + 1,
-      });
-      return;
-    }
-    const currentIndex = DEFAULT_WORKOUT_EXERCISES.findIndex(
-      (e) => e.id === session.currentExerciseId
-    );
-    const next = DEFAULT_WORKOUT_EXERCISES[currentIndex + 1];
-    if (next) {
-      setSession({
-        ...session,
-        phase: SESSION_PHASES.inExercise,
-        currentExerciseId: next.id,
-        currentSetNumber: 1,
-      });
-    } else {
-      setSession({ ...session, phase: SESSION_PHASES.completed });
-    }
-  }
+  const handleFinishWithConfetti = useCallback(() => setShowConfetti(true), []);
 
-  const isCompleted = session?.phase === SESSION_PHASES.completed;
-
-  function handleFinish(): void {
-    if (!session) return;
-    const completedSession = {
-      ...session,
-      phase: SESSION_PHASES.completed,
-      startedAt: session.startedAt ?? Date.now(),
-      currentExerciseId: session.currentExerciseId ?? DEFAULT_WORKOUT_EXERCISES[0]?.id ?? "",
-      currentSetNumber: session.currentSetNumber ?? 1,
-    };
-    setStorageItem(STORAGE_KEYS.workoutSession, completedSession);
-    setSession(completedSession);
+  const handleWorkoutComplete = useCallback(() => {
+    setStorageItem(STORAGE_KEYS.workoutSession, null);
     router.dismissAll();
-  }
+  }, [router]);
+
+  const handleSkipRest = useCallback(() => setView("log-set"), []);
+
+  const sessionPhase = session?.phase;
+  useEffect(() => {
+    if (!sessionPhase) return;
+    if (sessionPhase === SESSION_PHASES.completed && !showConfetti) {
+      setView("list");
+    }
+  }, [sessionPhase, showConfetti]);
+
+  const lastCompleted = session?.completedSets?.length
+    ? session.completedSets[session.completedSets.length - 1]
+    : undefined;
+  const lastExercise = lastCompleted
+    ? getExerciseById(DEFAULT_WORKOUT_EXERCISES, lastCompleted.exerciseId)
+    : undefined;
+  const restCompletedLabel =
+    lastExercise && lastCompleted
+      ? `${lastExercise.name} • Set ${lastCompleted.setNumber} completed`
+      : "Set completed";
+
+  const { width, height } = Dimensions.get("window");
+  const confettiOrigin = useMemo(() => ({ x: width / 2, y: height * 0.1 }), [width, height]);
+
+  const TRANSITION_MS = 540;
+  const transitionEasing = Easing.out(Easing.cubic);
+
+  const stackScreenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      presentation: "modal" as const,
+      animation: "slide_from_bottom" as const,
+      animationDuration: 400,
+    }),
+    []
+  );
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: false,
-          presentation: "modal",
-          animation: "slide_from_bottom",
-          animationDuration: 300,
-        }}
-      />
-      <Screen
-        preset="modal"
-        background="gradient"
-        safeAreaEdges={["bottom"]}
-        contentContainerClassName="flex-1 px-4 pt-8">
+      <Stack.Screen options={stackScreenOptions} />
+      <BackgroundGradient />
+
+      <Screen preset="modal" background="gradient" contentContainerClassName="flex-1 px-4 pt-8">
         <BackgroundGradient />
-        <View>
-          <H2 style={{ color: colors.primary }}>Workout</H2>
-          <P style={{ color: colors.mutedForeground, opacity: 0.8 }}>
-            {formatElapsedMs(elapsedMs)} elapsed
-          </P>
-        </View>
-        <View className="mt-12">
-          <H1>{exerciseName}</H1>
-          <P style={{ color: colors.mutedForeground, opacity: 0.8 }}>
-            Set {session?.currentSetNumber ?? 1} of {setsTotal || 1}
-          </P>
-        </View>
-        <View className="flex-1">
-          <Card className="mt-16" style={{ padding: 0 }}>
-            {DEFAULT_WORKOUT_EXERCISES.map((item, index) => {
-              const isActive = session?.currentExerciseId === item.id;
-              return (
-                <View
-                  key={item.id}
-                  className={cn(
-                    "flex-row items-center justify-normal gap-6 p-4",
-                    index === 0 && "rounded-t-lg",
-                    index === DEFAULT_WORKOUT_EXERCISES.length - 1 && "rounded-b-lg",
-                    index !== 0 && "border-t"
-                  )}
-                  style={{
-                    backgroundColor: colors.card,
-                    borderColor: colors.border,
-                  }}>
-                  {isActive ? (
-                    <View
-                      className="size-3 rounded-full"
-                      style={{ backgroundColor: colors.primary }}
-                    />
-                  ) : (
-                    <View
-                      className="size-3 rounded-full"
-                      style={{
-                        backgroundColor: colors.mutedForeground,
-                        opacity: 0.2,
-                      }}
-                    />
-                  )}
-                  <Text
-                    style={{
-                      color: colors.foreground,
-                      fontWeight: tokens.typography.weights.bold,
-                    }}>
-                    {item.name}
-                  </Text>
-                  <View className="flex-1 flex-row items-center justify-end gap-2">
-                    <Text
-                      style={{
-                        color: colors.mutedForeground,
-                        opacity: 0.8,
-                        fontSize: tokens.typography.sizes.sm,
-                      }}>
-                      {item.sets} sets
-                    </Text>
-                    <Text
-                      style={{
-                        color: colors.mutedForeground,
-                        opacity: 0.8,
-                        fontSize: tokens.typography.sizes.sm,
-                      }}>
-                      {item.reps} reps
-                    </Text>
-                    <Text
-                      style={{
-                        color: colors.mutedForeground,
-                        opacity: 0.8,
-                        fontSize: tokens.typography.sizes.sm,
-                      }}>
-                      {item.weight} lbs
-                    </Text>
-                    <ChevronRight size={16} color={colors.mutedForeground} />
-                  </View>
+        {view === "list" && (
+          <Animated.View
+            entering={FadeIn.duration(TRANSITION_MS).easing(transitionEasing)}
+            style={{ flex: 1 }}>
+            {isCompleted ? (
+              <View className="flex-1 items-center justify-center">
+                <View className="mt-16 flex-col">
+                  <H2>Done for Today</H2>
+                  <P className="mt-2" style={{ color: colors.mutedForeground }}>
+                    {exerciseName} • {formatElapsedMs(elapsedMs)}
+                  </P>
                 </View>
-              );
-            })}
-          </Card>
-        </View>
-        <View className="mb-4 border-t-2 py-4" style={{ borderColor: colors.border }}>
-          {isCompleted ? (
-            <Button
-              label="Done"
-              variant="primary"
-              size="lg"
-              onPress={() => {
-                setSession(null);
-                router.back();
-              }}
-              accessibilityLabel="Done, clear session"
+                <View className="mt-24 flex-1 items-center">
+                  <P style={{ color: colors.mutedForeground }}>{setsTotal} sets completed</P>
+                  <SetsProgressIndicator completed={3} total={4} />
+                </View>
+                <P className="mb-4" style={{ color: colors.mutedForeground }}>
+                  See you next session.
+                </P>
+              </View>
+            ) : (
+              <>
+                <WorkoutHeader elapsedMs={elapsedMs} />
+                <WorkoutCurrentExercise
+                  exerciseName={exerciseName}
+                  currentSetNumber={session?.currentSetNumber ?? 1}
+                  setsTotal={setsTotal}
+                />
+                <WorkoutExerciseList
+                  exercises={DEFAULT_WORKOUT_EXERCISES}
+                  currentExerciseId={session?.currentExerciseId}
+                  completedExerciseIds={completedExerciseIds}
+                />
+              </>
+            )}
+            <WorkoutActions
+              isCompleted={isCompleted}
+              onDone={handleFinishWithConfetti}
+              onContinue={handleContinue}
+              onFinish={handleFinish}
             />
-          ) : (
-            <Button
-              label="Continue"
-              variant="primary"
-              size="lg"
-              icon={
-                <ChevronRight size={24} className="mt-[0.25px]" color={colors.primaryForeground} />
-              }
-              iconPlacement="right"
-              onPress={handleContinue}
+          </Animated.View>
+        )}
+
+        {view === "log-set" && currentExercise && (
+          <Animated.View
+            entering={FadeInDown.duration(TRANSITION_MS).easing(transitionEasing)}
+            style={{ flex: 1 }}>
+            <WorkoutLogSetContent
+              exerciseName={exerciseName}
+              setsTotal={setsTotal}
+              currentSetNumber={session?.currentSetNumber ?? 1}
+              currentExercise={currentExercise}
+              onComplete={handleCompleteSet}
+              clearAndBack={() => setView("list")}
             />
-          )}
-          <Button label="Finish workout" variant="link" onPress={handleFinish} />
-        </View>
+          </Animated.View>
+        )}
+
+        {view === "rest" && (
+          <Animated.View
+            entering={FadeInDown.duration(TRANSITION_MS).easing(transitionEasing)}
+            style={{ flex: 1 }}>
+            <WorkoutRestContent completedLabel={restCompletedLabel} onSkipRest={handleSkipRest} />
+          </Animated.View>
+        )}
+
+        {showConfetti ? (
+          <View style={[StyleSheet.absoluteFill, { zIndex: 9999 }]} pointerEvents="none">
+            <ConfettiCannon
+              count={100}
+              origin={confettiOrigin}
+              autoStart
+              fadeOut
+              explosionSpeed={650}
+              fallSpeed={900}
+              colors={["#FFD700", "#FFA500", "#FF8C00", "#FF6347", "#FF4500"]}
+              onAnimationEnd={handleWorkoutComplete}
+            />
+          </View>
+        ) : null}
       </Screen>
     </>
   );

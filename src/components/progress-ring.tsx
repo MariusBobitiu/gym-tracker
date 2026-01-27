@@ -13,7 +13,7 @@ type Props = {
   trackOpacity?: number;
   showCenterText?: boolean;
   label?: string;
-  sublabel?: string;
+  subLabel?: string;
   icon?: React.ReactNode;
 };
 
@@ -28,7 +28,7 @@ export function ProgressRing({
   trackOpacity = 0.15,
   showCenterText = true,
   label,
-  sublabel,
+  subLabel,
   icon,
 }: Props): React.ReactElement {
   const { colors } = useTheme();
@@ -39,8 +39,8 @@ export function ProgressRing({
   React.useEffect(() => {
     Animated.timing(progress, {
       toValue: clampValue(value),
-      duration: 600,
-      easing: Easing.out(Easing.cubic),
+      duration: 2400,
+      easing: Easing.inOut(Easing.cubic),
       useNativeDriver: false,
     }).start();
   }, [progress, value]);
@@ -86,9 +86,9 @@ export function ProgressRing({
                 {label}
               </Text>
             ) : null}
-            {sublabel ? (
+            {subLabel ? (
               <Text className="text-xs" style={{ color: colors.mutedForeground }}>
-                {sublabel}
+                {subLabel}
               </Text>
             ) : null}
           </View>

@@ -8,11 +8,19 @@ export const SESSION_PHASES = {
 
 export type SessionPhase = (typeof SESSION_PHASES)[keyof typeof SESSION_PHASES];
 
+export type CompletedSet = {
+  exerciseId: string;
+  setNumber: number;
+  weight: number;
+  reps: number;
+};
+
 export type WorkoutSession = {
   phase: SessionPhase;
   startedAt: number;
   currentExerciseId: string;
   currentSetNumber: number;
+  completedSets?: CompletedSet[];
 };
 
 export type PlanExercise = {
