@@ -8,7 +8,7 @@ import { ChevronRight } from "lucide-react-native";
 import { BackgroundGradient } from "@/components/background-gradient";
 import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
 import { formatElapsedMs } from "@/lib/format-elapsed";
-import { STORAGE_KEYS, useStorageState } from "@/lib/storage";
+import { setStorageItem, STORAGE_KEYS, useStorageState } from "@/lib/storage";
 import { SESSION_PHASES } from "@/types/workout-session";
 
 export default function Workout(): React.ReactElement {
@@ -18,11 +18,7 @@ export default function Workout(): React.ReactElement {
 
   useEffect(() => {
     if (loading) return;
-    if (
-      !session ||
-      session.phase === SESSION_PHASES.idle ||
-      session.phase === SESSION_PHASES.completed
-    ) {
+    if (!session || session.phase === SESSION_PHASES.idle) {
       const first = DEFAULT_WORKOUT_EXERCISES[0];
       if (first) {
         setSession({
@@ -91,6 +87,20 @@ export default function Workout(): React.ReactElement {
   }
 
   const isCompleted = session?.phase === SESSION_PHASES.completed;
+
+  function handleFinish(): void {
+    if (!session) return;
+    const completedSession = {
+      ...session,
+      phase: SESSION_PHASES.completed,
+      startedAt: session.startedAt ?? Date.now(),
+      currentExerciseId: session.currentExerciseId ?? DEFAULT_WORKOUT_EXERCISES[0]?.id ?? "",
+      currentSetNumber: session.currentSetNumber ?? 1,
+    };
+    setStorageItem(STORAGE_KEYS.workoutSession, completedSession);
+    setSession(completedSession);
+    router.dismissAll();
+  }
 
   return (
     <>
@@ -214,6 +224,7 @@ export default function Workout(): React.ReactElement {
               onPress={handleContinue}
             />
           )}
+          <Button label="Finish workout" variant="link" onPress={handleFinish} />
         </View>
       </Screen>
     </>

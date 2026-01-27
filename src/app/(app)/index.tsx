@@ -1,6 +1,8 @@
 import * as React from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { Link, Stack } from "expo-router";
 import { ChevronRight } from "lucide-react-native";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { Button, Text, View } from "@/components/ui";
 import AppHeader from "@/components/app-header";
 import { Screen } from "@/components/screen";
@@ -9,7 +11,7 @@ import { useAuth } from "@/lib/auth/context";
 import { AmbientBackground, NoiseOverlay } from "@/components/ambient-background";
 import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
 import { formatElapsedMs } from "@/lib/format-elapsed";
-import { STORAGE_KEYS, useStorageState } from "@/lib/storage";
+import { getStorageItem, STORAGE_KEYS, useStorageState } from "@/lib/storage";
 import type { WorkoutSession } from "@/types/workout-session";
 import { SESSION_PHASES } from "@/types/workout-session";
 
@@ -314,6 +316,13 @@ export default function Home(): React.ReactElement {
   const { user } = useAuth();
   const [[, session], setSession] = useStorageState(STORAGE_KEYS.workoutSession);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      const value = getStorageItem(STORAGE_KEYS.workoutSession);
+      setSession(value ?? null);
+    }, [setSession])
+  );
+
   const greeting = React.useMemo(() => {
     const hour = new Date().getHours();
     const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -336,7 +345,12 @@ export default function Home(): React.ReactElement {
           <View className="mt-4 flex-1">
             <WeekSummary />
           </View>
-          {renderMainCard(session, setSession)}
+          <Animated.View
+            key={!session || session.phase === SESSION_PHASES.idle ? "idle" : session.phase}
+            entering={FadeIn.duration(220)}
+            exiting={FadeOut.duration(180)}>
+            {renderMainCard(session, setSession)}
+          </Animated.View>
         </Screen>
       </View>
     </>
