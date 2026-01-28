@@ -3,7 +3,7 @@ import { Dimensions, StyleSheet } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown } from "react-native-reanimated";
 import { Stack, useRouter } from "expo-router";
 import ConfettiCannon from "react-native-confetti-cannon";
-import { H1, H2, P, View } from "@/components/ui";
+import { H2, P, View } from "@/components/ui";
 import { Screen } from "@/components/screen";
 import { BackgroundGradient } from "@/components/background-gradient";
 import {
@@ -21,7 +21,6 @@ import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import { SESSION_PHASES } from "@/types/workout-session";
 import { useTheme } from "@/lib/theme-context";
 import { formatElapsedMs } from "@/lib/format-elapsed";
-import { NoiseOverlay } from "@/components/ambient-background";
 
 type WorkoutView = "list" | "log-set" | "rest";
 
@@ -112,7 +111,11 @@ export default function Workout(): React.ReactElement {
       <Stack.Screen options={stackScreenOptions} />
       <BackgroundGradient />
 
-      <Screen preset="modal" background="gradient" contentContainerClassName="flex-1 px-4 pt-8">
+      <Screen
+        preset="modal"
+        background="gradient"
+        safeAreaEdges={[]}
+        contentContainerClassName="flex-1 px-4 pt-8">
         <BackgroundGradient />
         {view === "list" && (
           <Animated.View

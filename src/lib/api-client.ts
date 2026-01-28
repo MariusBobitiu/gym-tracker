@@ -1,3 +1,4 @@
+import { API_BASE_URL_OVERRIDE } from "@/lib/api-base-url";
 import { Env } from "@/lib/env";
 import {
   getSecureItem,
@@ -48,7 +49,7 @@ type ApiClient = {
   request: <T, E = ApiError>(path: string, options?: ApiRequestOptions) => Promise<ApiResult<T, E>>;
 };
 
-const API_BASE_URL = Env.EXPO_PUBLIC_API_URL ?? "";
+const API_BASE_URL = (__DEV__ && API_BASE_URL_OVERRIDE) || Env.EXPO_PUBLIC_API_URL || "";
 let hasWarnedMissingBaseUrl = false;
 
 type UnauthorizedHandler = (statusCode: number) => void;
@@ -81,7 +82,8 @@ function buildUrl(baseUrl: string, path: string): string {
   if (!baseUrl) return path;
   const normalizedBase = baseUrl.replace(/\/+$/, "");
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${normalizedBase}${normalizedPath}`;
+  const url = `${normalizedBase}${normalizedPath}`;
+  return url;
 }
 
 function resolveBody(body: unknown, headers: Headers): BodyInit | undefined {

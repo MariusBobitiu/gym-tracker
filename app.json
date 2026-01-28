@@ -28,7 +28,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "dev.mariusbobitiu.gym-tracker",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
       }
     },
     "android": {
@@ -36,7 +39,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "dev.mariusbobitiu.gymtracker"
+      "package": "dev.mariusbobitiu.gymtracker",
+      "usesCleartextTraffic": true
     },
     "extra": {
       "router": {},

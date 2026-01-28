@@ -137,6 +137,7 @@ if (result.ok) {
 Notes:
 
 - Configure the base URL with `EXPO_PUBLIC_API_URL`.
+- **Testing on a physical device with API on your laptop:** use your machine’s LAN IP (e.g. `http://192.168.1.5:3000`) instead of `localhost`, so the phone can reach the API. Ensure the API listens on `0.0.0.0` and phone and laptop are on the same Wi‑Fi.
 - Access tokens are read from `SECURE_STORAGE_KEYS.authToken` (secure MMKV) or `STORAGE_KEYS.token`.
 - `useRefreshToken()` exists as a placeholder for wiring in refresh flows.
 

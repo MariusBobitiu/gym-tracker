@@ -18,6 +18,7 @@ export default function Layout() {
             backgroundColor: colors.background,
           },
         }}>
+        <Stack.Screen name="index" />
         <Stack.Screen
           name="workout"
           options={{

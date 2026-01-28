@@ -4,6 +4,7 @@ import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workou
 import { setStorageItem, STORAGE_KEYS, useStorageState } from "@/lib/storage";
 import type { PlanExercise, WorkoutSession } from "@/types/workout-session";
 import { SESSION_PHASES } from "@/types/workout-session";
+import { Alert } from "react-native";
 
 const EXERCISES = DEFAULT_WORKOUT_EXERCISES;
 
@@ -148,16 +149,24 @@ export function useWorkoutSession(): UseWorkoutSessionReturn {
 
   function handleFinish(): void {
     if (!session) return;
-    const completedSession: WorkoutSession = {
-      ...session,
-      phase: SESSION_PHASES.completed,
-      startedAt: session.startedAt ?? Date.now(),
-      currentExerciseId: session.currentExerciseId ?? EXERCISES[0]?.id ?? "",
-      currentSetNumber: session.currentSetNumber ?? 1,
-    };
-    setStorageItem(STORAGE_KEYS.workoutSession, completedSession);
-    setSession(completedSession);
-    router.dismissAll();
+    Alert.alert("Finish workout", "Are you sure you want to finish the workout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Finish",
+        onPress: () => {
+          const completedSession: WorkoutSession = {
+            ...session,
+            phase: SESSION_PHASES.completed,
+            startedAt: session.startedAt ?? Date.now(),
+            currentExerciseId: session.currentExerciseId ?? EXERCISES[0]?.id ?? "",
+            currentSetNumber: session.currentSetNumber ?? 1,
+          };
+          setStorageItem(STORAGE_KEYS.workoutSession, completedSession);
+          setSession(completedSession);
+          router.dismissAll();
+        },
+      },
+    ]);
   }
 
   function clearAndBack(): void {

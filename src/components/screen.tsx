@@ -6,9 +6,10 @@ import {
   View,
   type ScrollViewProps,
 } from "react-native";
-import { SafeAreaView, type Edge } from "react-native-safe-area-context";
+import { useSafeAreaInsets, type Edge } from "react-native-safe-area-context";
 import { BackgroundGradient } from "@/components/background-gradient";
 import { useTheme } from "@/lib/theme-context";
+import { cn } from "@/lib/cn";
 
 type ScreenPreset = "fixed" | "scroll" | "modal";
 type PaddingPreset = "none" | "sm" | "md" | "lg";
@@ -85,7 +86,17 @@ export function Screen({
   const scrollContentStyle = React.useMemo(() => ({ padding: paddingValue }), [paddingValue]);
 
   const isModal = preset === "modal";
-  const modalSafeAreaEdges = isModal ? (["top", "bottom"] as Edge[]) : safeAreaEdges;
+  const insets = useSafeAreaInsets();
+
+  const safeAreaPadding = React.useMemo(() => {
+    const edges: Edge[] = isModal ? ["bottom"] : safeAreaEdges;
+    return {
+      paddingTop: edges.includes("top") ? insets.top : 0,
+      paddingBottom: edges.includes("bottom") ? insets.bottom : 0,
+      paddingLeft: edges.includes("left") ? insets.left : 0,
+      paddingRight: edges.includes("right") ? insets.right : 0,
+    };
+  }, [isModal, safeAreaEdges, insets.top, insets.bottom, insets.left, insets.right]);
 
   const content =
     preset === "scroll" || preset === "modal" ? (
@@ -117,10 +128,10 @@ export function Screen({
   return (
     <View className="flex-1" style={isModal ? { backgroundColor: colors.background } : undefined}>
       {background === "gradient" && !isModal ? <BackgroundGradient /> : null}
-      <SafeAreaView edges={modalSafeAreaEdges} className="flex-1">
+      <View className="flex-1 border-t border-border/10" style={safeAreaPadding}>
         {isModal && <ModalGrabber />}
         {wrappedContent}
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
