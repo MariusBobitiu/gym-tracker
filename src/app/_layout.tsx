@@ -12,18 +12,24 @@ import { queryClient } from "@/lib/query/query-client";
 import { Screen } from "@/components/screen";
 import { View } from "@/components/ui";
 import { LoadingState } from "@/components/feedback-states";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function Root() {
   // Set up the auth context and render your layout inside of it.
   return (
-    <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <SplashScreenController />
-          <RootNavigator />
-        </ThemeProvider>
-      </QueryClientProvider>
-    </SessionProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
+        <SessionProvider>
+          <QueryClientProvider client={queryClient}>
+            <ThemeProvider>
+              <SplashScreenController />
+              <RootNavigator />
+            </ThemeProvider>
+          </QueryClientProvider>
+        </SessionProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }
 

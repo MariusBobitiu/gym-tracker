@@ -24,6 +24,15 @@ export default function WorkoutLayout() {
           gestureEnabled: true,
         }}
       />
+      <Stack.Screen
+        name="start"
+        options={{
+          presentation: "modal",
+          animation: "slide_from_bottom",
+          animationDuration: 300,
+          gestureEnabled: true,
+        }}
+      />
     </Stack>
   );
 }

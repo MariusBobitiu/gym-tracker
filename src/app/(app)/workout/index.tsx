@@ -14,7 +14,7 @@ import {
   WorkoutHeader,
   WorkoutLogSetContent,
   WorkoutRestContent,
-} from "@/components/workout";
+} from "@/features/workout";
 import { useWorkoutSession } from "@/hooks/use-workout-session";
 import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
