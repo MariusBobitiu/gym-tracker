@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Screen } from "@/components/screen";
-import { BackgroundGradient } from "@/components/background-gradient";
 import { Button, Card, H1, P, View } from "@/components/ui";
 import { SetInputStepper } from "@/features/workout";
 import { useTheme } from "@/lib/theme-context";

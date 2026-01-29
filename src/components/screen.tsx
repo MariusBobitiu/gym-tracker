@@ -9,7 +9,6 @@ import {
 import { useSafeAreaInsets, type Edge } from "react-native-safe-area-context";
 import { BackgroundGradient } from "@/components/background-gradient";
 import { useTheme } from "@/lib/theme-context";
-import { cn } from "@/lib/cn";
 
 type ScreenPreset = "fixed" | "scroll" | "modal";
 type PaddingPreset = "none" | "sm" | "md" | "lg";

@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
   H2,
+  H3,
   P,
   Text,
 } from "@/components/ui";
@@ -21,6 +22,7 @@ import { useTheme } from "@/lib/theme-context";
 import { usePlannerStore } from "@/features/planner/planner-store";
 import { formatWeekRange, getWeekRange, startOfWeekMonday } from "@/features/planner/date-utils";
 import type { PlannedSessionView } from "@/features/planner/planner-types";
+import { ScrollView } from "moti";
 
 export default function Planner() {
   const router = useRouter();
@@ -151,8 +153,54 @@ export default function Planner() {
       <Screen className="pb-24">
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
         <AppHeader showBackButton={false} title="Planner" isMainScreen />
+        {/* Week Navigation Header */}
+        <View className="mb-4 flex-row items-center justify-between px-4">
+          <Pressable
+            onPress={handlePrevWeek}
+            className="flex-row items-center"
+            style={{
+              padding: tokens.spacing.sm,
+              borderRadius: tokens.radius.md,
+              backgroundColor: colors.muted,
+            }}>
+            <ChevronLeft size={20} color={colors.foreground} />
+          </Pressable>
+
+          <View className="flex-1 items-center px-4">
+            <Text
+              style={{
+                fontSize: tokens.typography.sizes.sm,
+                color: colors.mutedForeground,
+                fontWeight: tokens.typography.weights.medium,
+              }}>
+              {weekRangeText}
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={handleNextWeek}
+            className="flex-row items-center"
+            style={{
+              padding: tokens.spacing.sm,
+              borderRadius: tokens.radius.md,
+              backgroundColor: colors.muted,
+            }}>
+            <ChevronRight size={20} color={colors.foreground} />
+          </Pressable>
+        </View>
         <View className="flex-1 items-center justify-center">
-          <P>No active cycle. Please create one.</P>
+          <H3>No active cycle</H3>
+          <P>Please create a cycle to get started.</P>
+          <Button
+            label="Create cycle"
+            icon={<Plus size={20} color={colors.background} className="mr-1" />}
+            iconPlacement="left"
+            className="mt-4 w-full"
+            onPress={() => {
+              // TODO: Implement create cycle modal
+              console.log("Create cycle");
+            }}
+          />
         </View>
       </Screen>
     );
@@ -161,134 +209,135 @@ export default function Planner() {
   const isPastWeek = weekEndDate < new Date();
 
   return (
-    <Screen className="pb-24" preset="scroll">
+    <Screen safeAreaEdges={["top", "bottom"]}>
       <Stack.Screen options={headerOptions({ title: "Planner" })} />
       <AppHeader showBackButton={false} title="Planner" isMainScreen />
-
-      {/* Week Navigation Header */}
-      <View className="mb-4 flex-row items-center justify-between px-4">
-        <Pressable
-          onPress={handlePrevWeek}
-          className="flex-row items-center"
-          style={{
-            padding: tokens.spacing.sm,
-            borderRadius: tokens.radius.md,
-            backgroundColor: colors.muted,
-          }}>
-          <ChevronLeft size={20} color={colors.foreground} />
-        </Pressable>
-
-        <View className="flex-1 items-center px-4">
-          <Text
+      <ScrollView className="mb-8 flex-1 pb-8">
+        {/* Week Navigation Header */}
+        <View className="mb-4 flex-row items-center justify-between px-4">
+          <Pressable
+            onPress={handlePrevWeek}
+            className="flex-row items-center"
             style={{
-              fontSize: tokens.typography.sizes.sm,
-              color: colors.mutedForeground,
-              fontWeight: tokens.typography.weights.medium,
+              padding: tokens.spacing.sm,
+              borderRadius: tokens.radius.md,
+              backgroundColor: colors.muted,
             }}>
-            {weekRangeText}
-          </Text>
-          <Text
-            style={{
-              fontSize: tokens.typography.sizes.xs,
-              color: colors.mutedForeground,
-              marginTop: 4,
-            }}>
-            {pattern.name} • Week {weekInstance.templateLabel}
-          </Text>
-        </View>
+            <ChevronLeft size={20} color={colors.foreground} />
+          </Pressable>
 
-        <Pressable
-          onPress={handleNextWeek}
-          className="flex-row items-center"
-          style={{
-            padding: tokens.spacing.sm,
-            borderRadius: tokens.radius.md,
-            backgroundColor: colors.muted,
-          }}>
-          <ChevronRight size={20} color={colors.foreground} />
-        </Pressable>
-      </View>
-
-      {/* Progress Indicator */}
-      <View className="mb-6 px-4">
-        <View
-          className="rounded-lg px-4 py-3"
-          style={{
-            backgroundColor: colors.card,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}>
-          <Text
-            style={{
-              fontSize: tokens.typography.sizes.md,
-              fontWeight: tokens.typography.weights.semibold,
-              color: colors.foreground,
-            }}>
-            {weekInstance.completedCount} / {weekInstance.totalPlanned} sessions done
-          </Text>
-          {weekInstance.missedCount > 0 && isPastWeek && (
+          <View className="flex-1 items-center px-4">
             <Text
               style={{
                 fontSize: tokens.typography.sizes.sm,
-                color: colors.destructive,
+                color: colors.mutedForeground,
+                fontWeight: tokens.typography.weights.medium,
+              }}>
+              {weekRangeText}
+            </Text>
+            <Text
+              style={{
+                fontSize: tokens.typography.sizes.xs,
+                color: colors.mutedForeground,
                 marginTop: 4,
               }}>
-              {weekInstance.missedCount} missed
+              {pattern.name} • Week {weekInstance.templateLabel}
             </Text>
+          </View>
+
+          <Pressable
+            onPress={handleNextWeek}
+            className="flex-row items-center"
+            style={{
+              padding: tokens.spacing.sm,
+              borderRadius: tokens.radius.md,
+              backgroundColor: colors.muted,
+            }}>
+            <ChevronRight size={20} color={colors.foreground} />
+          </Pressable>
+        </View>
+
+        {/* Progress Indicator */}
+        <View className="mb-6 px-4">
+          <View
+            className="rounded-lg px-4 py-3"
+            style={{
+              backgroundColor: colors.card,
+              borderWidth: 1,
+              borderColor: colors.border,
+            }}>
+            <Text
+              style={{
+                fontSize: tokens.typography.sizes.md,
+                fontWeight: tokens.typography.weights.semibold,
+                color: colors.foreground,
+              }}>
+              {weekInstance.completedCount} / {weekInstance.totalPlanned} sessions done
+            </Text>
+            {weekInstance.missedCount > 0 && isPastWeek && (
+              <Text
+                style={{
+                  fontSize: tokens.typography.sizes.sm,
+                  color: colors.destructive,
+                  marginTop: 4,
+                }}>
+                {weekInstance.missedCount} missed
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Sessions List */}
+        <View className="px-4">
+          <H2 className="mb-3">This week&apos;s sessions</H2>
+          {weekInstance.plannedSessions.map((session, index) => (
+            <SessionCard
+              key={session.plannedSessionTemplateId}
+              session={session}
+              onPress={() => handleSessionPress(session)}
+              isPastWeek={isPastWeek}
+            />
+          ))}
+
+          {/* Extra Sessions */}
+          {weekInstance.extraSessions.length > 0 && (
+            <View className="mt-6">
+              <H2 className="mb-3">Extra sessions</H2>
+              {weekInstance.extraSessions.map((log) => (
+                <Card key={log.id} className="mb-3">
+                  <CardHeader>
+                    <CardTitle>{log.actualSessionTitle}</CardTitle>
+                    {log.durationMins && <CardDescription>{log.durationMins} min</CardDescription>}
+                  </CardHeader>
+                </Card>
+              ))}
+            </View>
           )}
         </View>
-      </View>
 
-      {/* Sessions List */}
-      <View className="px-4">
-        <H2 className="mb-3">This week&apos;s sessions</H2>
-        {weekInstance.plannedSessions.map((session, index) => (
-          <SessionCard
-            key={session.plannedSessionTemplateId}
-            session={session}
-            onPress={() => handleSessionPress(session)}
-            isPastWeek={isPastWeek}
-          />
-        ))}
-
-        {/* Extra Sessions */}
-        {weekInstance.extraSessions.length > 0 && (
-          <View className="mt-6">
-            <H2 className="mb-3">Extra sessions</H2>
-            {weekInstance.extraSessions.map((log) => (
-              <Card key={log.id} className="mb-3">
-                <CardHeader>
-                  <CardTitle>{log.actualSessionTitle}</CardTitle>
-                  {log.durationMins && <CardDescription>{log.durationMins} min</CardDescription>}
-                </CardHeader>
-              </Card>
-            ))}
+        {/* Action Buttons */}
+        <View className="mt-6 px-4 pb-8">
+          <View style={{ marginBottom: tokens.spacing.md }}>
+            <Button
+              label="Add extra session"
+              icon={<Plus size={20} color={colors.foreground} />}
+              iconPlacement="left"
+              onPress={handleAddExtraSession}
+              variant="outline"
+            />
           </View>
-        )}
-      </View>
-
-      {/* Action Buttons */}
-      <View className="mt-6 px-4 pb-8">
-        <View style={{ marginBottom: tokens.spacing.md }}>
           <Button
-            label="Add extra session"
-            icon={<Plus size={20} color={colors.foreground} />}
+            label="Manage cycle"
+            icon={<Settings size={20} color={colors.foreground} />}
             iconPlacement="left"
-            onPress={handleAddExtraSession}
+            onPress={() => {
+              // TODO: Implement manage cycle modal
+              console.log("Manage cycle");
+            }}
             variant="outline"
           />
         </View>
-        <Button
-          label="Manage cycle"
-          icon={<Settings size={20} color={colors.foreground} />}
-          iconPlacement="left"
-          onPress={() => {
-            // TODO: Implement manage cycle modal
-            console.log("Manage cycle");
-          }}
-          variant="outline"
-        />
-      </View>
+      </ScrollView>
 
       {/* Session Action Modal */}
       <Modal
