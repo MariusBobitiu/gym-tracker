@@ -30,13 +30,19 @@
 
 import type { BottomSheetBackdropProps, BottomSheetModalProps } from "@gorhom/bottom-sheet";
 import { BottomSheetModal, useBottomSheet } from "@gorhom/bottom-sheet";
+import { BlurView } from "expo-blur";
 import * as React from "react";
-import { Pressable, View } from "react-native";
-import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import { Platform, Pressable, StyleSheet, Text as RNText, View } from "react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import { Path, Svg } from "react-native-svg";
 
 import { useTheme } from "@/lib/theme-context";
-import { Text } from "./text";
 
 type ModalProps = BottomSheetModalProps & {
   title?: string;
@@ -62,7 +68,14 @@ export const useModal = () => {
 
 export const Modal = React.forwardRef(
   (
-    { snapPoints: _snapPoints = ["60%"], title, detached = false, ...props }: ModalProps,
+    {
+      snapPoints: _snapPoints = ["60%"],
+      title,
+      detached = false,
+      containerStyle: containerStyleProp,
+      backgroundStyle: backgroundStyleProp,
+      ...props
+    }: ModalProps,
     ref: ModalRef
   ) => {
     const detachedProps = React.useMemo(() => getDetachedProps(detached), [detached]);
@@ -73,24 +86,31 @@ export const Modal = React.forwardRef(
 
     const { colors: themeColors, tokens } = useTheme();
 
+    const containerStyle = React.useMemo(
+      () => StyleSheet.flatten([{ backgroundColor: "transparent" }, containerStyleProp]),
+      [containerStyleProp]
+    );
+
+    const backgroundStyle = React.useMemo(
+      () => StyleSheet.flatten([{ backgroundColor: themeColors.background }, backgroundStyleProp]),
+      [themeColors.background, backgroundStyleProp]
+    );
+
     const renderHandleComponent = React.useCallback(
       () => (
-        <>
-          <View
-            className="mb-8 mt-2 h-1 w-12 self-center rounded-lg"
-            style={{
-              backgroundColor: themeColors.muted,
-              borderRadius: tokens.radius.md,
-              height: 4,
-              width: 48,
-              marginTop: tokens.spacing.sm,
-              marginBottom: tokens.spacing.lg,
-            }}
-          />
-          <ModalHeader title={title} dismiss={modal.dismiss} />
-        </>
+        <View
+          className="mb-2 self-center rounded-lg"
+          style={{
+            backgroundColor: themeColors.muted,
+            borderRadius: tokens.radius.md,
+            height: 4,
+            width: 48,
+            marginTop: tokens.spacing.sm,
+            marginBottom: tokens.spacing.sm,
+          }}
+        />
       ),
-      [title, modal.dismiss, themeColors, tokens]
+      [themeColors.muted, tokens]
     );
 
     return (
@@ -102,27 +122,80 @@ export const Modal = React.forwardRef(
         snapPoints={snapPoints}
         backdropComponent={props.backdropComponent || renderBackdrop}
         enableDynamicSizing={false}
-        handleComponent={renderHandleComponent}
-      />
+        containerStyle={containerStyle}
+        backgroundStyle={backgroundStyle}
+        handleComponent={renderHandleComponent}>
+        <>
+          <ModalHeader title={title} dismiss={modal.dismiss} />
+          {props.children}
+        </>
+      </BottomSheetModal>
     );
   }
 );
 
 /**
- * Custom Backdrop
+ * Custom Backdrop: dark semi-transparent overlay with optional blur.
+ * Opacity is driven by animatedIndex so the backdrop fades in sync with the sheet
+ * (avoids 1–2s delay where the backdrop stayed visible after the sheet closed).
  */
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const BACKDROP_OPACITY = 0.25;
 
-const CustomBackdrop = ({ style }: BottomSheetBackdropProps) => {
+const DISAPPEARS_ON_INDEX = 0;
+
+const CustomBackdrop = ({ style, animatedIndex }: BottomSheetBackdropProps) => {
   const { close } = useBottomSheet();
+  const [pointerEvents, setPointerEvents] = React.useState<"auto" | "box-none" | "none">("auto");
+
+  const backdropAnimatedStyle = useAnimatedStyle(
+    () => ({
+      opacity: interpolate(
+        animatedIndex.value,
+        [-1, DISAPPEARS_ON_INDEX],
+        [0, 1],
+        Extrapolation.CLAMP
+      ),
+    }),
+    [animatedIndex]
+  );
+
+  const setTouchability = React.useCallback((disabled: boolean) => {
+    setPointerEvents(disabled ? "none" : "auto");
+  }, []);
+
+  useAnimatedReaction(
+    () => animatedIndex.value <= -1,
+    (shouldDisable, previous) => {
+      if (previous === shouldDisable) return;
+      runOnJS(setTouchability)(shouldDisable);
+    },
+    [-1]
+  );
+
   return (
-    <AnimatedPressable
-      onPress={() => close()}
-      entering={FadeIn.duration(50)}
-      exiting={FadeOut.duration(20)}
-      style={[style, { backgroundColor: "rgba(0, 0, 0, 0.4)" }]}
-    />
+    <Animated.View
+      style={[StyleSheet.absoluteFill, style, backdropAnimatedStyle]}
+      pointerEvents={pointerEvents}>
+      <Pressable
+        onPress={() => close()}
+        style={StyleSheet.absoluteFill}
+        accessibilityRole="button"
+        accessibilityLabel="Close modal">
+        <BlurView
+          intensity={Platform.OS === "ios" ? 20 : 30}
+          tint="dark"
+          style={StyleSheet.absoluteFill}
+        />
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: `rgba(0, 0, 0, ${BACKDROP_OPACITY})` },
+          ]}
+          pointerEvents="none"
+        />
+      </Pressable>
+    </Animated.View>
   );
 };
 
@@ -154,6 +227,16 @@ const getDetachedProps = (detached: boolean) => {
 
 const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
   const { colors: themeColors, tokens } = useTheme();
+  const titleStyle = React.useMemo(
+    () => ({
+      color: themeColors.foreground,
+      fontSize: tokens.typography.sizes.md,
+      lineHeight: tokens.typography.lineHeights.md,
+      fontWeight: tokens.typography.weights.bold,
+      textAlign: "center" as const,
+    }),
+    [themeColors.foreground, tokens]
+  );
   return (
     <>
       {title && (
@@ -164,17 +247,10 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
             paddingVertical: tokens.spacing.lg,
           }}>
           <View style={{ height: 24, width: 24 }} />
-          <View className="flex-1">
-            <Text
-              className="text-center"
-              style={{
-                color: themeColors.foreground,
-                fontSize: tokens.typography.sizes.md,
-                lineHeight: tokens.typography.lineHeights.md,
-                fontWeight: tokens.typography.weights.bold,
-              }}>
+          <View className="flex-1 justify-center">
+            <RNText style={titleStyle} numberOfLines={1}>
               {title}
-            </Text>
+            </RNText>
           </View>
         </View>
       )}

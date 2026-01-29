@@ -37,6 +37,7 @@ type AppHeaderProps = {
   title?: React.ReactNode;
   left?: React.ReactNode;
   right?: React.ReactNode;
+  rightAddon?: React.ReactNode;
   showBackButton?: boolean;
   className?: string;
   isMainScreen?: boolean;
@@ -46,16 +47,18 @@ const AppHeader = ({
   title,
   left,
   right,
+  rightAddon,
   showBackButton = true,
   className,
   isMainScreen = false,
 }: AppHeaderProps) => {
   const { colors } = useTheme();
   const resolvedTitle =
-    typeof title === "string" ? <P style={{ fontSize: 24, fontWeight: "600" }}>{title}</P> : title;
+    typeof title === "string" ? <P style={{ fontSize: 20, fontWeight: "600" }}>{title}</P> : title;
 
   const rightContent = isMainScreen ? (
     <View className="flex-row items-center gap-2">
+      {rightAddon ?? null}
       <Button
         variant="link"
         icon={<Bell color={colors.foreground} />}

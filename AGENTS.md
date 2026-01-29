@@ -12,16 +12,20 @@ Every time you choose to apply a rule(s), explicitly state the rule(s) in the ou
 
 ```
 src
-  ├── app         ## Expo Router screens and layouts
-  │   ├── (app)    ## Authenticated app routes
+  ├── app              ## Expo Router screens and layouts
+  │   ├── (app)        ## Authenticated app routes (index, planner, history, profile, workout, settings)
+  │   │   └── planner  ## Planner: index (gated), split-template, split-builder, rotation, plan
   │   └── +html.tsx, +not-found.tsx, _layout.tsx, sign-in.tsx
-  ├── components  ## Shared components
-  │   ├── ui       ## Core UI components (button, input, text, etc.)
-  │   └── forms    ## Form helpers and controlled fields
-  ├── hooks        ## Reusable hooks (auth, theme, tokens)
-  ├── lib          ## Shared utilities, auth, query, storage, config
-  ├── store        ## Zustand store(s)
-  └── types        ## Shared types
+  ├── components       ## Shared components
+  │   ├── ui           ## Core UI components (button, input, text, etc.)
+  │   └── forms        ## Form helpers and controlled fields
+  ├── features         ## Feature modules (planner, workout)
+  │   └── planner      ## planner-repository, use-active-plan, date-utils, planner-store, planner-types
+  ├── hooks             ## Reusable hooks (auth, theme, tokens)
+  ├── lib               ## Shared utilities, auth, query, storage, config
+  │   └── planner-db    ## Drizzle schema, database, migrations, PlannerDbProvider
+  ├── store             ## Zustand store(s)
+  └── types             ## Shared types
 ```
 
 - How to use:
@@ -62,9 +66,11 @@ src
 - Expo Router
 - React Query with React Query Kit
 - Zustand
+- Drizzle ORM + OP-SQLite (SQLite for planner plan data; migrations via drizzle-kit)
 - React Native Keyboard Controller
 - React Native SVG
-- React Native MMKV
+- React Native MMKV (app settings, small keys; plan data lives in SQLite)
+- react-native-uuid (UUIDs for planner entities)
 
 ## Naming Conventions
 
@@ -108,6 +114,7 @@ src
 
 - Use `triggerHaptic` from `@/lib/haptics` for haptic feedback.
 - Store sensitive data in MMKV secure storage (`secureStorage`, `SECURE_STORAGE_KEYS`); ensure `EXPO_PUBLIC_MMKV_ENCRYPTION_KEY` is set.
+- **Planner plan data** (splits, variants, session templates, cycles) lives in **SQLite** via Drizzle (`@/lib/planner-db`, `@/features/planner/planner-repository`). Use MMKV only for small planner UI keys if needed (e.g. viewed week). Do not persist full plan state to MMKV.
 
 ## Hooks and Data Fetching
 
@@ -122,6 +129,7 @@ src
 - Use typography helpers `H1`, `H2`, `H3`, `P`, `Small` for consistent text scale.
 - Use `Screen` for page layout, safe area handling, and optional background gradient.
 - Use `FormField` and controlled fields from `@/components/forms` for form layouts.
+- **Planner header:** Bell and Settings in `AppHeader` are global (notifications, app settings). Planner-specific actions use `rightAddon` (e.g. Plan pill) and link to `/planner/plan`; do not repurpose the bell/gear for plan management.
 
 ## Theme, Tokens, and Utilities
 

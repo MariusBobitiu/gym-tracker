@@ -86,9 +86,9 @@ Tokens:
 - `radius`: numeric radius scale
 - `typography`: sizes, line heights, weights, letter spacing
 
-## Storage (MMKV)
+## Storage (MMKV + SQLite)
 
-Typed storage helpers live in `src/lib/storage.ts` and expose `getStorageItem`, `setStorageItem`, and `removeStorageItem` along with typed keys.
+**MMKV** — Typed storage helpers live in `src/lib/storage.ts` and expose `getStorageItem`, `setStorageItem`, and `removeStorageItem` along with typed keys. Use for app settings, theme, session, and small UI flags.
 
 ```tsx
 import { STORAGE_KEYS, getStorageItem, setStorageItem } from '@/lib/storage';
@@ -112,6 +112,8 @@ import { setSecureItem, SECURE_STORAGE_KEYS } from '@/lib/storage';
 
 setSecureItem(SECURE_STORAGE_KEYS.authToken, { access: '...', refresh: '...' });
 ```
+
+**SQLite (Planner)** — Plan data (splits, variants, session templates, cycles) lives in SQLite via Drizzle ORM and OP-SQLite. Schema and migrations live in `src/lib/planner-db/`; the repository API is in `src/features/planner/planner-repository.ts`. Migrations run at app start via `PlannerDbProvider` in the (app) layout. Do not persist full plan state to MMKV.
 
 ## Networking
 
@@ -240,6 +242,15 @@ export default function Account() {
   return null;
 }
 ```
+
+## Planner
+
+The Planner feature lets users define workout splits (variants A/B/C), set a rotation (e.g. A/B alternating), and view a week-based session list.
+
+- **Data:** Splits, variants, session templates, and cycles are stored in SQLite (Drizzle + OP-SQLite). Repository: `@/features/planner/planner-repository` (`getActivePlan`, `createTemplateSplit`, `createOrUpdateCycle`, `resetPlan`, etc.).
+- **Flow:** `/planner` gates between three states: no split (empty → split-template), split but no cycle (needs rotation → rotation), or full week view. Week view is generated from the active plan’s rotation and anchor week (no fixed weekdays).
+- **Routes:** `/planner` (main, gated), `/planner/split-template` (choose template or custom), `/planner/split-builder` (custom split), `/planner/rotation` (set rotation), `/planner/plan` (manage plan; accessible via Plan pill in header).
+- **Header:** Bell and Settings are global (notifications, app settings). Planner-specific actions use the Plan pill (`AppHeader` `rightAddon`) and go to `/planner/plan`.
 
 ## Project Notes
 

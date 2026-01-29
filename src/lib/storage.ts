@@ -2,7 +2,8 @@ import { useEffect, useCallback, useReducer } from "react";
 import { createMMKV } from "react-native-mmkv";
 import type { User } from "@/types";
 import type { WorkoutSession } from "@/types/workout-session";
-import type { PlannerState } from "@/features/planner/planner-types";
+/** Optional UI-only planner flags (e.g. viewed week). Plan data lives in SQLite. */
+export type PlannerUIState = { viewedWeekStart?: number } | null;
 
 export const storage = createMMKV({ id: "gym-tracker" });
 
@@ -39,7 +40,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.token]: TokenType;
   [STORAGE_KEYS.user]: User;
   [STORAGE_KEYS.workoutSession]: WorkoutSession | null;
-  [STORAGE_KEYS.planner]: PlannerState;
+  [STORAGE_KEYS.planner]: PlannerUIState;
 };
 
 export type SecureStorageSchema = {

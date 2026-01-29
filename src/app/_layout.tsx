@@ -17,18 +17,19 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function Root() {
   // Set up the auth context and render your layout inside of it.
+  // ThemeProvider must wrap BottomSheetModalProvider so modal portal content gets theme context.
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <SessionProvider>
-          <QueryClientProvider client={queryClient}>
-            <ThemeProvider>
+      <ThemeProvider>
+        <BottomSheetModalProvider>
+          <SessionProvider>
+            <QueryClientProvider client={queryClient}>
               <SplashScreenController />
               <RootNavigator />
-            </ThemeProvider>
-          </QueryClientProvider>
-        </SessionProvider>
-      </BottomSheetModalProvider>
+            </QueryClientProvider>
+          </SessionProvider>
+        </BottomSheetModalProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
