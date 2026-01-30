@@ -2,10 +2,12 @@
 
 import journal from "./meta/_journal.json";
 import m0000 from "./0000_flippant_magdalene.sql";
+import m0001 from "./0001_cycle_state.sql";
 
 export default {
   journal,
   migrations: {
     m0000,
+    m0001,
   },
 };

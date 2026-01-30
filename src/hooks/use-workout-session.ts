@@ -26,7 +26,11 @@ export type UseWorkoutSessionReturn = {
   setSession: (value: WorkoutSession | null) => void;
 };
 
-export function useWorkoutSession(): UseWorkoutSessionReturn {
+export type WorkoutSessionOptions = {
+  onComplete?: () => void | Promise<void>;
+};
+
+export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSessionReturn {
   const router = useRouter();
   const [[loading, session], setSession] = useStorageState(STORAGE_KEYS.workoutSession);
 
@@ -163,6 +167,7 @@ export function useWorkoutSession(): UseWorkoutSessionReturn {
           };
           setStorageItem(STORAGE_KEYS.workoutSession, completedSession);
           setSession(completedSession);
+          void options?.onComplete?.();
           router.dismissAll();
         },
       },

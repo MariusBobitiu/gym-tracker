@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import type { ActivePlan } from "./planner-repository";
-import { getActivePlan, getSplitIfExists } from "./planner-repository";
+import { useCallback, useEffect, useState } from "react";
+import type { ActivePlan, ActivePlanWithState } from "./planner-repository";
+import { getActiveCycleWithSplit, getSplitIfExists } from "./planner-repository";
 
 export type PlannerGateState =
   | { kind: "loading" }
   | { kind: "hard_empty" }
   | { kind: "needs_rotation"; splitOnly: Omit<ActivePlan, "cycle"> }
-  | { kind: "week_view"; plan: ActivePlan };
+  | { kind: "week_view"; plan: ActivePlanWithState };
 
 export function useActivePlan(): {
   state: PlannerGateState;
@@ -16,13 +16,13 @@ export function useActivePlan(): {
   const [state, setState] = useState<PlannerGateState>({ kind: "loading" });
   const [error, setError] = useState<Error | null>(null);
 
-  const refetch = async (): Promise<void> => {
+  const refetch = useCallback(async (): Promise<void> => {
     setState({ kind: "loading" });
     setError(null);
     try {
-      const plan = await getActivePlan();
-      if (plan) {
-        setState({ kind: "week_view", plan });
+      const planWithState = await getActiveCycleWithSplit();
+      if (planWithState) {
+        setState({ kind: "week_view", plan: planWithState });
         return;
       }
       const splitOnly = await getSplitIfExists();
@@ -35,11 +35,11 @@ export function useActivePlan(): {
       setError(e instanceof Error ? e : new Error(String(e)));
       setState({ kind: "hard_empty" });
     }
-  };
+  }, []);
 
   useEffect(() => {
     refetch();
-  }, []);
+  }, [refetch]);
 
   return { state, error, refetch };
 }

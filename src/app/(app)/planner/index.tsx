@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { differenceInCalendarWeeks, startOfWeek } from "date-fns";
 import { Stack, useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { Pressable, View } from "react-native";
 import { ChevronLeft, ChevronRight, Plus, Settings2 } from "lucide-react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
@@ -19,8 +21,17 @@ import {
 } from "@/components/ui";
 import { Modal, useModal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme-context";
-import { formatWeekRange, getWeekRange, startOfWeekMonday } from "@/features/planner/date-utils";
-import { getWeekSessionsFromPlan } from "@/features/planner/planner-repository";
+import {
+  formatDateShort,
+  formatWeekRange,
+  getWeekRange,
+  startOfWeekMonday,
+} from "@/features/planner/date-utils";
+import {
+  getWeekSessionsFromPlan,
+  getRotationType,
+  completePlannedSession,
+} from "@/features/planner/planner-repository";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import type { PlannedSessionView } from "@/features/planner/planner-types";
 import { ScrollView } from "moti";
@@ -48,9 +59,27 @@ export default function Planner() {
 
   const { state, error, refetch } = useActivePlan();
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
   const [weekStartDate, weekEndDate] = useMemo(
     () => getWeekRange(viewedWeekStart),
     [viewedWeekStart]
+  );
+  const isCurrentWeek = useMemo(() => {
+    const todayWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const viewedStart = startOfWeek(viewedWeekStart, { weekStartsOn: 1 });
+    return todayWeekStart.getTime() === viewedStart.getTime();
+  }, [viewedWeekStart]);
+  const sessionsHeaderText = useMemo(
+    () =>
+      isCurrentWeek
+        ? "Sessions for this week"
+        : `Sessions for ${formatDateShort(weekStartDate)} – ${formatDateShort(weekEndDate)}`,
+    [isCurrentWeek, weekStartDate, weekEndDate]
   );
   const weekRangeText = useMemo(
     () => formatWeekRange(weekStartDate, weekEndDate),
@@ -60,20 +89,60 @@ export default function Planner() {
   const weekData =
     state.kind === "week_view" ? getWeekSessionsFromPlan(state.plan, viewedWeekStart) : null;
 
+  const weekProgress =
+    state.kind === "week_view"
+      ? getWeekProgress({
+          weekData,
+          cycleState: state.plan.cycleState,
+          weekStartDate,
+          weekEndDate,
+        })
+      : null;
+  const upNextSessionId = weekProgress?.upNextSessionId ?? null;
+
+  useEffect(() => {
+    if (state.kind !== "week_view") return;
+    console.log("[Planner] cycle_state", state.plan.cycleState);
+  }, [state.kind, state.kind === "week_view" ? state.plan.cycleState : null]);
+
+  useEffect(() => {
+    if (state.kind !== "week_view" || !weekData) return;
+    const cycleStartWeekStart = startOfWeek(new Date(state.plan.cycle.anchor_week_start), {
+      weekStartsOn: 1,
+    });
+    const viewedStart = startOfWeek(viewedWeekStart, { weekStartsOn: 1 });
+    const weekIndex = differenceInCalendarWeeks(viewedStart, cycleStartWeekStart, {
+      weekStartsOn: 1,
+    });
+    const weekVariant = weekIndex % 2 === 0 ? "A" : "B";
+    console.log("[Planner] Week calc", {
+      cycleStartWeekStart: cycleStartWeekStart.toISOString(),
+      viewedWeekStart: viewedStart.toISOString(),
+      weekIndex,
+      weekVariant,
+    });
+  }, [
+    state.kind,
+    state.kind === "week_view" ? state.plan.cycle.anchor_week_start : undefined,
+    viewedWeekStart,
+    weekData?.variantKey,
+  ]);
+
   const plannedSessions: PlannedSessionView[] = useMemo(() => {
     if (!weekData) return [];
-    return weekData.sessions.map((s, index) => ({
-      plannedSessionTemplateId: s.id,
-      title: s.name,
-      tags: s.muscleGroups ?? undefined,
-      muscleGroups: s.muscleGroups ?? undefined,
+    const completedCount = weekProgress?.completedCount ?? 0;
+    return weekData.sessions.map((session, index) => ({
+      plannedSessionTemplateId: session.id,
+      title: session.name,
+      tags: session.muscleGroups ?? undefined,
+      muscleGroups: session.muscleGroups ?? undefined,
       estimatedMins: undefined,
       variantNotes: undefined,
-      status: "planned" as const,
+      status: index < completedCount ? "completed" : "planned",
       completedLog: undefined,
-      isUpNext: index === 0,
+      isUpNext: upNextSessionId === session.id,
     }));
-  }, [weekData]);
+  }, [weekData, upNextSessionId, weekProgress?.completedCount]);
 
   const handlePrevWeek = () => {
     const prev = new Date(viewedWeekStart);
@@ -101,15 +170,25 @@ export default function Planner() {
     });
   };
 
-  const handleMarkAsDone = () => {
-    if (!selectedSession) return;
+  const handleMarkAsDone = async () => {
+    if (!selectedSession || state.kind !== "week_view") return;
     sessionModal.dismiss();
     setSelectedSession(null);
+    try {
+      await completePlannedSession(
+        state.plan.cycle.id,
+        state.plan,
+        selectedSession.plannedSessionTemplateId
+      );
+      refetch();
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   if (state.kind === "loading") {
     return (
-      <Screen className="pb-24">
+      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
         <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
         <View className="flex-1 items-center justify-center">
@@ -121,7 +200,7 @@ export default function Planner() {
 
   if (error) {
     return (
-      <Screen className="pb-24">
+      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
         <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
         <View className="flex-1 items-center justify-center px-4">
@@ -136,7 +215,7 @@ export default function Planner() {
 
   if (state.kind === "hard_empty") {
     return (
-      <Screen className="pb-24">
+      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
         <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
         <View className="flex-1 items-center justify-center px-6">
@@ -158,7 +237,7 @@ export default function Planner() {
 
   if (state.kind === "needs_rotation") {
     return (
-      <Screen className="pb-24">
+      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
         <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
         <View className="flex-1 items-center justify-center px-6">
@@ -180,15 +259,17 @@ export default function Planner() {
 
   const isPastWeek = weekEndDate < new Date();
   const totalPlanned = weekData?.totalPlanned ?? 0;
-  const completedCount = 0;
+  const completedCount = weekProgress?.completedCount ?? 0;
   const missedCount = 0;
 
   return (
-    <Screen safeAreaEdges={["top", "bottom"]}>
+    <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
       <Stack.Screen options={headerOptions({ title: "Planner" })} />
       <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
       <ScrollView className="mb-8 flex-1 pb-8">
-        <View className="mb-4 flex-row items-center justify-between px-4">
+        <View
+          className="mb-4 flex-row items-center justify-between px-4"
+          key={`week-nav-${viewedWeekStart.getTime()}`}>
           <Pressable
             onPress={handlePrevWeek}
             className="flex-row items-center"
@@ -209,16 +290,26 @@ export default function Planner() {
               }}>
               {weekRangeText}
             </Text>
-            {weekData && (
-              <Text
-                style={{
-                  fontSize: tokens.typography.sizes.xs,
-                  color: colors.mutedForeground,
-                  marginTop: 4,
-                }}>
-                {state.plan.split.name} • Week {weekData.variantKey}
-              </Text>
-            )}
+            {weekData &&
+              (getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
+                <Text
+                  style={{
+                    fontSize: tokens.typography.sizes.xs,
+                    color: colors.mutedForeground,
+                    marginTop: 4,
+                  }}>
+                  {state.plan.split.name} • Week {weekData.variantKey}
+                </Text>
+              ) : (
+                <Text
+                  style={{
+                    fontSize: tokens.typography.sizes.xs,
+                    color: colors.mutedForeground,
+                    marginTop: 4,
+                  }}>
+                  {state.plan.split.name}
+                </Text>
+              ))}
           </View>
 
           <Pressable
@@ -262,11 +353,39 @@ export default function Planner() {
           </View>
         </View>
 
-        <View className="px-4">
-          <H2 className="mb-3">This week&apos;s sessions</H2>
+        <View
+          className="px-4"
+          key={`sessions-${viewedWeekStart.getTime()}-${weekData?.variantKey ?? ""}`}>
+          <H2 className="mb-3">{sessionsHeaderText}</H2>
+          {completedCount >= totalPlanned && totalPlanned > 0 && (
+            <View
+              className="mb-3 rounded-lg px-4 py-3"
+              style={{
+                backgroundColor: `${colors.primary}12`,
+                borderWidth: 1,
+                borderColor: `${colors.primary}40`,
+              }}>
+              <Text
+                style={{
+                  fontSize: tokens.typography.sizes.sm,
+                  color: colors.primary,
+                  fontWeight: tokens.typography.weights.semibold,
+                }}>
+                All sessions complete
+              </Text>
+              <Text
+                style={{
+                  fontSize: tokens.typography.sizes.sm,
+                  color: colors.mutedForeground,
+                  marginTop: 4,
+                }}>
+                Nice work! You’re done for this week.
+              </Text>
+            </View>
+          )}
           {plannedSessions.map((session) => (
             <SessionCard
-              key={session.plannedSessionTemplateId}
+              key={`${viewedWeekStart.getTime()}-${session.plannedSessionTemplateId}`}
               session={session}
               onPress={() => handleSessionPress(session)}
               isPastWeek={isPastWeek}
@@ -291,17 +410,92 @@ export default function Planner() {
         title={selectedSession?.title || "Session Actions"}>
         {selectedSession && (
           <View className="px-4 pb-8">
+            {!isCurrentWeek && (
+              <View
+                className="mb-4 rounded-lg px-3 py-2"
+                style={{
+                  backgroundColor: `${colors.muted}40`,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                }}>
+                <Text
+                  style={{
+                    fontSize: tokens.typography.sizes.sm,
+                    color: colors.mutedForeground,
+                  }}>
+                  Only current week sessions can be started or marked complete.
+                </Text>
+              </View>
+            )}
             <View style={{ marginBottom: tokens.spacing.md }}>
-              <Button label="Start workout" onPress={handleStartWorkout} variant="primary" />
+              <Button
+                label="Start workout"
+                onPress={handleStartWorkout}
+                variant="primary"
+                disabled={!isCurrentWeek}
+              />
             </View>
             <View style={{ marginBottom: tokens.spacing.md }}>
-              <Button label="Mark as done" onPress={handleMarkAsDone} variant="outline" />
+              <Button
+                label="Mark as done"
+                onPress={handleMarkAsDone}
+                variant="outline"
+                disabled={!isCurrentWeek}
+              />
             </View>
           </View>
         )}
       </Modal>
     </Screen>
   );
+}
+
+type WeekProgressInput = {
+  weekData: ReturnType<typeof getWeekSessionsFromPlan> | null;
+  cycleState: {
+    session_index_a: number;
+    session_index_b: number;
+    session_index_c: number;
+    last_completed_at: string | null;
+  };
+  weekStartDate: Date;
+  weekEndDate: Date;
+};
+
+type WeekProgressResult = {
+  completedCount: number;
+  upNextSessionId: string | null;
+};
+
+function getWeekProgress(input: WeekProgressInput): WeekProgressResult | null {
+  const { weekData, cycleState, weekStartDate, weekEndDate } = input;
+  if (!weekData) return null;
+
+  const sessions = weekData.sessions;
+  const total = sessions.length;
+  const lastCompletedAt = cycleState.last_completed_at
+    ? new Date(cycleState.last_completed_at)
+    : null;
+  const isInWeek =
+    lastCompletedAt !== null &&
+    lastCompletedAt.getTime() >= weekStartDate.getTime() &&
+    lastCompletedAt.getTime() <= weekEndDate.getTime();
+
+  const nextIndex =
+    weekData.variantKey === "B"
+      ? cycleState.session_index_b
+      : weekData.variantKey === "C"
+        ? cycleState.session_index_c
+        : cycleState.session_index_a;
+
+  let completedCount = isInWeek ? Math.min(nextIndex, total) : 0;
+  if (isInWeek && total > 0 && nextIndex === 0) {
+    completedCount = total;
+  }
+
+  const upNextSessionId = completedCount >= total ? null : (sessions[nextIndex]?.id ?? null);
+
+  return { completedCount, upNextSessionId };
 }
 
 type SessionCardProps = {

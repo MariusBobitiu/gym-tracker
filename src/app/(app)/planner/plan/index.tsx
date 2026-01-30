@@ -12,6 +12,7 @@ import {
   resetPlan,
   parseRotation,
 } from "@/features/planner/planner-repository";
+import { resetRotationPointer } from "@/features/planner/rotation-state";
 import { LoadingState } from "@/components/feedback-states";
 
 export default function PlanScreen() {
@@ -40,6 +41,11 @@ export default function PlanScreen() {
     setResetting(true);
     try {
       await resetPlan();
+      try {
+        resetRotationPointer();
+      } catch (e) {
+        console.warn("resetRotationPointer:", e);
+      }
       router.replace({ pathname: "/planner" } as never);
     } catch (e) {
       console.error(e);
@@ -49,7 +55,7 @@ export default function PlanScreen() {
 
   if (loading) {
     return (
-      <Screen className="pb-24">
+      <Screen safeAreaEdges={["top", "bottom"]} contentContainerClassName="pb-12">
         <Stack.Screen options={headerOptions({ title: "Manage plan" })} />
         <AppHeader title="Manage plan" showBackButton />
         <View className="flex-1 items-center justify-center">
@@ -65,7 +71,7 @@ export default function PlanScreen() {
     plan?.variants.map((v) => v.key) ?? splitOnly?.variants.map((v) => v.key) ?? [];
 
   return (
-    <Screen className="pb-24" preset="scroll">
+    <Screen safeAreaEdges={["top", "bottom"]} contentContainerClassName="pb-12" preset="scroll">
       <Stack.Screen options={headerOptions({ title: "Manage plan" })} />
       <AppHeader title="Manage plan" showBackButton />
       <View className="px-4 py-4">

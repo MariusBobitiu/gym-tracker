@@ -5,12 +5,7 @@ import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { Button, Card, CardContent, CardHeader, CardTitle, P, Text } from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
-import {
-  createTemplateSplit,
-  createOrUpdateCycle,
-  type TemplateId,
-} from "@/features/planner/planner-repository";
-import { startOfWeekMonday } from "@/features/planner/date-utils";
+import { createTemplateSplit, type TemplateId } from "@/features/planner/planner-repository";
 
 const TEMPLATE_OPTIONS: { id: TemplateId; title: string; description: string }[] = [
   {
@@ -38,11 +33,8 @@ export default function SplitTemplateScreen() {
   const handleSelectTemplate = async (templateId: TemplateId): Promise<void> => {
     setIsSubmitting(true);
     try {
-      const splitId = await createTemplateSplit(templateId);
-      const anchorWeekStart = startOfWeekMonday(new Date()).toISOString();
-      const rotation = templateId === "full-body-abc" ? ["A", "B", "C"] : ["A", "B"];
-      await createOrUpdateCycle(splitId, rotation, anchorWeekStart);
-      router.replace({ pathname: "/planner" } as never);
+      await createTemplateSplit(templateId);
+      router.replace({ pathname: "/planner/rotation" } as never);
     } catch (e) {
       console.error(e);
       setIsSubmitting(false);
@@ -54,7 +46,7 @@ export default function SplitTemplateScreen() {
   };
 
   return (
-    <Screen className="pb-24">
+    <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
       <Stack.Screen options={headerOptions({ title: "Choose a template" })} />
       <AppHeader title="Choose a template" showBackButton />
       <View className="px-4 py-4">

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dimensions, StyleSheet } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown } from "react-native-reanimated";
 import { Stack, useRouter } from "expo-router";
@@ -21,12 +21,34 @@ import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import { SESSION_PHASES } from "@/types/workout-session";
 import { useTheme } from "@/lib/theme-context";
 import { formatElapsedMs } from "@/lib/format-elapsed";
+import {
+  completeWorkoutAndAdvance,
+  completePlannedSession,
+  getActiveCycleWithSplit,
+} from "@/features/planner/planner-repository";
+import { usePlannerStore } from "@/features/planner/planner-store";
 
 type WorkoutView = "list" | "log-set" | "rest";
 
 export default function Workout(): React.ReactElement {
   const router = useRouter();
   const { colors } = useTheme();
+  const { activePlannedSessionId, setActivePlannedSessionId } = usePlannerStore();
+  const hasAdvancedPlannerRef = useRef(false);
+
+  const advancePlannerState = useCallback(async (): Promise<void> => {
+    if (!activePlannedSessionId || hasAdvancedPlannerRef.current) return;
+    hasAdvancedPlannerRef.current = true;
+    try {
+      const planWithState = await getActiveCycleWithSplit();
+      if (!planWithState) return;
+      await completePlannedSession(planWithState.cycle.id, planWithState, activePlannedSessionId);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActivePlannedSessionId(null);
+    }
+  }, [activePlannedSessionId, setActivePlannedSessionId]);
   const {
     session,
     elapsedMs,
@@ -37,7 +59,7 @@ export default function Workout(): React.ReactElement {
     currentExercise,
     completeSetAndAdvance,
     handleFinish,
-  } = useWorkoutSession();
+  } = useWorkoutSession({ onComplete: advancePlannerState });
 
   const [view, setView] = useState<WorkoutView>("list");
   const [showConfetti, setShowConfetti] = useState(false);
@@ -65,9 +87,12 @@ export default function Workout(): React.ReactElement {
   const handleFinishWithConfetti = useCallback(() => setShowConfetti(true), []);
 
   const handleWorkoutComplete = useCallback(() => {
-    setStorageItem(STORAGE_KEYS.workoutSession, null);
-    router.dismissAll();
-  }, [router]);
+    void (async () => {
+      await advancePlannerState();
+      setStorageItem(STORAGE_KEYS.workoutSession, null);
+      router.dismissAll();
+    })();
+  }, [advancePlannerState, router]);
 
   const handleSkipRest = useCallback(() => setView("log-set"), []);
 

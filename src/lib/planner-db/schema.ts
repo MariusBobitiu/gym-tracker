@@ -40,3 +40,17 @@ export const cycles = sqliteTable("cycles", {
   created_at: text("created_at").notNull(),
   is_active: integer("is_active", { mode: "boolean" }).notNull(),
 });
+
+export const cycleState = sqliteTable("cycle_state", {
+  id: text("id").primaryKey(),
+  cycle_id: text("cycle_id")
+    .notNull()
+    .unique()
+    .references(() => cycles.id, { onDelete: "cascade" }),
+  current_variant_key: text("current_variant_key").notNull(),
+  session_index_a: integer("session_index_a").notNull().default(0),
+  session_index_b: integer("session_index_b").notNull().default(0),
+  session_index_c: integer("session_index_c").notNull().default(0),
+  last_completed_at: text("last_completed_at"),
+  created_at: text("created_at").notNull(),
+});

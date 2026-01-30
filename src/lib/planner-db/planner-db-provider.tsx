@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View } from "react-native";
 import { useMigrations } from "drizzle-orm/op-sqlite/migrator";
 import { db } from "@/lib/planner-db/database";
+import { runPlannerDbDiagnostics } from "@/lib/planner-db/diagnostics";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/lib/theme-context";
 
@@ -25,6 +26,12 @@ type PlannerDbProviderProps = {
 export function PlannerDbProvider({ children }: PlannerDbProviderProps): React.ReactElement {
   const { success, error } = useMigrations(db, migrationsConfig);
   const { colors } = useTheme();
+
+  useEffect(() => {
+    if (typeof __DEV__ !== "undefined" && __DEV__ && success) {
+      runPlannerDbDiagnostics();
+    }
+  }, [success]);
 
   if (error) {
     return (

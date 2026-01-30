@@ -1,24 +1,63 @@
-import React, { useState } from "react";
-import { Stack, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { Pressable, View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { Button, P } from "@/components/ui";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/lib/theme-context";
-import { createCustomSplit, type CustomVariantInput } from "@/features/planner/planner-repository";
+import {
+  createCustomSplit,
+  getSplitBySplitId,
+  updateSplitWithVariantsAndSessions,
+  type CustomVariantInput,
+} from "@/features/planner/planner-repository";
 import { FormField } from "@/components/forms";
 import { Plus, Trash2 } from "lucide-react-native";
 import { ScrollView } from "moti";
+import { LoadingState } from "@/components/feedback-states";
 
 export default function SplitBuilderScreen() {
   const router = useRouter();
+  const { splitId } = useLocalSearchParams<{ splitId?: string }>();
   const { colors, tokens } = useTheme();
   const [splitName, setSplitName] = useState("My split");
   const [variantA, setVariantA] = useState<string[]>(["Session 1", "Session 2"]);
   const [variantB, setVariantB] = useState<string[] | null>(null);
   const [variantC, setVariantC] = useState<string[] | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(!!splitId);
+
+  const isEdit = Boolean(splitId);
+
+  useEffect(() => {
+    if (!splitId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    getSplitBySplitId(splitId)
+      .then((data) => {
+        if (!data) {
+          setLoading(false);
+          return;
+        }
+        setSplitName(data.split.name);
+        const sessionsA = data.sessionsByVariant["A"] ?? [];
+        setVariantA(sessionsA.length > 0 ? sessionsA.map((s) => s.name) : ["Session 1"]);
+        const hasB = data.variants.some((v) => v.key === "B");
+        const sessionsB = data.sessionsByVariant["B"] ?? [];
+        setVariantB(
+          hasB ? (sessionsB.length > 0 ? sessionsB.map((s) => s.name) : ["Session 1"]) : null
+        );
+        const hasC = data.variants.some((v) => v.key === "C");
+        const sessionsC = data.sessionsByVariant["C"] ?? [];
+        setVariantC(
+          hasC ? (sessionsC.length > 0 ? sessionsC.map((s) => s.name) : ["Session 1"]) : null
+        );
+      })
+      .finally(() => setLoading(false));
+  }, [splitId]);
 
   const addSession = (variant: "A" | "B" | "C"): void => {
     if (variant === "A") setVariantA((prev) => [...prev, `Session ${prev.length + 1}`]);
@@ -51,16 +90,33 @@ export default function SplitBuilderScreen() {
     if (variantC && variantC.length > 0) variants.push({ key: "C", sessionNames: variantC });
     setIsSubmitting(true);
     try {
-      await createCustomSplit(splitName.trim(), variants);
-      router.replace({ pathname: "/planner/rotation" } as never);
+      if (isEdit && splitId) {
+        await updateSplitWithVariantsAndSessions(splitId, splitName.trim(), variants);
+        router.replace({ pathname: "/planner/plan/summary" } as never);
+      } else {
+        await createCustomSplit(splitName.trim(), variants);
+        router.replace({ pathname: "/planner/rotation" } as never);
+      }
     } catch (e) {
       console.error(e);
       setIsSubmitting(false);
     }
   };
 
+  if (loading) {
+    return (
+      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+        <Stack.Screen options={headerOptions({ title: "Custom split" })} />
+        <AppHeader title="Custom split" showBackButton />
+        <View className="flex-1 items-center justify-center">
+          <LoadingState label="Loading..." />
+        </View>
+      </Screen>
+    );
+  }
+
   return (
-    <Screen keyboardAvoiding safeAreaEdges={["bottom", "top"]}>
+    <Screen keyboardAvoiding contentContainerClassName="pb-12" safeAreaEdges={["bottom", "top"]}>
       <Stack.Screen options={headerOptions({ title: "Custom split" })} />
       <AppHeader title="Custom split" showBackButton />
       <ScrollView className="mb-12 flex-1 px-4 py-4">
@@ -191,7 +247,7 @@ export default function SplitBuilderScreen() {
         ) : null}
 
         <Button
-          label="Save and set rotation"
+          label={isEdit ? "Save" : "Save and set rotation"}
           className="mt-4 w-full"
           onPress={handleSave}
           disabled={isSubmitting}

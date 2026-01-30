@@ -5,6 +5,9 @@ import type { WorkoutSession } from "@/types/workout-session";
 /** Optional UI-only planner flags (e.g. viewed week). Plan data lives in SQLite. */
 export type PlannerUIState = { viewedWeekStart?: number } | null;
 
+/** Pointer for "next workout" in rotation (variant index, session index). Used by getNextWorkout/advanceRotation. */
+export type PlannerNextWorkoutState = { variantIndex: number; sessionIndex: number } | null;
+
 export const storage = createMMKV({ id: "gym-tracker" });
 
 const ENCRYPTION_KEY = process.env.EXPO_PUBLIC_MMKV_ENCRYPTION_KEY;
@@ -20,6 +23,7 @@ export const STORAGE_KEYS = {
   user: "user",
   workoutSession: "workout_session",
   planner: "planner_v1",
+  plannerNextWorkout: "planner_next_workout",
 } as const;
 
 export const SECURE_STORAGE_KEYS = {
@@ -41,6 +45,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.user]: User;
   [STORAGE_KEYS.workoutSession]: WorkoutSession | null;
   [STORAGE_KEYS.planner]: PlannerUIState;
+  [STORAGE_KEYS.plannerNextWorkout]: PlannerNextWorkoutState;
 };
 
 export type SecureStorageSchema = {
