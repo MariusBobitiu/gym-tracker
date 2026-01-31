@@ -38,7 +38,8 @@ export type RotationType = "SAME_EVERY_WEEK" | "ALTERNATE_AB";
 
 /** Normalize rotation value to SAME_EVERY_WEEK or ALTERNATE_AB. Handles legacy JSON array. */
 export function getRotationType(rotation: string): RotationType {
-  if (rotation === "SAME_EVERY_WEEK" || rotation === "ALTERNATE_AB") return rotation;
+  if (rotation === "SAME_EVERY_WEEK" || rotation === "ALTERNATE_AB")
+    return rotation;
   try {
     const arr = JSON.parse(rotation) as unknown;
     const list = Array.isArray(arr) ? arr : [];
@@ -61,7 +62,11 @@ function parseRotation(rotationJson: string): string[] {
 export async function getSplitBySplitId(
   splitId: string
 ): Promise<Omit<ActivePlan, "cycle"> | null> {
-  const splitRows = await db.select().from(splits).where(eq(splits.id, splitId)).limit(1);
+  const splitRows = await db
+    .select()
+    .from(splits)
+    .where(eq(splits.id, splitId))
+    .limit(1);
   const split = splitRows[0] ?? null;
   if (!split) return null;
 
@@ -81,7 +86,9 @@ export async function getSplitBySplitId(
     sessionsByVariant[v.key] = sessionRows.map((s) => ({
       id: s.id,
       name: s.name,
-      muscleGroups: s.muscle_groups ? (JSON.parse(s.muscle_groups) as string[]) : null,
+      muscleGroups: s.muscle_groups
+        ? (JSON.parse(s.muscle_groups) as string[])
+        : null,
       position: s.position,
     }));
   }
@@ -89,7 +96,10 @@ export async function getSplitBySplitId(
 }
 
 /** Returns the first split with its variants and sessions (no cycle). Use to detect NeedsRotation. */
-export async function getSplitIfExists(): Promise<Omit<ActivePlan, "cycle"> | null> {
+export async function getSplitIfExists(): Promise<Omit<
+  ActivePlan,
+  "cycle"
+> | null> {
   const splitRows = await db.select().from(splits).limit(1);
   const split = splitRows[0] ?? null;
   if (!split) return null;
@@ -110,7 +120,9 @@ export async function getSplitIfExists(): Promise<Omit<ActivePlan, "cycle"> | nu
     sessionsByVariant[v.key] = sessionRows.map((s) => ({
       id: s.id,
       name: s.name,
-      muscleGroups: s.muscle_groups ? (JSON.parse(s.muscle_groups) as string[]) : null,
+      muscleGroups: s.muscle_groups
+        ? (JSON.parse(s.muscle_groups) as string[])
+        : null,
       position: s.position,
     }));
   }
@@ -118,12 +130,20 @@ export async function getSplitIfExists(): Promise<Omit<ActivePlan, "cycle"> | nu
 }
 
 export async function getActivePlan(): Promise<ActivePlan | null> {
-  const activeCycles = await db.select().from(cycles).where(eq(cycles.is_active, true)).limit(1);
+  const activeCycles = await db
+    .select()
+    .from(cycles)
+    .where(eq(cycles.is_active, true))
+    .limit(1);
 
   const cycle = activeCycles[0] ?? null;
   if (!cycle) return null;
 
-  const splitRows = await db.select().from(splits).where(eq(splits.id, cycle.split_id)).limit(1);
+  const splitRows = await db
+    .select()
+    .from(splits)
+    .where(eq(splits.id, cycle.split_id))
+    .limit(1);
   const split = splitRows[0] ?? null;
   if (!split) return null;
 
@@ -145,7 +165,9 @@ export async function getActivePlan(): Promise<ActivePlan | null> {
     sessionsByVariant[v.key] = sessionRows.map((s) => ({
       id: s.id,
       name: s.name,
-      muscleGroups: s.muscle_groups ? (JSON.parse(s.muscle_groups) as string[]) : null,
+      muscleGroups: s.muscle_groups
+        ? (JSON.parse(s.muscle_groups) as string[])
+        : null,
       position: s.position,
     }));
   }
@@ -159,8 +181,14 @@ export async function getActivePlan(): Promise<ActivePlan | null> {
 }
 
 /** Returns cycle_state for cycleId; creates default row if missing. */
-export async function getOrCreateCycleState(cycleId: string): Promise<CycleStateRow> {
-  const rows = await db.select().from(cycleState).where(eq(cycleState.cycle_id, cycleId)).limit(1);
+export async function getOrCreateCycleState(
+  cycleId: string
+): Promise<CycleStateRow> {
+  const rows = await db
+    .select()
+    .from(cycleState)
+    .where(eq(cycleState.cycle_id, cycleId))
+    .limit(1);
   const existing = rows[0];
   if (existing) return existing;
 
@@ -190,7 +218,9 @@ export async function getOrCreateCycleState(cycleId: string): Promise<CycleState
 }
 
 /** Ensures exactly one cycle_state row exists for the cycle (creates default if missing). Alias for getOrCreateCycleState. */
-export async function ensureCycleState(cycleId: string): Promise<CycleStateRow> {
+export async function ensureCycleState(
+  cycleId: string
+): Promise<CycleStateRow> {
   return getOrCreateCycleState(cycleId);
 }
 
@@ -213,8 +243,14 @@ const TEMPLATES = {
   "upper-lower-ab": {
     name: "Upper / Lower (A/B)",
     variants: [
-      { key: "A", sessions: ["Upper Body", "Lower Body", "Upper Body", "Lower Body"] },
-      { key: "B", sessions: ["Upper Body", "Lower Body", "Upper Body", "Lower Body"] },
+      {
+        key: "A",
+        sessions: ["Upper Body", "Lower Body", "Upper Body", "Lower Body"],
+      },
+      {
+        key: "B",
+        sessions: ["Upper Body", "Lower Body", "Upper Body", "Lower Body"],
+      },
     ],
   },
   "full-body-abc": {
@@ -229,13 +265,15 @@ const TEMPLATES = {
 
 export type TemplateId = keyof typeof TEMPLATES;
 
-export async function createTemplateSplit(templateId: TemplateId): Promise<string> {
+export async function createTemplateSplit(
+  templateId: TemplateId
+): Promise<string> {
   const template = TEMPLATES[templateId];
   if (!template) throw new Error(`Unknown template: ${templateId}`);
 
   const variants: CustomVariantInput[] = template.variants.map((v) => ({
     key: v.key,
-    sessionNames: v.sessions,
+    sessionNames: [...v.sessions],
   }));
   return createSplitWithVariantsAndSessions(template.name, variants);
 }
@@ -300,7 +338,11 @@ export async function createOrUpdateCycle(
     .set({ is_active: false })
     .where(sql`1 = 1`);
 
-  const existing = await db.select().from(cycles).where(eq(cycles.id, id)).limit(1);
+  const existing = await db
+    .select()
+    .from(cycles)
+    .where(eq(cycles.id, id))
+    .limit(1);
 
   if (existing.length > 0) {
     await db
@@ -328,7 +370,11 @@ export async function createOrUpdateCycle(
 }
 
 export async function resetPlan(): Promise<void> {
-  const active = await db.select().from(cycles).where(eq(cycles.is_active, true)).limit(1);
+  const active = await db
+    .select()
+    .from(cycles)
+    .where(eq(cycles.is_active, true))
+    .limit(1);
   if (active.length === 0) return;
   const splitId = active[0].split_id;
 
@@ -339,7 +385,9 @@ export async function resetPlan(): Promise<void> {
     .from(splitVariants)
     .where(eq(splitVariants.split_id, splitId));
   for (const v of variantRows) {
-    await db.delete(sessionTemplates).where(eq(sessionTemplates.variant_id, v.id));
+    await db
+      .delete(sessionTemplates)
+      .where(eq(sessionTemplates.variant_id, v.id));
   }
   await db.delete(splitVariants).where(eq(splitVariants.split_id, splitId));
   await db.delete(splits).where(eq(splits.id, splitId));
@@ -361,11 +409,17 @@ export function getVariantKeyForWeekDisplay(
   weekStartMonday: Date
 ): string {
   if (rotationType === "SAME_EVERY_WEEK") return "A";
-  const cycleStartWeekStart = startOfWeek(new Date(anchorWeekStart), { weekStartsOn: 1 });
-  const viewedWeekStart = startOfWeek(weekStartMonday, { weekStartsOn: 1 });
-  const weekIndex = differenceInCalendarWeeks(viewedWeekStart, cycleStartWeekStart, {
+  const cycleStartWeekStart = startOfWeek(new Date(anchorWeekStart), {
     weekStartsOn: 1,
   });
+  const viewedWeekStart = startOfWeek(weekStartMonday, { weekStartsOn: 1 });
+  const weekIndex = differenceInCalendarWeeks(
+    viewedWeekStart,
+    cycleStartWeekStart,
+    {
+      weekStartsOn: 1,
+    }
+  );
   return weekIndex % 2 === 0 ? "A" : "B";
 }
 
@@ -381,7 +435,8 @@ export function getVariantKeyForWeek(
   weekStart.setHours(0, 0, 0, 0);
   const diffMs = weekStart.getTime() - anchor.getTime();
   const weeksSinceAnchor = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
-  const index = ((weeksSinceAnchor % rotation.length) + rotation.length) % rotation.length;
+  const index =
+    ((weeksSinceAnchor % rotation.length) + rotation.length) % rotation.length;
   return rotation[index] ?? "A";
 }
 
@@ -410,7 +465,10 @@ export function getWeekSessionsFromPlan(
   };
 }
 
-export async function updateSplit(splitId: string, name: string): Promise<void> {
+export async function updateSplit(
+  splitId: string,
+  name: string
+): Promise<void> {
   await db.update(splits).set({ name }).where(eq(splits.id, splitId));
 }
 
@@ -433,7 +491,9 @@ export async function updateSplitWithVariantsAndSessions(
     .where(eq(splitVariants.split_id, splitId));
 
   for (const v of variantRows) {
-    await db.delete(sessionTemplates).where(eq(sessionTemplates.variant_id, v.id));
+    await db
+      .delete(sessionTemplates)
+      .where(eq(sessionTemplates.variant_id, v.id));
   }
   await db.delete(splitVariants).where(eq(splitVariants.split_id, splitId));
 
@@ -458,7 +518,10 @@ export async function updateSplitWithVariantsAndSessions(
 }
 
 /** Returns the session template id that is "up next" based on cycle_state and rotation type. */
-export function getUpNextSessionId(plan: ActivePlan, state: CycleStateRow): string | null {
+export function getUpNextSessionId(
+  plan: ActivePlan,
+  state: CycleStateRow
+): string | null {
   const rotationType = getRotationType(plan.cycle.rotation);
   const sessionsA = plan.sessionsByVariant["A"] ?? [];
   const sessionsB = plan.sessionsByVariant["B"] ?? [];
@@ -482,7 +545,11 @@ export function getUpNextSessionId(plan: ActivePlan, state: CycleStateRow): stri
   return null;
 }
 
-export type UpNextSession = { variantKey: string; sessionName: string; sessionId: string };
+export type UpNextSession = {
+  variantKey: string;
+  sessionName: string;
+  sessionId: string;
+};
 
 /** Next session from cycle_state: { variantKey, sessionTemplateId, name }. Used for "Up next" (Model B). */
 export type NextSession = {
@@ -492,12 +559,20 @@ export type NextSession = {
 };
 
 /** Returns the next session from cycle_state (variant + template id + name). Sync; use with plan + state. */
-export function getNextSessionFromPlan(plan: ActivePlan, state: CycleStateRow): NextSession | null {
+export function getNextSessionFromPlan(
+  plan: ActivePlan,
+  state: CycleStateRow
+): NextSession | null {
   const sessionId = getUpNextSessionId(plan, state);
   if (!sessionId) return null;
   for (const [key, sessions] of Object.entries(plan.sessionsByVariant)) {
     const session = sessions.find((s) => s.id === sessionId);
-    if (session) return { variantKey: key, sessionTemplateId: session.id, name: session.name };
+    if (session)
+      return {
+        variantKey: key,
+        sessionTemplateId: session.id,
+        name: session.name,
+      };
   }
   return null;
 }
@@ -513,12 +588,16 @@ export async function getNextSession(
 }
 
 /** Returns up-next session info for display (e.g. "Today: Variant A — Push"). */
-export function getUpNextSession(plan: ActivePlan, state: CycleStateRow): UpNextSession | null {
+export function getUpNextSession(
+  plan: ActivePlan,
+  state: CycleStateRow
+): UpNextSession | null {
   const sessionId = getUpNextSessionId(plan, state);
   if (!sessionId) return null;
   for (const [key, sessions] of Object.entries(plan.sessionsByVariant)) {
     const session = sessions.find((s) => s.id === sessionId);
-    if (session) return { variantKey: key, sessionName: session.name, sessionId };
+    if (session)
+      return { variantKey: key, sessionName: session.name, sessionId };
   }
   return null;
 }
@@ -589,7 +668,9 @@ export async function completePlannedSession(
   if (!match) return;
 
   const [variantKey, sessions] = match;
-  const index = sessions.findIndex((session) => session.id === sessionTemplateId);
+  const index = sessions.findIndex(
+    (session) => session.id === sessionTemplateId
+  );
   if (index < 0) return;
 
   const count = sessions.length || 1;
@@ -616,6 +697,9 @@ export async function completePlannedSession(
           };
 
   if (state) {
-    await db.update(cycleState).set(update).where(eq(cycleState.cycle_id, cycleId));
+    await db
+      .update(cycleState)
+      .set(update)
+      .where(eq(cycleState.cycle_id, cycleId));
   }
 }
