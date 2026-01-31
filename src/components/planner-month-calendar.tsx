@@ -44,20 +44,6 @@ function getCalendarDays(monthDate: Date, rangeStart: Date, rangeEnd: Date): Cal
   }));
 }
 
-function MonthHeader({ label }: { label: string }): React.JSX.Element {
-  const { colors, tokens } = useTheme();
-  return (
-    <Text
-      style={{
-        fontSize: tokens.typography.sizes.sm,
-        fontWeight: tokens.typography.weights.semibold,
-        color: colors.foreground,
-      }}>
-      {label}
-    </Text>
-  );
-}
-
 function WeekdayRow({ labels }: { labels: string[] }): React.JSX.Element {
   const { colors, tokens } = useTheme();
   return (
@@ -69,7 +55,7 @@ function WeekdayRow({ labels }: { labels: string[] }): React.JSX.Element {
               fontSize: tokens.typography.sizes.xs,
               color: colors.mutedForeground,
               textAlign: "center",
-              fontWeight: tokens.typography.weights.medium,
+              fontWeight: tokens.typography.weights.semibold,
             }}>
             {label}
           </Text>
@@ -154,10 +140,6 @@ export function PlannerMonthCalendar({
   rangeEnd,
   onDayPress,
 }: MonthCalendarProps): React.JSX.Element {
-  const monthLabel = useMemo(
-    () => monthDate.toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-    [monthDate]
-  );
   const weekDayLabels = useMemo(() => ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], []);
   const calendarDays = useMemo(
     () => getCalendarDays(monthDate, rangeStart, rangeEnd),
@@ -166,7 +148,6 @@ export function PlannerMonthCalendar({
 
   return (
     <View>
-      <MonthHeader label={monthLabel} />
       <WeekdayRow labels={weekDayLabels} />
       <CalendarGrid days={calendarDays} onDayPress={onDayPress} />
     </View>

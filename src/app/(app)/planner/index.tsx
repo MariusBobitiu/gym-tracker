@@ -2,15 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { differenceInCalendarWeeks, format, startOfWeek } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-import { LayoutAnimation, Platform, Pressable, UIManager, View } from "react-native";
-import {
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  ChevronUp,
-  Plus,
-  Settings2,
-} from "lucide-react-native";
+import { LayoutChangeEvent, Pressable, View } from "react-native";
+import { ChevronLeft, ChevronRight, ChevronUp, Plus, Settings2 } from "lucide-react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import {
@@ -21,7 +14,6 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-  H2,
   H3,
   P,
   Text,
@@ -41,7 +33,7 @@ import {
 } from "@/features/planner/planner-repository";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import type { PlannedSessionView } from "@/features/planner/planner-types";
-import { ScrollView } from "moti";
+import { AnimatePresence, MotiView, ScrollView } from "moti";
 import { LoadingState } from "@/components/feedback-states";
 import { PlannerMonthCalendar } from "@/components/planner-month-calendar";
 import { getHitSlop, resolveAccessibilityLabel } from "@/lib/accessibility";
@@ -64,6 +56,7 @@ export default function Planner() {
   const { colors, tokens } = useTheme();
   const [viewedWeekStart, setViewedWeekStart] = useState(() => startOfWeekMonday(new Date()));
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [calendarHeight, setCalendarHeight] = useState(0);
   const [selectedSession, setSelectedSession] = useState<PlannedSessionView | null>(null);
   const sessionModal = useModal();
   const reduceMotion = useReducedMotion();
@@ -120,12 +113,6 @@ export default function Planner() {
     if (state.kind !== "week_view") return;
   }, [state.kind, cycleStateForEffect]);
 
-  useEffect(() => {
-    if (Platform.OS !== "android") return;
-    if (!UIManager.setLayoutAnimationEnabledExperimental) return;
-    UIManager.setLayoutAnimationEnabledExperimental(true);
-  }, []);
-
   const anchorWeekStartForEffect =
     state.kind === "week_view" ? state.plan.cycle.anchor_week_start : undefined;
   useEffect(() => {
@@ -177,11 +164,8 @@ export default function Planner() {
   };
 
   const handleToggleCalendar = useCallback((): void => {
-    if (!reduceMotion) {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    }
     setIsCalendarOpen((prev) => !prev);
-  }, [reduceMotion]);
+  }, []);
 
   const handleCalendarDayPress = useCallback((date: Date): void => {
     setViewedWeekStart(startOfWeekMonday(date));
@@ -216,6 +200,37 @@ export default function Planner() {
       console.error(e);
     }
   };
+
+  const handleCalendarLayout = useCallback(
+    (event: LayoutChangeEvent): void => {
+      const nextHeight = event.nativeEvent.layout.height;
+      if (nextHeight === calendarHeight) return;
+      setCalendarHeight(nextHeight);
+    },
+    [calendarHeight]
+  );
+
+  const calendarTransition = useMemo(
+    () => ({
+      type: "timing" as const,
+      duration: reduceMotion ? 0 : 380,
+    }),
+    [reduceMotion]
+  );
+  const titleTransition = useMemo(
+    () => ({
+      type: "timing" as const,
+      duration: reduceMotion ? 0 : 240,
+    }),
+    [reduceMotion]
+  );
+  const chevronTransition = useMemo(
+    () =>
+      reduceMotion
+        ? { type: "timing" as const, duration: 0 }
+        : { type: "spring" as const, damping: 18, stiffness: 110 },
+    [reduceMotion]
+  );
 
   if (state.kind === "loading") {
     return (
@@ -299,7 +314,7 @@ export default function Planner() {
       <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
       <ScrollView className="mb-8 flex-1 pb-8">
         <View
-          className="mb-4 flex-row items-center justify-between px-4"
+          className="min-h-14 flex-row items-center justify-between px-4"
           key={`week-nav-${viewedWeekStart.getTime()}`}>
           <Pressable
             onPress={handlePrevWeek}
@@ -322,43 +337,38 @@ export default function Planner() {
             })}>
             <View className="items-center">
               <View className="flex-row items-center">
-                <Text
-                  style={{
-                    fontSize: tokens.typography.sizes.sm,
-                    color: colors.mutedForeground,
-                    fontWeight: tokens.typography.weights.medium,
-                  }}>
-                  {calendarTitleText}
-                </Text>
-                <View className="ml-1">
-                  {isCalendarOpen ? (
-                    <ChevronUp size={16} color={colors.mutedForeground} />
-                  ) : (
-                    <ChevronDown size={16} color={colors.mutedForeground} />
-                  )}
-                </View>
+                <AnimatePresence exitBeforeEnter>
+                  <MotiView
+                    key={isCalendarOpen ? "month" : "range"}
+                    from={{
+                      opacity: 0,
+                      translateY: reduceMotion ? 0 : -4,
+                    }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    exit={{
+                      opacity: 0,
+                      translateY: reduceMotion ? 0 : 4,
+                    }}
+                    transition={titleTransition}
+                    className="ml-6 flex-1 items-center justify-center">
+                    <Text
+                      style={{
+                        fontSize: tokens.typography.sizes.md,
+                        color: colors.mutedForeground,
+                        fontWeight: tokens.typography.weights.medium,
+                      }}>
+                      {calendarTitleText}
+                    </Text>
+                  </MotiView>
+                </AnimatePresence>
+                <MotiView
+                  animate={{
+                    rotate: isCalendarOpen ? "180deg" : "0deg",
+                  }}
+                  transition={chevronTransition}>
+                  <ChevronUp size={18} color={colors.mutedForeground} />
+                </MotiView>
               </View>
-              {weekData &&
-                !isCalendarOpen &&
-                (getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
-                  <Text
-                    style={{
-                      fontSize: tokens.typography.sizes.xs,
-                      color: colors.mutedForeground,
-                      marginTop: 4,
-                    }}>
-                    {state.plan.split.name} • Week {weekData.variantKey}
-                  </Text>
-                ) : (
-                  <Text
-                    style={{
-                      fontSize: tokens.typography.sizes.xs,
-                      color: colors.mutedForeground,
-                      marginTop: 4,
-                    }}>
-                    {state.plan.split.name}
-                  </Text>
-                ))}
             </View>
           </Pressable>
 
@@ -374,16 +384,69 @@ export default function Planner() {
           </Pressable>
         </View>
 
-        {isCalendarOpen && (
-          <View className="mb-4 px-4">
+        <View className="px-4" style={{ position: "relative" }}>
+          <View
+            pointerEvents="none"
+            onLayout={handleCalendarLayout}
+            style={{ position: "absolute", left: 0, right: 0, opacity: 0 }}>
+            <PlannerMonthCalendar
+              monthDate={weekStartDate}
+              rangeStart={weekStartDate}
+              rangeEnd={weekEndDate}
+            />
+          </View>
+          <MotiView
+            pointerEvents={isCalendarOpen ? "auto" : "none"}
+            style={{
+              overflow: "hidden",
+              height: isCalendarOpen ? calendarHeight : 0,
+              opacity: isCalendarOpen ? 1 : 0,
+            }}
+            transition={calendarTransition}
+            animate={{
+              height: isCalendarOpen ? calendarHeight : 0,
+              opacity: isCalendarOpen ? 1 : 0,
+            }}
+            from={{
+              height: 0,
+              opacity: 0,
+            }}>
             <PlannerMonthCalendar
               monthDate={weekStartDate}
               rangeStart={weekStartDate}
               rangeEnd={weekEndDate}
               onDayPress={handleCalendarDayPress}
             />
-          </View>
-        )}
+          </MotiView>
+        </View>
+
+        <View>
+          {weekData && getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
+            <P
+              style={{
+                fontSize: tokens.typography.sizes.md,
+                fontWeight: tokens.typography.weights.medium,
+                color: colors.mutedForeground,
+                marginBottom: tokens.spacing.md,
+                textAlign: "center",
+                marginTop: isCalendarOpen ? 4 : 0,
+              }}>
+              {state.plan.split.name} • Week {weekData.variantKey}
+            </P>
+          ) : (
+            <P
+              style={{
+                fontSize: tokens.typography.sizes.md,
+                fontWeight: tokens.typography.weights.medium,
+                color: colors.mutedForeground,
+                marginBottom: tokens.spacing.md,
+                textAlign: "center",
+                marginTop: isCalendarOpen ? 4 : 0,
+              }}>
+              {state.plan.split.name}
+            </P>
+          )}
+        </View>
 
         <View className="mb-6 px-4">
           <View
@@ -417,7 +480,7 @@ export default function Planner() {
         <View
           className="px-4"
           key={`sessions-${viewedWeekStart.getTime()}-${weekData?.variantKey ?? ""}`}>
-          <H2 className="mb-3">{sessionsHeaderText}</H2>
+          <H3 className="mb-3">{sessionsHeaderText}</H3>
           {completedCount >= totalPlanned && totalPlanned > 0 && (
             <View
               className="mb-3 rounded-lg px-4 py-3"
@@ -457,10 +520,10 @@ export default function Planner() {
         <View className="mt-6 px-4 pb-8">
           <Button
             label="Add extra session"
-            icon={<Plus size={20} color={colors.foreground} />}
+            icon={<Plus size={20} color={colors.background} className="mr-1" />}
             iconPlacement="left"
             onPress={() => {}}
-            variant="outline"
+            variant="default"
           />
         </View>
       </ScrollView>
