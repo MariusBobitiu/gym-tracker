@@ -93,7 +93,7 @@ function DayCell({ day, onPress }: DayCellProps): React.JSX.Element {
       ? `${colors.foreground}10`
       : "transparent";
   const dayBorder = day.isToday
-    ? `${colors.primary}90`
+    ? colors.primary
     : day.isInRange
       ? `${colors.foreground}30`
       : "transparent";
@@ -120,11 +120,7 @@ function DayCell({ day, onPress }: DayCellProps): React.JSX.Element {
         <Text
           style={{
             fontSize: tokens.typography.sizes.xs,
-            color: day.isToday
-              ? `${colors.primary}95`
-              : day.isInRange
-                ? colors.foreground
-                : textColor,
+            color: day.isToday ? colors.primary : day.isInRange ? colors.foreground : textColor,
             fontWeight: day.isInRange
               ? tokens.typography.weights.semibold
               : tokens.typography.weights.medium,

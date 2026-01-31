@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { differenceInCalendarWeeks, startOfWeek } from "date-fns";
+import { differenceInCalendarWeeks, format, startOfWeek } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { LayoutAnimation, Platform, Pressable, UIManager, View } from "react-native";
@@ -96,6 +96,10 @@ export default function Planner() {
     () => formatWeekRange(weekStartDate, weekEndDate),
     [weekStartDate, weekEndDate]
   );
+  const calendarTitleText = useMemo(() => {
+    if (!isCalendarOpen) return weekRangeText;
+    return format(weekStartDate, "MMMM yyyy");
+  }, [isCalendarOpen, weekRangeText, weekStartDate]);
 
   const weekData =
     state.kind === "week_view" ? getWeekSessionsFromPlan(state.plan, viewedWeekStart) : null;
@@ -111,10 +115,10 @@ export default function Planner() {
       : null;
   const upNextSessionId = weekProgress?.upNextSessionId ?? null;
 
+  const cycleStateForEffect = state.kind === "week_view" ? state.plan.cycleState : null;
   useEffect(() => {
     if (state.kind !== "week_view") return;
-    console.log("[Planner] cycle_state", state.plan.cycleState);
-  }, [state.kind, state.kind === "week_view" ? state.plan.cycleState : null]);
+  }, [state.kind, cycleStateForEffect]);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;
@@ -122,6 +126,8 @@ export default function Planner() {
     UIManager.setLayoutAnimationEnabledExperimental(true);
   }, []);
 
+  const anchorWeekStartForEffect =
+    state.kind === "week_view" ? state.plan.cycle.anchor_week_start : undefined;
   useEffect(() => {
     if (state.kind !== "week_view" || !weekData) return;
     const cycleStartWeekStart = startOfWeek(new Date(state.plan.cycle.anchor_week_start), {
@@ -138,12 +144,9 @@ export default function Planner() {
       weekIndex,
       weekVariant,
     });
-  }, [
-    state.kind,
-    state.kind === "week_view" ? state.plan.cycle.anchor_week_start : undefined,
-    viewedWeekStart,
-    weekData?.variantKey,
-  ]);
+    // anchorWeekStartForEffect tracks state.plan.cycle.anchor_week_start when kind === "week_view"; state.plan not on all variants
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.kind, anchorWeekStartForEffect, viewedWeekStart, weekData?.variantKey, weekData]);
 
   const plannedSessions: PlannedSessionView[] = useMemo(() => {
     if (!weekData) return [];
@@ -325,7 +328,7 @@ export default function Planner() {
                     color: colors.mutedForeground,
                     fontWeight: tokens.typography.weights.medium,
                   }}>
-                  {weekRangeText}
+                  {calendarTitleText}
                 </Text>
                 <View className="ml-1">
                   {isCalendarOpen ? (
@@ -336,6 +339,7 @@ export default function Planner() {
                 </View>
               </View>
               {weekData &&
+                !isCalendarOpen &&
                 (getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
                   <Text
                     style={{
