@@ -56,7 +56,13 @@ export default function PlanScreen() {
   if (loading) {
     return (
       <Screen safeAreaEdges={["top", "bottom"]} contentContainerClassName="pb-12">
-        <Stack.Screen options={headerOptions({ title: "Manage plan" })} />
+        <Stack.Screen
+          options={headerOptions({
+            title: "Manage plan",
+            animation: "ios_from_right",
+            animationDuration: 380,
+          })}
+        />
         <AppHeader title="Manage plan" showBackButton />
         <View className="flex-1 items-center justify-center">
           <LoadingState label="Loading..." />
