@@ -2,8 +2,15 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { differenceInCalendarWeeks, startOfWeek } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
-import { Pressable, View } from "react-native";
-import { ChevronLeft, ChevronRight, Plus, Settings2 } from "lucide-react-native";
+import { LayoutAnimation, Platform, Pressable, UIManager, View } from "react-native";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Plus,
+  Settings2,
+} from "lucide-react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import {
@@ -36,7 +43,9 @@ import { useActivePlan } from "@/features/planner/use-active-plan";
 import type { PlannedSessionView } from "@/features/planner/planner-types";
 import { ScrollView } from "moti";
 import { LoadingState } from "@/components/feedback-states";
-import { getHitSlop } from "@/lib/accessibility";
+import { PlannerMonthCalendar } from "@/components/planner-month-calendar";
+import { getHitSlop, resolveAccessibilityLabel } from "@/lib/accessibility";
+import { useReducedMotion } from "@/lib/motion";
 
 function PlanPill() {
   const router = useRouter();
@@ -54,8 +63,10 @@ export default function Planner() {
   const router = useRouter();
   const { colors, tokens } = useTheme();
   const [viewedWeekStart, setViewedWeekStart] = useState(() => startOfWeekMonday(new Date()));
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<PlannedSessionView | null>(null);
   const sessionModal = useModal();
+  const reduceMotion = useReducedMotion();
 
   const { state, error, refetch } = useActivePlan();
 
@@ -104,6 +115,12 @@ export default function Planner() {
     if (state.kind !== "week_view") return;
     console.log("[Planner] cycle_state", state.plan.cycleState);
   }, [state.kind, state.kind === "week_view" ? state.plan.cycleState : null]);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    if (!UIManager.setLayoutAnimationEnabledExperimental) return;
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }, []);
 
   useEffect(() => {
     if (state.kind !== "week_view" || !weekData) return;
@@ -155,6 +172,17 @@ export default function Planner() {
     next.setDate(next.getDate() + 7);
     setViewedWeekStart(startOfWeekMonday(next));
   };
+
+  const handleToggleCalendar = useCallback((): void => {
+    if (!reduceMotion) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    setIsCalendarOpen((prev) => !prev);
+  }, [reduceMotion]);
+
+  const handleCalendarDayPress = useCallback((date: Date): void => {
+    setViewedWeekStart(startOfWeekMonday(date));
+  }, []);
 
   const handleSessionPress = (session: PlannedSessionView) => {
     setSelectedSession(session);
@@ -281,36 +309,54 @@ export default function Planner() {
             <ChevronLeft size={20} color={colors.foreground} />
           </Pressable>
 
-          <View className="flex-1 items-center px-4">
-            <Text
-              style={{
-                fontSize: tokens.typography.sizes.sm,
-                color: colors.mutedForeground,
-                fontWeight: tokens.typography.weights.medium,
-              }}>
-              {weekRangeText}
-            </Text>
-            {weekData &&
-              (getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
+          <Pressable
+            className="flex-1 px-4"
+            onPress={handleToggleCalendar}
+            hitSlop={getHitSlop()}
+            accessibilityRole="button"
+            accessibilityLabel={resolveAccessibilityLabel({
+              fallback: isCalendarOpen ? "Collapse calendar" : "Expand calendar",
+            })}>
+            <View className="items-center">
+              <View className="flex-row items-center">
                 <Text
                   style={{
-                    fontSize: tokens.typography.sizes.xs,
+                    fontSize: tokens.typography.sizes.sm,
                     color: colors.mutedForeground,
-                    marginTop: 4,
+                    fontWeight: tokens.typography.weights.medium,
                   }}>
-                  {state.plan.split.name} • Week {weekData.variantKey}
+                  {weekRangeText}
                 </Text>
-              ) : (
-                <Text
-                  style={{
-                    fontSize: tokens.typography.sizes.xs,
-                    color: colors.mutedForeground,
-                    marginTop: 4,
-                  }}>
-                  {state.plan.split.name}
-                </Text>
-              ))}
-          </View>
+                <View className="ml-1">
+                  {isCalendarOpen ? (
+                    <ChevronUp size={16} color={colors.mutedForeground} />
+                  ) : (
+                    <ChevronDown size={16} color={colors.mutedForeground} />
+                  )}
+                </View>
+              </View>
+              {weekData &&
+                (getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
+                  <Text
+                    style={{
+                      fontSize: tokens.typography.sizes.xs,
+                      color: colors.mutedForeground,
+                      marginTop: 4,
+                    }}>
+                    {state.plan.split.name} • Week {weekData.variantKey}
+                  </Text>
+                ) : (
+                  <Text
+                    style={{
+                      fontSize: tokens.typography.sizes.xs,
+                      color: colors.mutedForeground,
+                      marginTop: 4,
+                    }}>
+                    {state.plan.split.name}
+                  </Text>
+                ))}
+            </View>
+          </Pressable>
 
           <Pressable
             onPress={handleNextWeek}
@@ -323,6 +369,17 @@ export default function Planner() {
             <ChevronRight size={20} color={colors.foreground} />
           </Pressable>
         </View>
+
+        {isCalendarOpen && (
+          <View className="mb-4 px-4">
+            <PlannerMonthCalendar
+              monthDate={weekStartDate}
+              rangeStart={weekStartDate}
+              rangeEnd={weekEndDate}
+              onDayPress={handleCalendarDayPress}
+            />
+          </View>
+        )}
 
         <View className="mb-6 px-4">
           <View
