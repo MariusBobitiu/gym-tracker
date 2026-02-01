@@ -10,6 +10,8 @@ import {
   sessionTemplates,
   splitVariants,
   splits,
+  workoutSessions,
+  workoutSets,
 } from "@/lib/planner-db/schema";
 
 const PLANNER_TABLES = [
@@ -18,6 +20,8 @@ const PLANNER_TABLES = [
   "session_templates",
   "cycles",
   "cycle_state",
+  "workout_sessions",
+  "workout_sets",
 ] as const;
 
 type TableName = (typeof PLANNER_TABLES)[number];
@@ -30,7 +34,9 @@ type DiagnosticsResult = {
 type QueryResult = { rows?: Record<string, unknown>[] };
 
 async function getTableNames(): Promise<Set<string>> {
-  const drizzleDb = db as { $client?: { execute: (query: string) => Promise<QueryResult> } };
+  const drizzleDb = db as {
+    $client?: { execute: (query: string) => Promise<QueryResult> };
+  };
   const client = drizzleDb.$client;
   if (!client?.execute) {
     return new Set();
@@ -49,6 +55,8 @@ async function getCount(table: TableName): Promise<number> {
     session_templates: sessionTemplates,
     cycles,
     cycle_state: cycleState,
+    workout_sessions: workoutSessions,
+    workout_sets: workoutSets,
   };
   const t = tableMap[table];
   const rows = await db.select().from(t);

@@ -68,9 +68,9 @@ export function getWeekIndexInCycle(
  */
 export function formatWeekRange(start: Date, end: Date): string {
   const startDay = start.getDate();
-  const startMonth = start.toLocaleDateString("en-US", { month: "short" });
+  const startMonth = start.toLocaleDateString("en-GB", { month: "short" });
   const endDay = end.getDate();
-  const endMonth = end.toLocaleDateString("en-US", { month: "short" });
+  const endMonth = end.toLocaleDateString("en-GB", { month: "short" });
   const year = end.getFullYear();
 
   if (startMonth === endMonth) {
@@ -84,7 +84,7 @@ export function formatWeekRange(start: Date, end: Date): string {
  */
 export function formatDateShort(date: Date): string {
   const day = date.getDate();
-  const month = date.toLocaleDateString("en-US", { month: "short" });
+  const month = date.toLocaleDateString("en-GB", { month: "short" });
   return `${day} ${month}`;
 }
 

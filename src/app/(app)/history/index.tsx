@@ -7,7 +7,6 @@ import {
   formatWeekRange,
   getRotationType,
   getWeekRange,
-  getWeekSessionsFromPlan,
   startOfWeekMonday,
   useActivePlan,
 } from "@/features/planner/";
@@ -31,55 +30,16 @@ import {
 import { ErrorState, LoadingState } from "@/components/feedback-states";
 import { PlannerMonthCalendar } from "@/components/planner-month-calendar";
 import { ScrollView } from "moti";
-import { HistorySessionView } from "@/types/history";
+import { useHistoryWeek } from "@/hooks/use-history-week";
 
-type WeekProgressInput = {
-  weekData: ReturnType<typeof getWeekSessionsFromPlan> | null;
-  cycleState: {
-    session_index_a: number;
-    session_index_b: number;
-    session_index_c: number;
-    last_completed_at: string | null;
-  };
-  weekStartDate: Date;
-  weekEndDate: Date;
-};
+function formatVolumeKg(value: number | null | undefined): string {
+  if (!value || value <= 0) return "—";
+  return `${value.toLocaleString("en-GB", { maximumFractionDigits: 1 })} kg`;
+}
 
-type WeekProgressResult = {
-  completedCount: number;
-  upNextSessionId: string | null;
-};
-
-function getWeekProgress(input: WeekProgressInput): WeekProgressResult | null {
-  const { weekData, cycleState, weekStartDate, weekEndDate } = input;
-  if (!weekData) return null;
-
-  const sessions = weekData.sessions;
-  const total = sessions.length;
-  const lastCompletedAt = cycleState.last_completed_at
-    ? new Date(cycleState.last_completed_at)
-    : null;
-  const isInWeek =
-    lastCompletedAt !== null &&
-    lastCompletedAt.getTime() >= weekStartDate.getTime() &&
-    lastCompletedAt.getTime() <= weekEndDate.getTime();
-
-  const nextIndex =
-    weekData.variantKey === "B"
-      ? cycleState.session_index_b
-      : weekData.variantKey === "C"
-        ? cycleState.session_index_c
-        : cycleState.session_index_a;
-
-  let completedCount = isInWeek ? Math.min(nextIndex, total) : 0;
-  if (isInWeek && total > 0 && nextIndex === 0) {
-    completedCount = total;
-  }
-
-  const upNextSessionId =
-    completedCount >= total ? null : (sessions[nextIndex]?.id ?? null);
-
-  return { completedCount, upNextSessionId };
+function formatDuration(value: number | null | undefined): string {
+  if (!value || value <= 0) return "—";
+  return `${value} mins`;
 }
 
 export default function History() {
@@ -92,6 +52,13 @@ export default function History() {
   const { state, error, refetch } = useActivePlan();
   const { colors, tokens } = useTheme();
 
+  const plan = state.kind === "week_view" ? state.plan : null;
+  const {
+    loading: isHistoryLoading,
+    error: historyError,
+    data: historyData,
+  } = useHistoryWeek(plan, viewedWeekStart);
+
   useFocusEffect(
     useCallback(() => {
       refetch();
@@ -103,19 +70,8 @@ export default function History() {
     [viewedWeekStart]
   );
 
-  const weekData =
-    state.kind === "week_view"
-      ? getWeekSessionsFromPlan(state.plan, viewedWeekStart)
-      : null;
-  const weekProgress =
-    state.kind === "week_view"
-      ? getWeekProgress({
-          weekData,
-          cycleState: state.plan.cycleState,
-          weekStartDate,
-          weekEndDate,
-        })
-      : null;
+  const weekData = historyData?.weekData ?? null;
+  const weekStats = historyData?.weekStats;
 
   const handlePrevMonth = useCallback(() => {
     const targetMonthStart = startOfMonth(subMonths(viewedMonthStart, 1));
@@ -147,33 +103,10 @@ export default function History() {
     setViewedMonthStart(startOfMonth(weekStart));
   }, []);
 
-  const historySessions: HistorySessionView[] = useMemo(() => {
-    if (!weekData) return [];
-    const completedCount = weekProgress?.completedCount ?? 0;
-    const now = new Date();
-    const isPastWeek = weekEndDate < now;
-    const isFutureWeek = weekStartDate > now;
-    return weekData.sessions.map((session, index) => {
-      const isCompleted = index < completedCount;
-      const status: HistorySessionView["status"] = isCompleted
-        ? "completed"
-        : isFutureWeek
-          ? "planned"
-          : isPastWeek
-            ? "missed"
-            : "planned";
-      return {
-        plannedSessionTemplateId: session.id,
-        title: session.name,
-        tags: session.muscleGroups ?? undefined,
-        muscleGroups: session.muscleGroups ?? undefined,
-        estimatedMins: undefined,
-        variantNotes: undefined,
-        status,
-        completedLog: undefined,
-      };
-    });
-  }, [weekData, weekProgress, weekStartDate, weekEndDate]);
+  const historySessions = useMemo(
+    () => historyData?.historySessions ?? [],
+    [historyData]
+  );
 
   if (state.kind === "loading") {
     return (
@@ -187,7 +120,8 @@ export default function History() {
     );
   }
 
-  if (error) {
+  if (error || historyError) {
+    const message = error?.message ?? historyError?.message ?? "Unknown error";
     return (
       <Screen
         contentContainerClassName="pb-12"
@@ -196,10 +130,7 @@ export default function History() {
         <Stack.Screen options={headerOptions({ title: "History" })} />
         <AppHeader showBackButton={false} title="History" isMainScreen />
         <View className="flex-1 items-center justify-center px-4">
-          <ErrorState
-            title="Unable to Load History"
-            description={error.message}
-          />
+          <ErrorState title="Unable to Load History" description={message} />
         </View>
       </Screen>
     );
@@ -244,6 +175,18 @@ export default function History() {
               router.push({ pathname: "/planner/rotation" } as never)
             }
           />
+        </View>
+      </Screen>
+    );
+  }
+
+  if (isHistoryLoading) {
+    return (
+      <Screen className="pb-24">
+        <Stack.Screen options={headerOptions({ title: "History" })} />
+        <AppHeader showBackButton={false} title="History" isMainScreen />
+        <View className="flex-1 items-center justify-center">
+          <LoadingState label="Loading history..." />
         </View>
       </Screen>
     );
@@ -331,14 +274,13 @@ export default function History() {
           </View>
           <View className="flex-col p-3">
             <P style={{ color: colors.mutedForeground }}>
-              {weekProgress?.completedCount} / {weekData?.sessions.length}{" "}
+              {weekStats?.completedCount ?? 0} / {weekStats?.totalPlanned ?? 0}{" "}
               sessions done
             </P>
             <View
               className="flex-row items-center"
               style={{ gap: tokens.spacing.xs }}
             >
-              {/* TODO: Add total volume */}
               <Dumbbell size={14} color={colors.primary} className="mr-2" />
               <P style={{ color: colors.mutedForeground }}>Total Volume:</P>
               <P
@@ -347,7 +289,7 @@ export default function History() {
                   fontWeight: tokens.typography.weights.medium,
                 }}
               >
-                34.200 kg
+                {formatVolumeKg(weekStats?.totalVolumeKg)}
               </P>
             </View>
             <View
@@ -362,7 +304,7 @@ export default function History() {
                   fontWeight: tokens.typography.weights.medium,
                 }}
               >
-                58 mins
+                {formatDuration(weekStats?.averageDurationMins)}
               </P>
             </View>
             <View
@@ -375,11 +317,12 @@ export default function History() {
               {historySessions.map((session) => (
                 <Pressable
                   key={session.plannedSessionTemplateId}
-                  onPress={() =>
+                  onPress={() => {
+                    if (!session.completedSessionId) return;
                     router.push({
-                      pathname: `/history/${session.plannedSessionTemplateId}`,
-                    } as never)
-                  }
+                      pathname: `/history/${session.completedSessionId}`,
+                    } as never);
+                  }}
                   className="flex-col"
                   style={{
                     borderWidth: 1,
@@ -466,7 +409,9 @@ export default function History() {
                       className="flex-row items-center"
                       style={{ gap: tokens.spacing.xs }}
                     >
-                      <P style={{ color: colors.mutedForeground }}>6800 kg</P>
+                      <P style={{ color: colors.mutedForeground }}>
+                        {formatVolumeKg(session.totalVolumeKg)}
+                      </P>
                       <ChevronRight size={16} color={colors.primary} />
                     </View>
                   </View>
@@ -480,7 +425,8 @@ export default function History() {
                     }}
                   >
                     <P style={{ color: colors.mutedForeground }}>
-                      {session.muscleGroups?.length} sets • 8 reps
+                      {session.totalSets ?? 0} sets • {session.totalReps ?? 0}{" "}
+                      reps
                     </P>
                   </View>
                 </Pressable>

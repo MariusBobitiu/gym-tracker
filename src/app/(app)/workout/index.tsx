@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Dimensions, StyleSheet } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown } from "react-native-reanimated";
 import { Stack, useRouter } from "expo-router";
@@ -16,24 +22,45 @@ import {
   WorkoutRestContent,
 } from "@/features/workout";
 import { useWorkoutSession } from "@/hooks/use-workout-session";
-import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
+import {
+  DEFAULT_WORKOUT_EXERCISES,
+  getExerciseById,
+} from "@/lib/default-workout";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
 import { SESSION_PHASES } from "@/types/workout-session";
 import { useTheme } from "@/lib/theme-context";
 import { formatElapsedMs } from "@/lib/format-elapsed";
 import {
-  completeWorkoutAndAdvance,
   completePlannedSession,
+  createWorkoutSession,
   getActiveCycleWithSplit,
 } from "@/features/planner/planner-repository";
 import { usePlannerStore } from "@/features/planner/planner-store";
 
 type WorkoutView = "list" | "log-set" | "rest";
 
+function findPlannedSessionTitle(
+  plan: Awaited<ReturnType<typeof getActiveCycleWithSplit>> | null,
+  plannedSessionId: string | null
+): string {
+  if (!plan || !plannedSessionId) return "Workout";
+  for (const sessions of Object.values(plan.sessionsByVariant)) {
+    const match = sessions.find((session) => session.id === plannedSessionId);
+    if (match) return match.name;
+  }
+  return "Workout";
+}
+
+function toDurationMins(startedAt: number, completedAt: number): number {
+  const durationMs = Math.max(0, completedAt - startedAt);
+  return Math.round(durationMs / 60000);
+}
+
 export default function Workout(): React.ReactElement {
   const router = useRouter();
   const { colors } = useTheme();
-  const { activePlannedSessionId, setActivePlannedSessionId } = usePlannerStore();
+  const { activePlannedSessionId, setActivePlannedSessionId } =
+    usePlannerStore();
   const hasAdvancedPlannerRef = useRef(false);
 
   const advancePlannerState = useCallback(async (): Promise<void> => {
@@ -42,7 +69,11 @@ export default function Workout(): React.ReactElement {
     try {
       const planWithState = await getActiveCycleWithSplit();
       if (!planWithState) return;
-      await completePlannedSession(planWithState.cycle.id, planWithState, activePlannedSessionId);
+      await completePlannedSession(
+        planWithState.cycle.id,
+        planWithState,
+        activePlannedSessionId
+      );
     } catch (e) {
       console.error(e);
     } finally {
@@ -86,13 +117,62 @@ export default function Workout(): React.ReactElement {
 
   const handleFinishWithConfetti = useCallback(() => setShowConfetti(true), []);
 
+  const logWorkoutSession = useCallback(async (): Promise<void> => {
+    if (!session?.completedSets?.length) return;
+    const planWithState = await getActiveCycleWithSplit();
+    const completedAt = Date.now();
+    const startedAt = session.startedAt ?? completedAt;
+    const sessionTitle = findPlannedSessionTitle(
+      planWithState,
+      activePlannedSessionId
+    );
+
+    const totalVolumeKg = session.completedSets.reduce(
+      (sum, set) => sum + set.weight * set.reps,
+      0
+    );
+    const totalReps = session.completedSets.reduce(
+      (sum, set) => sum + set.reps,
+      0
+    );
+    const totalSets = session.completedSets.length;
+
+    const sets = session.completedSets.map((set) => {
+      const exercise = getExerciseById(
+        DEFAULT_WORKOUT_EXERCISES,
+        set.exerciseId
+      );
+      return {
+        exerciseId: set.exerciseId,
+        exerciseName: exercise?.name ?? "Exercise",
+        setNumber: set.setNumber,
+        weight: set.weight,
+        reps: set.reps,
+      };
+    });
+
+    await createWorkoutSession({
+      cycleId: planWithState?.cycle.id ?? null,
+      plannedSessionTemplateId: activePlannedSessionId ?? null,
+      sessionTitle,
+      startedAt,
+      completedAt,
+      durationMins: toDurationMins(startedAt, completedAt),
+      totalVolumeKg,
+      totalSets,
+      totalReps,
+      sets,
+    });
+  }, [activePlannedSessionId, session]);
+
   const handleWorkoutComplete = useCallback(() => {
     void (async () => {
+      await logWorkoutSession();
       await advancePlannerState();
       setStorageItem(STORAGE_KEYS.workoutSession, null);
       router.dismissAll();
     })();
-  }, [advancePlannerState, router]);
+  }, [advancePlannerState, logWorkoutSession, router]);
 
   const handleSkipRest = useCallback(() => setView("log-set"), []);
 
@@ -116,7 +196,10 @@ export default function Workout(): React.ReactElement {
       : "Set completed";
 
   const { width, height } = Dimensions.get("window");
-  const confettiOrigin = useMemo(() => ({ x: width / 2, y: height * 0.1 }), [width, height]);
+  const confettiOrigin = useMemo(
+    () => ({ x: width / 2, y: height * 0.1 }),
+    [width, height]
+  );
 
   const TRANSITION_MS = 540;
   const transitionEasing = Easing.out(Easing.cubic);
@@ -140,12 +223,14 @@ export default function Workout(): React.ReactElement {
         preset="modal"
         background="gradient"
         safeAreaEdges={[]}
-        contentContainerClassName="flex-1 px-4 pt-8">
+        contentContainerClassName="flex-1 px-4 pt-8"
+      >
         <BackgroundGradient />
         {view === "list" && (
           <Animated.View
             entering={FadeIn.duration(TRANSITION_MS).easing(transitionEasing)}
-            style={{ flex: 1 }}>
+            style={{ flex: 1 }}
+          >
             {isCompleted ? (
               <View className="flex-1 items-center justify-center">
                 <View className="mt-16 flex-col">
@@ -155,7 +240,9 @@ export default function Workout(): React.ReactElement {
                   </P>
                 </View>
                 <View className="mt-24 flex-1 items-center">
-                  <P style={{ color: colors.mutedForeground }}>{setsTotal} sets completed</P>
+                  <P style={{ color: colors.mutedForeground }}>
+                    {setsTotal} sets completed
+                  </P>
                   <SetsProgressIndicator completed={3} total={4} />
                 </View>
                 <P className="mb-4" style={{ color: colors.mutedForeground }}>
@@ -188,8 +275,11 @@ export default function Workout(): React.ReactElement {
 
         {view === "log-set" && currentExercise && (
           <Animated.View
-            entering={FadeInDown.duration(TRANSITION_MS).easing(transitionEasing)}
-            style={{ flex: 1 }}>
+            entering={FadeInDown.duration(TRANSITION_MS).easing(
+              transitionEasing
+            )}
+            style={{ flex: 1 }}
+          >
             <WorkoutLogSetContent
               exerciseName={exerciseName}
               setsTotal={setsTotal}
@@ -203,14 +293,23 @@ export default function Workout(): React.ReactElement {
 
         {view === "rest" && (
           <Animated.View
-            entering={FadeInDown.duration(TRANSITION_MS).easing(transitionEasing)}
-            style={{ flex: 1 }}>
-            <WorkoutRestContent completedLabel={restCompletedLabel} onSkipRest={handleSkipRest} />
+            entering={FadeInDown.duration(TRANSITION_MS).easing(
+              transitionEasing
+            )}
+            style={{ flex: 1 }}
+          >
+            <WorkoutRestContent
+              completedLabel={restCompletedLabel}
+              onSkipRest={handleSkipRest}
+            />
           </Animated.View>
         )}
 
         {showConfetti ? (
-          <View style={[StyleSheet.absoluteFill, { zIndex: 9999 }]} pointerEvents="none">
+          <View
+            style={[StyleSheet.absoluteFill, { zIndex: 9999 }]}
+            pointerEvents="none"
+          >
             <ConfettiCannon
               count={100}
               origin={confettiOrigin}

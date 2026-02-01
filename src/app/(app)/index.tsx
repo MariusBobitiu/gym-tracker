@@ -8,8 +8,14 @@ import AppHeader from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { useTheme } from "@/lib/theme-context";
 import { useAuth } from "@/lib/auth/context";
-import { AmbientBackground, NoiseOverlay } from "@/components/ambient-background";
-import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
+import {
+  AmbientBackground,
+  NoiseOverlay,
+} from "@/components/ambient-background";
+import {
+  DEFAULT_WORKOUT_EXERCISES,
+  getExerciseById,
+} from "@/lib/default-workout";
 import { formatElapsedMs } from "@/lib/format-elapsed";
 import { getStorageItem, STORAGE_KEYS, useStorageState } from "@/lib/storage";
 import type { WorkoutSession } from "@/types/workout-session";
@@ -38,7 +44,9 @@ function WeekSummary(): React.ReactElement {
   const { colors, tokens, isDark } = useTheme();
   const completedCount = WEEK_DOTS.filter((dot) => dot.isActive).length;
   const progressPercentage = (completedCount / workoutsThisWeek) * 100;
-  const today = new Date().toLocaleDateString("en-US", { weekday: "short" }).toLowerCase();
+  const today = new Date()
+    .toLocaleDateString("en-GB", { weekday: "short" })
+    .toLowerCase();
   const todayDot = WEEK_DOTS.find((dot) => dot.id === today);
   if (todayDot) {
     // todayDot.isActive = true;
@@ -48,7 +56,10 @@ function WeekSummary(): React.ReactElement {
   return (
     <View className="mt-12">
       <View className="mb-4 flex-row items-center justify-between">
-        <Text className="uppercase tracking-[2px]" style={{ color: colors.mutedForeground }}>
+        <Text
+          className="uppercase tracking-[2px]"
+          style={{ color: colors.mutedForeground }}
+        >
           This week
         </Text>
         <Text
@@ -56,7 +67,8 @@ function WeekSummary(): React.ReactElement {
             fontSize: tokens.typography.sizes.xs,
             color: colors.mutedForeground,
             opacity: 0.6,
-          }}>
+          }}
+        >
           {completedCount}/{WEEK_DOTS.length}
         </Text>
       </View>
@@ -75,7 +87,13 @@ function WeekSummary(): React.ReactElement {
                     : isDark
                       ? colors.border
                       : colors.foreground,
-                opacity: dot.isActive ? 1 : dot.isToday ? 0.45 : isDark ? 0.6 : 0.15,
+                opacity: dot.isActive
+                  ? 1
+                  : dot.isToday
+                    ? 0.45
+                    : isDark
+                      ? 0.6
+                      : 0.15,
               }}
             />
             <Text
@@ -87,7 +105,8 @@ function WeekSummary(): React.ReactElement {
                     ? colors.foreground
                     : colors.mutedForeground,
                 opacity: dot.isActive ? 1 : dot.isToday ? 0.6 : 0.6,
-              }}>
+              }}
+            >
               {dot.label}
             </Text>
           </View>
@@ -97,7 +116,8 @@ function WeekSummary(): React.ReactElement {
       {/* Subtle progress bar */}
       <View
         className="mb-3 h-[0.75px] overflow-hidden rounded-full"
-        style={{ backgroundColor: colors.border, opacity: 0.8 }}>
+        style={{ backgroundColor: colors.border, opacity: 0.8 }}
+      >
         <View
           className="h-full rounded-full"
           style={{
@@ -115,7 +135,8 @@ function WeekSummary(): React.ReactElement {
           style={{
             color: colors.mutedForeground,
             opacity: 0.8,
-          }}>
+          }}
+        >
           2 sessions
         </Text>
         <View
@@ -127,7 +148,8 @@ function WeekSummary(): React.ReactElement {
           style={{
             color: colors.mutedForeground,
             opacity: 0.8,
-          }}>
+          }}
+        >
           120 min
         </Text>
         <View
@@ -139,7 +161,8 @@ function WeekSummary(): React.ReactElement {
           style={{
             color: colors.mutedForeground,
             opacity: 0.8,
-          }}>
+          }}
+        >
           12.4k kg
         </Text>
       </View>
@@ -161,16 +184,24 @@ function ReadyToTrainCard(): React.ReactElement {
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 8 },
         elevation: 6,
-      }}>
-      <Text className="uppercase tracking-[2px]" style={{ color: colors.mutedForeground }}>
+      }}
+    >
+      <Text
+        className="uppercase tracking-[2px]"
+        style={{ color: colors.mutedForeground }}
+      >
         Ready to train
       </Text>
       <Text
         className="font-inter mt-3 font-semibold"
-        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}>
+        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}
+      >
         Pull
       </Text>
-      <Text className="mt-1 text-base" style={{ color: colors.mutedForeground }}>
+      <Text
+        className="mt-1 text-base"
+        style={{ color: colors.mutedForeground }}
+      >
         Back & biceps
       </Text>
       <Link href="/workout" asChild>
@@ -189,9 +220,15 @@ function ReadyToTrainCard(): React.ReactElement {
   );
 }
 
-function ActiveSessionCard({ session }: { session: WorkoutSession }): React.ReactElement {
+function ActiveSessionCard({
+  session,
+}: {
+  session: WorkoutSession;
+}): React.ReactElement {
   const { colors } = useTheme();
-  const [elapsedMs, setElapsedMs] = React.useState(() => Date.now() - session.startedAt);
+  const [elapsedMs, setElapsedMs] = React.useState(
+    () => Date.now() - session.startedAt
+  );
 
   React.useEffect(() => {
     const interval = setInterval(() => {
@@ -200,7 +237,10 @@ function ActiveSessionCard({ session }: { session: WorkoutSession }): React.Reac
     return () => clearInterval(interval);
   }, [session.startedAt]);
 
-  const exercise = getExerciseById(DEFAULT_WORKOUT_EXERCISES, session.currentExerciseId);
+  const exercise = getExerciseById(
+    DEFAULT_WORKOUT_EXERCISES,
+    session.currentExerciseId
+  );
   const exerciseName = exercise?.name ?? "Unknown exercise";
   const setsTotal = exercise?.sets ?? 0;
   const setLabel =
@@ -219,16 +259,24 @@ function ActiveSessionCard({ session }: { session: WorkoutSession }): React.Reac
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 8 },
         elevation: 6,
-      }}>
-      <Text className="uppercase tracking-[2px]" style={{ color: colors.mutedForeground }}>
+      }}
+    >
+      <Text
+        className="uppercase tracking-[2px]"
+        style={{ color: colors.mutedForeground }}
+      >
         Workout in progress
       </Text>
       <Text
         className="font-inter mt-3 font-semibold"
-        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}>
+        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}
+      >
         {formatElapsedMs(elapsedMs)} elapsed
       </Text>
-      <Text className="mt-1 text-base" style={{ color: colors.mutedForeground }}>
+      <Text
+        className="mt-1 text-base"
+        style={{ color: colors.mutedForeground }}
+      >
         {exerciseName} · {setLabel}
       </Text>
       <Link href="/workout" asChild>
@@ -268,16 +316,24 @@ function CompletedSessionCard({
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 8 },
         elevation: 6,
-      }}>
-      <Text className="uppercase tracking-[2px]" style={{ color: colors.mutedForeground }}>
+      }}
+    >
+      <Text
+        className="uppercase tracking-[2px]"
+        style={{ color: colors.mutedForeground }}
+      >
         Session complete
       </Text>
       <Text
         className="font-inter mt-3 font-semibold"
-        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}>
+        style={{ fontSize: 28, lineHeight: 32, color: colors.foreground }}
+      >
         {formatElapsedMs(totalMs)} total
       </Text>
-      <Text className="mt-1 text-base" style={{ color: colors.mutedForeground }}>
+      <Text
+        className="mt-1 text-base"
+        style={{ color: colors.mutedForeground }}
+      >
         Great work. Tap Done to start a new session later.
       </Text>
       <Button
@@ -307,14 +363,18 @@ function renderMainCard(
     return <ActiveSessionCard session={session} />;
   }
   if (session.phase === SESSION_PHASES.completed) {
-    return <CompletedSessionCard session={session} onDone={() => setSession(null)} />;
+    return (
+      <CompletedSessionCard session={session} onDone={() => setSession(null)} />
+    );
   }
   return <ReadyToTrainCard />;
 }
 
 export default function Home(): React.ReactElement {
   const { user } = useAuth();
-  const [[, session], setSession] = useStorageState(STORAGE_KEYS.workoutSession);
+  const [[, session], setSession] = useStorageState(
+    STORAGE_KEYS.workoutSession
+  );
 
   useFocusEffect(
     React.useCallback(() => {
@@ -325,7 +385,12 @@ export default function Home(): React.ReactElement {
 
   const greeting = React.useMemo(() => {
     const hour = new Date().getHours();
-    const timeGreeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+    const timeGreeting =
+      hour < 12
+        ? "Good morning"
+        : hour < 18
+          ? "Good afternoon"
+          : "Good evening";
     const userName = user?.name?.split(" ")[0] || "there";
     return `${timeGreeting}, ${userName}`;
   }, [user?.name]);
@@ -340,15 +405,21 @@ export default function Home(): React.ReactElement {
           preset="scroll"
           safeAreaEdges={["top"]}
           contentContainerClassName="pb-28 pt-4"
-          background="none">
+          background="none"
+        >
           <AppHeader showBackButton={false} title={greeting} isMainScreen />
           <View className="mt-4 flex-1">
             <WeekSummary />
           </View>
           <Animated.View
-            key={!session || session.phase === SESSION_PHASES.idle ? "idle" : session.phase}
+            key={
+              !session || session.phase === SESSION_PHASES.idle
+                ? "idle"
+                : session.phase
+            }
             entering={FadeIn.duration(220)}
-            exiting={FadeOut.duration(180)}>
+            exiting={FadeOut.duration(180)}
+          >
             {renderMainCard(session, setSession)}
           </Animated.View>
         </Screen>

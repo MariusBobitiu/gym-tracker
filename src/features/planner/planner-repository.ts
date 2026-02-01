@@ -1,14 +1,15 @@
 import { differenceInCalendarWeeks, startOfWeek } from "date-fns";
-import { eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import uuid from "react-native-uuid";
 import { db } from "@/lib/planner-db/database";
-import { startOfWeekMonday } from "@/features/planner/date-utils";
 import {
   cycleState,
   cycles,
   sessionTemplates,
   splitVariants,
   splits,
+  workoutSessions,
+  workoutSets,
 } from "@/lib/planner-db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 
@@ -17,6 +18,8 @@ export type SplitVariantRow = InferSelectModel<typeof splitVariants>;
 export type SessionTemplateRow = InferSelectModel<typeof sessionTemplates>;
 export type CycleRow = InferSelectModel<typeof cycles>;
 export type CycleStateRow = InferSelectModel<typeof cycleState>;
+export type WorkoutSessionRow = InferSelectModel<typeof workoutSessions>;
+export type WorkoutSetRow = InferSelectModel<typeof workoutSets>;
 
 export type SessionTemplateView = {
   id: string;
@@ -34,6 +37,43 @@ export type ActivePlan = {
 
 export type ActivePlanWithState = ActivePlan & { cycleState: CycleStateRow };
 
+export type WorkoutSessionSummary = {
+  id: string;
+  plannedSessionTemplateId: string | null;
+  sessionTitle: string;
+  startedAt: number;
+  completedAt: number;
+  durationMins: number | null;
+  totalVolumeKg: number | null;
+  totalSets: number;
+  totalReps: number;
+  muscleGroups: string[] | null;
+};
+
+export type WorkoutSessionDetail = {
+  session: WorkoutSessionSummary;
+  sets: WorkoutSetRow[];
+};
+
+export type CreateWorkoutSessionInput = {
+  cycleId: string | null;
+  plannedSessionTemplateId: string | null;
+  sessionTitle: string;
+  startedAt: number;
+  completedAt: number;
+  durationMins: number | null;
+  totalVolumeKg: number | null;
+  totalSets: number;
+  totalReps: number;
+  sets: {
+    exerciseId: string;
+    exerciseName: string;
+    setNumber: number;
+    weight: number;
+    reps: number;
+  }[];
+};
+
 export type RotationType = "SAME_EVERY_WEEK" | "ALTERNATE_AB";
 
 /** Normalize rotation value to SAME_EVERY_WEEK or ALTERNATE_AB. Handles legacy JSON array. */
@@ -46,6 +86,15 @@ export function getRotationType(rotation: string): RotationType {
     return list.length >= 2 ? "ALTERNATE_AB" : "SAME_EVERY_WEEK";
   } catch {
     return "SAME_EVERY_WEEK";
+  }
+}
+
+function parseMuscleGroups(value: string | null): string[] | null {
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as string[];
+  } catch {
+    return null;
   }
 }
 
@@ -230,6 +279,133 @@ export async function getActiveCycleWithSplit(): Promise<ActivePlanWithState | n
   if (!plan) return null;
   const state = await ensureCycleState(plan.cycle.id);
   return { ...plan, cycleState: state };
+}
+
+export async function getWorkoutSessionsInRange(
+  startMs: number,
+  endMs: number
+): Promise<WorkoutSessionSummary[]> {
+  const rows = await db
+    .select({
+      id: workoutSessions.id,
+      plannedSessionTemplateId: workoutSessions.planned_session_template_id,
+      sessionTitle: workoutSessions.session_title,
+      startedAt: workoutSessions.started_at,
+      completedAt: workoutSessions.completed_at,
+      durationMins: workoutSessions.duration_mins,
+      totalVolumeKg: workoutSessions.total_volume_kg,
+      totalSets: workoutSessions.total_sets,
+      totalReps: workoutSessions.total_reps,
+      muscleGroups: sessionTemplates.muscle_groups,
+    })
+    .from(workoutSessions)
+    .leftJoin(
+      sessionTemplates,
+      eq(workoutSessions.planned_session_template_id, sessionTemplates.id)
+    )
+    .where(
+      and(
+        gte(workoutSessions.completed_at, startMs),
+        lte(workoutSessions.completed_at, endMs)
+      )
+    )
+    .orderBy(desc(workoutSessions.completed_at));
+
+  return rows.map((row) => ({
+    id: row.id,
+    plannedSessionTemplateId: row.plannedSessionTemplateId,
+    sessionTitle: row.sessionTitle,
+    startedAt: row.startedAt,
+    completedAt: row.completedAt,
+    durationMins: row.durationMins ?? null,
+    totalVolumeKg: row.totalVolumeKg ?? null,
+    totalSets: row.totalSets,
+    totalReps: row.totalReps,
+    muscleGroups: parseMuscleGroups(row.muscleGroups ?? null),
+  }));
+}
+
+export async function getWorkoutSessionDetail(
+  sessionId: string
+): Promise<WorkoutSessionDetail | null> {
+  const rows = await db
+    .select({
+      id: workoutSessions.id,
+      plannedSessionTemplateId: workoutSessions.planned_session_template_id,
+      sessionTitle: workoutSessions.session_title,
+      startedAt: workoutSessions.started_at,
+      completedAt: workoutSessions.completed_at,
+      durationMins: workoutSessions.duration_mins,
+      totalVolumeKg: workoutSessions.total_volume_kg,
+      totalSets: workoutSessions.total_sets,
+      totalReps: workoutSessions.total_reps,
+      muscleGroups: sessionTemplates.muscle_groups,
+    })
+    .from(workoutSessions)
+    .leftJoin(
+      sessionTemplates,
+      eq(workoutSessions.planned_session_template_id, sessionTemplates.id)
+    )
+    .where(eq(workoutSessions.id, sessionId))
+    .limit(1);
+
+  const sessionRow = rows[0];
+  if (!sessionRow) return null;
+
+  const sets = await db
+    .select()
+    .from(workoutSets)
+    .where(eq(workoutSets.session_id, sessionId))
+    .orderBy(workoutSets.set_number);
+
+  return {
+    session: {
+      id: sessionRow.id,
+      plannedSessionTemplateId: sessionRow.plannedSessionTemplateId,
+      sessionTitle: sessionRow.sessionTitle,
+      startedAt: sessionRow.startedAt,
+      completedAt: sessionRow.completedAt,
+      durationMins: sessionRow.durationMins ?? null,
+      totalVolumeKg: sessionRow.totalVolumeKg ?? null,
+      totalSets: sessionRow.totalSets,
+      totalReps: sessionRow.totalReps,
+      muscleGroups: parseMuscleGroups(sessionRow.muscleGroups ?? null),
+    },
+    sets,
+  };
+}
+
+export async function createWorkoutSession(
+  input: CreateWorkoutSessionInput
+): Promise<string> {
+  const sessionId = String(uuid.v4());
+  await db.insert(workoutSessions).values({
+    id: sessionId,
+    cycle_id: input.cycleId,
+    planned_session_template_id: input.plannedSessionTemplateId,
+    session_title: input.sessionTitle,
+    started_at: input.startedAt,
+    completed_at: input.completedAt,
+    duration_mins: input.durationMins,
+    total_volume_kg: input.totalVolumeKg,
+    total_sets: input.totalSets,
+    total_reps: input.totalReps,
+  });
+
+  if (input.sets.length > 0) {
+    const setRows = input.sets.map((set) => ({
+      id: String(uuid.v4()),
+      session_id: sessionId,
+      exercise_id: set.exerciseId,
+      exercise_name: set.exerciseName,
+      set_number: set.setNumber,
+      weight: set.weight,
+      reps: set.reps,
+    }));
+    await db.insert(workoutSets).values(setRows);
+  }
+
+  return sessionId;
 }
 
 const TEMPLATES = {
