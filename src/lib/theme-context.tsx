@@ -45,7 +45,7 @@ export const lightTheme: ThemeColors = {
 
   primary: "#F5B547",
   primaryForeground: "#1A1203",
-  primaryGradient: ["#F7C35C", "#F5B547", "#E7A93A"],
+  primaryGradient: ["#F9D494", "#F5B547", "#573905"],
 
   // Secondary should be neutral charcoal, not navy
   secondary: "#171A1F",
@@ -105,13 +105,17 @@ type ThemeProviderProps = {
   children: React.ReactNode;
 };
 
-export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElement {
+export function ThemeProvider({
+  children,
+}: ThemeProviderProps): React.ReactElement {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === "dark";
   const themeColors = isDark ? darkTheme : lightTheme;
 
   return (
-    <ThemeContext.Provider value={{ colors: themeColors, tokens: themeTokens, isDark }}>
+    <ThemeContext.Provider
+      value={{ colors: themeColors, tokens: themeTokens, isDark }}
+    >
       {children}
     </ThemeContext.Provider>
   );

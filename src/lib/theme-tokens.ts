@@ -19,6 +19,7 @@ export type ThemeTokens = {
   };
   typography: {
     sizes: {
+      "2xs": number;
       xs: number;
       sm: number;
       md: number;
@@ -29,6 +30,7 @@ export type ThemeTokens = {
       "4xl": number;
     };
     lineHeights: {
+      "2xs": number;
       xs: number;
       sm: number;
       md: number;
@@ -73,6 +75,7 @@ export const themeTokens: ThemeTokens = {
   },
   typography: {
     sizes: {
+      "2xs": 10,
       xs: 12,
       sm: 14,
       md: 16,
@@ -83,6 +86,7 @@ export const themeTokens: ThemeTokens = {
       "4xl": 36,
     },
     lineHeights: {
+      "2xs": 12,
       xs: 16,
       sm: 20,
       md: 24,
