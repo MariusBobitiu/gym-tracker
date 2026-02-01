@@ -6,7 +6,10 @@ import type { WorkoutSession } from "@/types/workout-session";
 export type PlannerUIState = { viewedWeekStart?: number } | null;
 
 /** Pointer for "next workout" in rotation (variant index, session index). Used by getNextWorkout/advanceRotation. */
-export type PlannerNextWorkoutState = { variantIndex: number; sessionIndex: number } | null;
+export type PlannerNextWorkoutState = {
+  variantIndex: number;
+  sessionIndex: number;
+} | null;
 
 export const storage = createMMKV({ id: "gym-tracker" });
 
@@ -14,6 +17,21 @@ const ENCRYPTION_KEY = process.env.EXPO_PUBLIC_MMKV_ENCRYPTION_KEY;
 export const secureStorage = ENCRYPTION_KEY
   ? createMMKV({ id: "gym-tracker-secure", encryptionKey: ENCRYPTION_KEY })
   : null;
+
+export type WeightUnit = "kg" | "lb";
+
+export type NotificationPrefs = {
+  workoutReminders: boolean;
+  marketing: boolean;
+};
+
+export type BugReport = {
+  id: string;
+  subject: string;
+  description: string;
+  stepsToReproduce?: string;
+  createdAt: number;
+};
 
 export const STORAGE_KEYS = {
   storageVersion: "storage_version",
@@ -24,6 +42,9 @@ export const STORAGE_KEYS = {
   workoutSession: "workout_session",
   planner: "planner_v1",
   plannerNextWorkout: "planner_next_workout",
+  weightUnit: "weight_unit",
+  notificationPrefs: "notification_prefs",
+  bugReports: "bug_reports",
 } as const;
 
 export const SECURE_STORAGE_KEYS = {
@@ -46,6 +67,9 @@ export type StorageSchema = {
   [STORAGE_KEYS.workoutSession]: WorkoutSession | null;
   [STORAGE_KEYS.planner]: PlannerUIState;
   [STORAGE_KEYS.plannerNextWorkout]: PlannerNextWorkoutState;
+  [STORAGE_KEYS.weightUnit]: WeightUnit;
+  [STORAGE_KEYS.notificationPrefs]: NotificationPrefs | null;
+  [STORAGE_KEYS.bugReports]: BugReport[] | null;
 };
 
 export type SecureStorageSchema = {
@@ -53,20 +77,29 @@ export type SecureStorageSchema = {
 };
 
 export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
-export type SecureStorageKey = (typeof SECURE_STORAGE_KEYS)[keyof typeof SECURE_STORAGE_KEYS];
+export type SecureStorageKey =
+  (typeof SECURE_STORAGE_KEYS)[keyof typeof SECURE_STORAGE_KEYS];
 
 type UseStateHook<T> = [[boolean, T | null], (value: T | null) => void];
 
 const STORAGE_VERSION = 1;
 
-function useAsyncState<T>(initialValue: [boolean, T | null] = [true, null]): UseStateHook<T> {
+function useAsyncState<T>(
+  initialValue: [boolean, T | null] = [true, null]
+): UseStateHook<T> {
   return useReducer(
-    (state: [boolean, T | null], action: T | null = null): [boolean, T | null] => [false, action],
+    (
+      state: [boolean, T | null],
+      action: T | null = null
+    ): [boolean, T | null] => [false, action],
     initialValue
   ) as UseStateHook<T>;
 }
 
-function readRawValue(store: typeof storage, key: string): string | number | boolean | undefined {
+function readRawValue(
+  store: typeof storage,
+  key: string
+): string | number | boolean | undefined {
   const stringValue = store.getString(key);
   if (stringValue !== undefined) return stringValue;
   const numberValue = store.getNumber(key);
@@ -88,7 +121,11 @@ function parseStoredValue<T>(raw: string | number | boolean): T {
   return raw as T;
 }
 
-function setStoreValue(store: typeof storage, key: string, value: unknown): void {
+function setStoreValue(
+  store: typeof storage,
+  key: string,
+  value: unknown
+): void {
   if (value === null || value === undefined) {
     store.remove(key);
     return;
@@ -107,7 +144,9 @@ function setStoreValue(store: typeof storage, key: string, value: unknown): void
   store.set(key, JSON.stringify(value));
 }
 
-export function getStorageItem<K extends StorageKey>(key: K): StorageSchema[K] | null {
+export function getStorageItem<K extends StorageKey>(
+  key: K
+): StorageSchema[K] | null {
   try {
     const rawValue = readRawValue(storage, key);
     if (rawValue === undefined) {
@@ -120,7 +159,10 @@ export function getStorageItem<K extends StorageKey>(key: K): StorageSchema[K] |
   }
 }
 
-export function setStorageItem<K extends StorageKey>(key: K, value: StorageSchema[K] | null): void {
+export function setStorageItem<K extends StorageKey>(
+  key: K,
+  value: StorageSchema[K] | null
+): void {
   try {
     setStoreValue(storage, key, value);
   } catch (e) {
@@ -143,9 +185,13 @@ export async function setStorageItemAsync<K extends StorageKey>(
   setStorageItem(key, value);
 }
 
-export function getSecureItem<K extends SecureStorageKey>(key: K): SecureStorageSchema[K] | null {
+export function getSecureItem<K extends SecureStorageKey>(
+  key: K
+): SecureStorageSchema[K] | null {
   if (!secureStorage) {
-    console.warn("Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.");
+    console.warn(
+      "Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY."
+    );
     return null;
   }
 
@@ -166,7 +212,9 @@ export function setSecureItem<K extends SecureStorageKey>(
   value: SecureStorageSchema[K] | null
 ): void {
   if (!secureStorage) {
-    console.warn("Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.");
+    console.warn(
+      "Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY."
+    );
     return;
   }
 
@@ -179,7 +227,9 @@ export function setSecureItem<K extends SecureStorageKey>(
 
 export function removeSecureItem(key: SecureStorageKey): void {
   if (!secureStorage) {
-    console.warn("Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY.");
+    console.warn(
+      "Secure storage not configured. Set EXPO_PUBLIC_MMKV_ENCRYPTION_KEY."
+    );
     return;
   }
 
@@ -227,7 +277,11 @@ export function runStorageMigrations(): void {
     removeItem: removeStorageItem,
   };
 
-  for (let version = currentVersion + 1; version <= STORAGE_VERSION; version += 1) {
+  for (
+    let version = currentVersion + 1;
+    version <= STORAGE_VERSION;
+    version += 1
+  ) {
     const migrate = migrations[version];
     if (migrate) {
       migrate(helpers);
@@ -237,7 +291,9 @@ export function runStorageMigrations(): void {
   storage.set(STORAGE_KEYS.storageVersion, STORAGE_VERSION);
 }
 
-export function useStorageState<K extends StorageKey>(key: K): UseStateHook<StorageSchema[K]> {
+export function useStorageState<K extends StorageKey>(
+  key: K
+): UseStateHook<StorageSchema[K]> {
   const [state, setState] = useAsyncState<StorageSchema[K]>();
 
   useEffect(() => {

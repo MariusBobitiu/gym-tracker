@@ -144,6 +144,36 @@ export async function getSplitBySplitId(
   return { split, variants: variantRows, sessionsByVariant };
 }
 
+/** Returns all splits ordered by created_at descending. */
+export async function getAllSplits(): Promise<SplitRow[]> {
+  const rows = await db.select().from(splits).orderBy(desc(splits.created_at));
+  return rows;
+}
+
+/** Deletes a split and all related cycles, cycle_state, session_templates, split_variants. */
+export async function deleteSplit(splitId: string): Promise<void> {
+  const cycleRows = await db
+    .select({ id: cycles.id })
+    .from(cycles)
+    .where(eq(cycles.split_id, splitId));
+  for (const c of cycleRows) {
+    await db.delete(cycleState).where(eq(cycleState.cycle_id, c.id));
+  }
+  await db.delete(cycles).where(eq(cycles.split_id, splitId));
+
+  const variantRows = await db
+    .select({ id: splitVariants.id })
+    .from(splitVariants)
+    .where(eq(splitVariants.split_id, splitId));
+  for (const v of variantRows) {
+    await db
+      .delete(sessionTemplates)
+      .where(eq(sessionTemplates.variant_id, v.id));
+  }
+  await db.delete(splitVariants).where(eq(splitVariants.split_id, splitId));
+  await db.delete(splits).where(eq(splits.id, splitId));
+}
+
 /** Returns the first split with its variants and sessions (no cycle). Use to detect NeedsRotation. */
 export async function getSplitIfExists(): Promise<Omit<
   ActivePlan,
