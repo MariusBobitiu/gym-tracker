@@ -61,10 +61,9 @@ export default function ProfileSettingsScreen(): React.ReactElement {
   }
 
   function handleEditSplit(splitId: string): void {
-    router.push({
-      pathname: "/planner/split-builder",
-      params: { splitId },
-    } as never);
+    router.push(
+      `/planner/split-builder?splitId=${encodeURIComponent(splitId)}` as never
+    );
   }
 
   async function handleRemoveSplit(split: SplitRow): Promise<void> {

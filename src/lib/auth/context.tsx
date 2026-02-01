@@ -169,6 +169,9 @@ export function SessionProvider({
     setUser(meResult.data);
     setToken(storedToken);
     setStorageItem(STORAGE_KEYS.user, meResult.data);
+    if (getStorageItem(STORAGE_KEYS.userFirstSeenAt) == null) {
+      setStorageItem(STORAGE_KEYS.userFirstSeenAt, Date.now());
+    }
     setStatus("authed");
   }, []);
 
@@ -212,6 +215,9 @@ export function SessionProvider({
           setUser(apiSession.user);
           setToken(apiSession.token);
           setStorageItem(STORAGE_KEYS.user, apiSession.user);
+          if (getStorageItem(STORAGE_KEYS.userFirstSeenAt) == null) {
+            setStorageItem(STORAGE_KEYS.userFirstSeenAt, Date.now());
+          }
           writeStoredToken(apiSession.token);
           setStatus("authed");
           return apiSession;
@@ -247,6 +253,7 @@ export function SessionProvider({
     setUser(null);
     setToken(null);
     removeStorageItem(STORAGE_KEYS.user);
+    removeStorageItem(STORAGE_KEYS.userFirstSeenAt);
     clearStoredToken();
     setStatus("guest");
   }, [onSignOut]);

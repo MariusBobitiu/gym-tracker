@@ -149,9 +149,12 @@ export default function PlanScreen() {
               <Button
                 label="Edit split"
                 variant="outline"
-                onPress={() =>
-                  router.push({ pathname: "/planner/split-builder" } as never)
-                }
+                onPress={() => {
+                  if (!displaySplit?.id) return;
+                  router.push(
+                    `/planner/split-builder?splitId=${encodeURIComponent(displaySplit.id)}` as never
+                  );
+                }}
               />
               <Button
                 label="Edit rotation"

@@ -31,6 +31,8 @@ import { ErrorState, LoadingState } from "@/components/feedback-states";
 import { PlannerMonthCalendar } from "@/components/planner-month-calendar";
 import { ScrollView } from "moti";
 import { useHistoryWeek } from "@/hooks/use-history-week";
+import { useSession } from "@/lib/auth/context";
+import { getRegistrationDate } from "@/lib/storage";
 
 function formatVolumeKg(value: number | null | undefined): string {
   if (!value || value <= 0) return "—";
@@ -50,14 +52,19 @@ export default function History() {
     startOfMonth(new Date())
   );
   const { state, error, refetch } = useActivePlan();
+  const { user } = useSession();
   const { colors, tokens } = useTheme();
 
+  const registrationDate = useMemo(
+    () => getRegistrationDate(user ?? null),
+    [user]
+  );
   const plan = state.kind === "week_view" ? state.plan : null;
   const {
     loading: isHistoryLoading,
     error: historyError,
     data: historyData,
-  } = useHistoryWeek(plan, viewedWeekStart);
+  } = useHistoryWeek(plan, viewedWeekStart, registrationDate);
 
   useFocusEffect(
     useCallback(() => {

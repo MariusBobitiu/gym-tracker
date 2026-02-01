@@ -13,13 +13,16 @@ import {
   type CustomVariantInput,
 } from "@/features/planner/planner-repository";
 import { FormField } from "@/components/forms";
-import { ChevronRight, Plus, Trash2 } from "lucide-react-native";
+import { Pencil, Plus, Trash2 } from "lucide-react-native";
 import { ScrollView } from "moti";
 import { LoadingState } from "@/components/feedback-states";
 
 export default function SplitBuilderScreen() {
   const router = useRouter();
-  const { splitId } = useLocalSearchParams<{ splitId?: string }>();
+  const raw = useLocalSearchParams<{ splitId?: string | string[] }>();
+  const splitId = Array.isArray(raw.splitId)
+    ? (raw.splitId[0] ?? undefined)
+    : raw.splitId;
   const { colors, tokens } = useTheme();
   const [splitName, setSplitName] = useState("My split");
   const [variantA, setVariantA] = useState<string[]>([
@@ -217,6 +220,22 @@ export default function SplitBuilderScreen() {
                   editable={!isSubmitting}
                 />
               </View>
+              {isEdit && sessionIdsA[index] ? (
+                <Pressable
+                  onPress={() =>
+                    router.push({
+                      pathname: "/planner/session-exercises",
+                      params: {
+                        sessionTemplateId: sessionIdsA[index],
+                        sessionName: name,
+                      },
+                    } as never)
+                  }
+                  accessibilityLabel={`Edit exercises for ${name}`}
+                >
+                  <Pencil size={20} color={colors.foreground} />
+                </Pressable>
+              ) : null}
               <Pressable
                 onPress={() => removeSession("A", index)}
                 disabled={variantA.length <= 1}
@@ -224,31 +243,6 @@ export default function SplitBuilderScreen() {
                 <Trash2 size={20} color={colors.destructive} />
               </Pressable>
             </View>
-            {isEdit && sessionIdsA[index] ? (
-              <Pressable
-                onPress={() =>
-                  router.push({
-                    pathname: "/planner/session-exercises",
-                    params: {
-                      sessionTemplateId: sessionIdsA[index],
-                      sessionName: name,
-                    },
-                  } as never)
-                }
-                className="mt-1 flex-row items-center"
-                style={{ paddingVertical: tokens.spacing.xs }}
-              >
-                <P
-                  style={{
-                    color: colors.primary,
-                    fontSize: tokens.typography.sizes.sm,
-                  }}
-                >
-                  Exercises
-                </P>
-                <ChevronRight size={14} color={colors.primary} />
-              </Pressable>
-            ) : null}
           </View>
         ))}
         <Button
@@ -292,6 +286,22 @@ export default function SplitBuilderScreen() {
                       editable={!isSubmitting}
                     />
                   </View>
+                  {isEdit && sessionIdsB[index] ? (
+                    <Pressable
+                      onPress={() =>
+                        router.push({
+                          pathname: "/planner/session-exercises",
+                          params: {
+                            sessionTemplateId: sessionIdsB[index],
+                            sessionName: name,
+                          },
+                        } as never)
+                      }
+                      accessibilityLabel={`Edit exercises for ${name}`}
+                    >
+                      <Pencil size={20} color={colors.foreground} />
+                    </Pressable>
+                  ) : null}
                   <Pressable
                     onPress={() => removeSession("B", index)}
                     disabled={variantB.length <= 1}
@@ -299,31 +309,6 @@ export default function SplitBuilderScreen() {
                     <Trash2 size={20} color={colors.destructive} />
                   </Pressable>
                 </View>
-                {isEdit && sessionIdsB[index] ? (
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: "/planner/session-exercises",
-                        params: {
-                          sessionTemplateId: sessionIdsB[index],
-                          sessionName: name,
-                        },
-                      } as never)
-                    }
-                    className="mt-1 flex-row items-center"
-                    style={{ paddingVertical: tokens.spacing.xs }}
-                  >
-                    <P
-                      style={{
-                        color: colors.primary,
-                        fontSize: tokens.typography.sizes.sm,
-                      }}
-                    >
-                      Exercises
-                    </P>
-                    <ChevronRight size={14} color={colors.primary} />
-                  </Pressable>
-                ) : null}
               </View>
             ))}
             <Button
@@ -369,6 +354,22 @@ export default function SplitBuilderScreen() {
                       editable={!isSubmitting}
                     />
                   </View>
+                  {isEdit && sessionIdsC[index] ? (
+                    <Pressable
+                      onPress={() =>
+                        router.push({
+                          pathname: "/planner/session-exercises",
+                          params: {
+                            sessionTemplateId: sessionIdsC[index],
+                            sessionName: name,
+                          },
+                        } as never)
+                      }
+                      accessibilityLabel={`Edit exercises for ${name}`}
+                    >
+                      <Pencil size={20} color={colors.foreground} />
+                    </Pressable>
+                  ) : null}
                   <Pressable
                     onPress={() => removeSession("C", index)}
                     disabled={variantC.length <= 1}
@@ -376,31 +377,6 @@ export default function SplitBuilderScreen() {
                     <Trash2 size={20} color={colors.destructive} />
                   </Pressable>
                 </View>
-                {isEdit && sessionIdsC[index] ? (
-                  <Pressable
-                    onPress={() =>
-                      router.push({
-                        pathname: "/planner/session-exercises",
-                        params: {
-                          sessionTemplateId: sessionIdsC[index],
-                          sessionName: name,
-                        },
-                      } as never)
-                    }
-                    className="mt-1 flex-row items-center"
-                    style={{ paddingVertical: tokens.spacing.xs }}
-                  >
-                    <P
-                      style={{
-                        color: colors.primary,
-                        fontSize: tokens.typography.sizes.sm,
-                      }}
-                    >
-                      Exercises
-                    </P>
-                    <ChevronRight size={14} color={colors.primary} />
-                  </Pressable>
-                ) : null}
               </View>
             ))}
             <Button

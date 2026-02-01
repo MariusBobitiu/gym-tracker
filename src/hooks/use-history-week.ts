@@ -81,23 +81,35 @@ function buildHistorySessions(input: {
   plannedSessionMap: Map<string, WorkoutSessionSummary>;
   weekStartDate: Date;
   weekEndDate: Date;
+  /** Weeks ending before this date are not shown as "missed" (e.g. before user registered). */
+  registrationDate: Date | null;
 }): HistorySessionView[] {
-  const { weekData, plannedSessionMap, weekStartDate, weekEndDate } = input;
+  const {
+    weekData,
+    plannedSessionMap,
+    weekStartDate,
+    weekEndDate,
+    registrationDate,
+  } = input;
   if (!weekData) return [];
 
   const now = new Date();
   const isPastWeek = weekEndDate < now;
   const isFutureWeek = weekStartDate > now;
+  const isBeforeRegistration =
+    registrationDate != null && weekEndDate < registrationDate;
 
   return weekData.sessions.map((session) => {
     const completed = plannedSessionMap.get(session.id);
     const status: HistorySessionView["status"] = completed
       ? "completed"
-      : isFutureWeek
+      : isBeforeRegistration
         ? "planned"
-        : isPastWeek
-          ? "missed"
-          : "planned";
+        : isFutureWeek
+          ? "planned"
+          : isPastWeek
+            ? "missed"
+            : "planned";
 
     return {
       plannedSessionTemplateId: session.id,
@@ -119,7 +131,8 @@ function buildHistorySessions(input: {
 
 export function useHistoryWeek(
   plan: ActivePlanWithState | null,
-  viewedWeekStart: Date
+  viewedWeekStart: Date,
+  registrationDate: Date | null = null
 ): UseHistoryWeekResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -166,6 +179,7 @@ export function useHistoryWeek(
       plannedSessionMap,
       weekStartDate,
       weekEndDate,
+      registrationDate,
     });
     const weekStats = computeWeekStats(
       sessions,
@@ -177,7 +191,7 @@ export function useHistoryWeek(
       weekStats,
       weekData,
     };
-  }, [plan, sessions, weekStartDate, weekEndDate]);
+  }, [plan, sessions, weekStartDate, weekEndDate, registrationDate]);
 
   return {
     loading,

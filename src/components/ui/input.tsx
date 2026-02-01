@@ -88,28 +88,47 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
     [error, isFocussed, props.disabled]
   );
 
-  const inputStyle = React.useMemo(
-    () =>
-      StyleSheet.flatten([
-        {
-          backgroundColor: themeColors.input,
-          borderRadius: tokens.radius.md,
-          borderColor: isFocussed
-            ? themeColors.ring
-            : error
-              ? themeColors.destructive
-              : themeColors.border,
-          color: themeColors.foreground,
-          fontSize: tokens.typography.sizes.md,
-          lineHeight: tokens.typography.lineHeights.md,
-          fontWeight: tokens.typography.weights.medium,
-          paddingHorizontal: tokens.spacing.md,
-          paddingVertical: tokens.spacing.md,
-        },
-        inputProps.style,
-      ]),
-    [isFocussed, error, themeColors, inputProps.style, tokens]
-  );
+  const inputStyle = React.useMemo(() => {
+    const paddingVertical = tokens.spacing.md;
+    const fontSize = tokens.typography.sizes.md;
+    const isMultiline = Boolean(inputProps.multiline);
+    const lineHeight = tokens.typography.lineHeights.md;
+    const singleLineHeight = 48;
+    const minHeight = isMultiline
+      ? lineHeight + paddingVertical * 2
+      : singleLineHeight;
+    const baseStyle: Record<string, unknown> = {
+      backgroundColor: themeColors.input,
+      borderRadius: tokens.radius.md,
+      borderColor: isFocussed
+        ? themeColors.ring
+        : error
+          ? themeColors.destructive
+          : themeColors.border,
+      color: themeColors.foreground,
+      fontSize,
+      fontWeight: tokens.typography.weights.medium,
+      paddingHorizontal: tokens.spacing.md,
+      minHeight,
+    };
+    if (isMultiline) {
+      baseStyle.paddingVertical = paddingVertical;
+      baseStyle.lineHeight = lineHeight;
+    } else {
+      baseStyle.height = singleLineHeight;
+      baseStyle.textAlignVertical = "center";
+      baseStyle.paddingTop = paddingVertical + 2;
+      baseStyle.paddingBottom = paddingVertical - 2;
+    }
+    return StyleSheet.flatten([baseStyle, inputProps.style]);
+  }, [
+    isFocussed,
+    error,
+    themeColors,
+    inputProps.style,
+    inputProps.multiline,
+    tokens,
+  ]);
 
   return (
     <View className={styles.container()}>
@@ -134,6 +153,7 @@ export const Input = React.forwardRef<NTextInput, NInputProps>((props, ref) => {
         className={styles.input()}
         onBlur={onBlur}
         onFocus={onFocus}
+        includeFontPadding={false}
         {...inputProps}
         style={inputStyle}
       />

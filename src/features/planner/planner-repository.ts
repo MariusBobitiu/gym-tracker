@@ -664,6 +664,78 @@ const TEMPLATES = {
 
 export type TemplateId = keyof typeof TEMPLATES;
 
+/** Default exercises per session name when creating a template split. */
+const TEMPLATE_EXERCISES: Record<
+  TemplateId,
+  Partial<Record<string, SessionTemplateExerciseInput[]>>
+> = {
+  "ppl-ab": {
+    Push: [
+      { name: "Bench Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Overhead Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Tricep Pushdown", sets: 3, reps: 12, weight: 20 },
+    ],
+    Pull: [
+      { name: "Barbell Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Lat Pulldown", sets: 3, reps: 10, weight: 20 },
+      { name: "Barbell Curl", sets: 3, reps: 10, weight: 20 },
+    ],
+    Legs: [
+      { name: "Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Curl", sets: 3, reps: 12, weight: 20 },
+    ],
+  },
+  "upper-lower-ab": {
+    "Upper Body": [
+      { name: "Bench Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Overhead Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Barbell Row", sets: 3, reps: 10, weight: 20 },
+    ],
+    "Lower Body": [
+      { name: "Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Press", sets: 3, reps: 12, weight: 20 },
+    ],
+  },
+  "full-body-abc": {
+    "Full Body A": [
+      { name: "Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Bench Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Barbell Row", sets: 3, reps: 10, weight: 20 },
+    ],
+    "Full Body B": [
+      { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
+      { name: "Overhead Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Lat Pulldown", sets: 3, reps: 10, weight: 20 },
+    ],
+    "Full Body C": [
+      { name: "Leg Press", sets: 3, reps: 12, weight: 20 },
+      { name: "Incline Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Cable Row", sets: 3, reps: 10, weight: 20 },
+    ],
+  },
+};
+
+async function seedTemplateExercises(
+  splitId: string,
+  templateId: TemplateId
+): Promise<void> {
+  const exercisesBySession = TEMPLATE_EXERCISES[templateId];
+  if (!exercisesBySession) return;
+  const data = await getSplitBySplitId(splitId);
+  if (!data) return;
+  for (const sessions of Object.values(data.sessionsByVariant)) {
+    for (const session of sessions) {
+      const exercises = exercisesBySession[session.name];
+      if (!exercises?.length) continue;
+      for (let i = 0; i < exercises.length; i++) {
+        await addExerciseToSessionTemplate(session.id, exercises[i], i);
+      }
+    }
+  }
+}
+
 export async function createTemplateSplit(
   templateId: TemplateId
 ): Promise<string> {
@@ -674,7 +746,12 @@ export async function createTemplateSplit(
     key: v.key,
     sessionNames: [...v.sessions],
   }));
-  return createSplitWithVariantsAndSessions(template.name, variants);
+  const splitId = await createSplitWithVariantsAndSessions(
+    template.name,
+    variants
+  );
+  await seedTemplateExercises(splitId, templateId);
+  return splitId;
 }
 
 export type CustomVariantInput = { key: string; sessionNames: string[] };

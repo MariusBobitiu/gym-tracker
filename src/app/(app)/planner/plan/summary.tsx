@@ -187,10 +187,9 @@ export default function PlanSummaryScreen() {
           variant="outline"
           className="w-full"
           onPress={() =>
-            router.push({
-              pathname: "/planner/split-builder",
-              params: { splitId: plan.split.id },
-            } as never)
+            router.push(
+              `/planner/split-builder?splitId=${encodeURIComponent(plan.split.id)}` as never
+            )
           }
         />
       </ScrollView>

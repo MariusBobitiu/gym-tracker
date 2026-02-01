@@ -15,6 +15,7 @@ import {
   getWeekSessionsFromPlan,
   getUpNextSession,
 } from "@/features/planner/planner-repository";
+import type { ActivePlanWithState } from "@/features/planner/planner-repository";
 import { getWeekRange, startOfWeekMonday } from "@/features/planner/date-utils";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import { useHistoryWeek } from "@/hooks/use-history-week";
@@ -162,6 +163,8 @@ function BentoCard({
 }
 
 type BentoGridProps = {
+  /** When false, plan is still loading so this week / up next show "—" instead of 0. */
+  planReady: boolean;
   thisWeekCompleted: number;
   thisWeekTotal: number;
   upNextSessionName: string | null;
@@ -171,6 +174,7 @@ type BentoGridProps = {
 };
 
 function BentoGrid({
+  planReady,
   thisWeekCompleted,
   thisWeekTotal,
   upNextSessionName,
@@ -180,12 +184,13 @@ function BentoGrid({
 }: BentoGridProps): React.ReactElement {
   const { colors } = useTheme();
   const progressPct =
-    thisWeekTotal > 0
+    planReady && thisWeekTotal > 0
       ? Math.min((thisWeekCompleted / thisWeekTotal) * 100, 100)
       : 0;
   const upNext = thisWeekTotal - thisWeekCompleted;
-  const upNextLabel =
-    upNext > 0 && upNextSessionName
+  const upNextLabel = !planReady
+    ? "—"
+    : upNext > 0 && upNextSessionName
       ? `Next: ${upNextSessionName}`
       : upNext > 0
         ? "Session remaining"
@@ -208,10 +213,16 @@ function BentoGrid({
                 lineHeight: 32,
               }}
             >
-              {thisWeekCompleted}
+              {planReady ? thisWeekCompleted : "—"}
             </Text>
             <P style={{ color: colors.mutedForeground }}>
-              of {thisWeekTotal > 0 ? thisWeekTotal : 0} sessions
+              of{" "}
+              {planReady && thisWeekTotal > 0
+                ? thisWeekTotal
+                : planReady
+                  ? 0
+                  : "—"}{" "}
+              sessions
             </P>
           </View>
           <View
@@ -231,8 +242,8 @@ function BentoGrid({
         <View className="flex-1 gap-3">
           <BentoCard
             title="Up next"
-            value={String(Math.max(0, upNext))}
-            subtitle="Session remaining"
+            value={planReady ? String(Math.max(0, upNext)) : "—"}
+            subtitle={planReady ? "Session remaining" : "—"}
           />
           <BentoCard
             title="Last week"
@@ -337,7 +348,14 @@ function BestLiftsSection({
 export function ProfileScreen(): React.ReactElement {
   const thisWeekStart = useMemo(() => startOfWeekMonday(new Date()), []);
   const { state: planState, refetch: refetchPlan } = useActivePlan();
-  const plan = planState.kind === "week_view" ? planState.plan : null;
+  const [cachedPlan, setCachedPlan] = useState<ActivePlanWithState | null>(
+    null
+  );
+  const plan = useMemo((): ActivePlanWithState | null => {
+    if (planState.kind === "week_view") return planState.plan;
+    if (planState.kind === "loading") return cachedPlan;
+    return null;
+  }, [planState, cachedPlan]);
   const {
     data: thisWeekData,
     loading: thisWeekLoading,
@@ -354,6 +372,19 @@ export function ProfileScreen(): React.ReactElement {
   const [lastWeekTotal, setLastWeekTotal] = useState(0);
   const [last14DaysMins, setLast14DaysMins] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (planState.kind === "week_view") {
+      setCachedPlan(planState.plan);
+      return;
+    }
+    if (
+      planState.kind === "hard_empty" ||
+      planState.kind === "needs_rotation"
+    ) {
+      setCachedPlan(null);
+    }
+  }, [planState]);
 
   const loadProfileData = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -409,14 +440,19 @@ export function ProfileScreen(): React.ReactElement {
   useFocusEffect(
     useCallback(() => {
       refetchPlan();
-      void refetchThisWeek();
+      if (plan) void refetchThisWeek();
       void loadProfileData();
-    }, [refetchPlan, refetchThisWeek, loadProfileData])
+    }, [refetchPlan, plan, refetchThisWeek, loadProfileData])
   );
 
   useEffect(() => {
     void loadProfileData();
   }, [loadProfileData]);
+
+  // Refetch this week when plan becomes available (same as Today refetches history when plan is set)
+  useEffect(() => {
+    if (plan) void refetchThisWeek();
+  }, [plan, refetchThisWeek]);
 
   const stats: StatItem[] = useMemo(() => {
     if (!profileStats) {
@@ -472,6 +508,7 @@ export function ProfileScreen(): React.ReactElement {
         <View className="gap-8">
           <ProfileHeader stats={stats} />
           <BentoGrid
+            planReady={plan !== null}
             thisWeekCompleted={thisWeekCompleted}
             thisWeekTotal={thisWeekTotal}
             upNextSessionName={upNextSessionName}

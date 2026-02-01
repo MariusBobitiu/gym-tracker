@@ -39,6 +39,7 @@ export const STORAGE_KEYS = {
   session: "session",
   token: "token",
   user: "user",
+  userFirstSeenAt: "user_first_seen_at",
   workoutSession: "workout_session",
   planner: "planner_v1",
   plannerNextWorkout: "planner_next_workout",
@@ -64,6 +65,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.session]: string;
   [STORAGE_KEYS.token]: TokenType;
   [STORAGE_KEYS.user]: User;
+  [STORAGE_KEYS.userFirstSeenAt]: number | null;
   [STORAGE_KEYS.workoutSession]: WorkoutSession | null;
   [STORAGE_KEYS.planner]: PlannerUIState;
   [STORAGE_KEYS.plannerNextWorkout]: PlannerNextWorkoutState;
@@ -176,6 +178,17 @@ export function removeStorageItem(key: StorageKey): void {
   } catch (e) {
     console.error("MMKV storage error:", e);
   }
+}
+
+/** Returns user registration or first-seen date for cutoff (e.g. history weeks). */
+export function getRegistrationDate(user: User | null): Date | null {
+  if (user?.createdAt) {
+    const d = new Date(user.createdAt);
+    if (!Number.isNaN(d.getTime())) return d;
+  }
+  const firstSeen = getStorageItem(STORAGE_KEYS.userFirstSeenAt);
+  if (typeof firstSeen === "number") return new Date(firstSeen);
+  return null;
 }
 
 export async function setStorageItemAsync<K extends StorageKey>(
