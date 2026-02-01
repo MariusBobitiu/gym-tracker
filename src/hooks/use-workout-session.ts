@@ -1,12 +1,13 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useRouter } from "expo-router";
-import { DEFAULT_WORKOUT_EXERCISES, getExerciseById } from "@/lib/default-workout";
+import {
+  DEFAULT_WORKOUT_EXERCISES,
+  getExerciseById,
+} from "@/lib/default-workout";
 import { setStorageItem, STORAGE_KEYS, useStorageState } from "@/lib/storage";
 import type { PlanExercise, WorkoutSession } from "@/types/workout-session";
 import { SESSION_PHASES } from "@/types/workout-session";
 import { Alert } from "react-native";
-
-const EXERCISES = DEFAULT_WORKOUT_EXERCISES;
 
 export type CompleteSetResult = "rest" | "workout" | "done";
 
@@ -20,7 +21,10 @@ export type UseWorkoutSessionReturn = {
   isCompleted: boolean;
   completedExerciseIds: string[];
   handleContinue: () => void;
-  completeSetAndAdvance: (weight: number, reps: number) => CompleteSetResult | null;
+  completeSetAndAdvance: (
+    weight: number,
+    reps: number
+  ) => CompleteSetResult | null;
   handleFinish: () => void;
   clearAndBack: () => void;
   setSession: (value: WorkoutSession | null) => void;
@@ -28,16 +32,31 @@ export type UseWorkoutSessionReturn = {
 
 export type WorkoutSessionOptions = {
   onComplete?: () => void | Promise<void>;
+  /** Exercise list for this workout; defaults to DEFAULT_WORKOUT_EXERCISES when not from a planned session */
+  exercises?: PlanExercise[];
+  /** When true, do not auto-initialize session (e.g. while loading planned session exercises) */
+  skipInitialization?: boolean;
 };
 
-export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSessionReturn {
+export function useWorkoutSession(
+  options?: WorkoutSessionOptions
+): UseWorkoutSessionReturn {
   const router = useRouter();
-  const [[loading, session], setSession] = useStorageState(STORAGE_KEYS.workoutSession);
+  const [[loading, session], setSession] = useStorageState(
+    STORAGE_KEYS.workoutSession
+  );
+  const exercises = useMemo(
+    () =>
+      options?.exercises?.length
+        ? options.exercises
+        : DEFAULT_WORKOUT_EXERCISES,
+    [options?.exercises]
+  );
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || options?.skipInitialization) return;
     if (!session || session.phase === SESSION_PHASES.idle) {
-      const first = EXERCISES[0];
+      const first = exercises[0];
       if (first) {
         setSession({
           phase: SESSION_PHASES.inWorkout,
@@ -47,7 +66,7 @@ export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSe
         });
       }
     }
-  }, [loading, session, setSession]);
+  }, [loading, session, setSession, exercises, options?.skipInitialization]);
 
   const [elapsedMs, setElapsedMs] = React.useState(() =>
     session ? Date.now() - session.startedAt : 0
@@ -62,7 +81,7 @@ export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSe
   }, [session]);
 
   const currentExercise = session
-    ? getExerciseById(EXERCISES, session.currentExerciseId)
+    ? getExerciseById(exercises, session.currentExerciseId)
     : undefined;
   const exerciseName = currentExercise?.name ?? "—";
   const setsTotal = currentExercise?.sets ?? 0;
@@ -70,13 +89,20 @@ export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSe
 
   const completedExerciseIds = React.useMemo(() => {
     if (!session?.completedSets?.length) return [];
-    return EXERCISES.filter((ex) => {
-      const count = session.completedSets!.filter((s) => s.exerciseId === ex.id).length;
-      return count === ex.sets;
-    }).map((ex) => ex.id);
-  }, [session?.completedSets]);
+    return exercises
+      .filter((ex) => {
+        const count = session.completedSets!.filter(
+          (s) => s.exerciseId === ex.id
+        ).length;
+        return count === ex.sets;
+      })
+      .map((ex) => ex.id);
+  }, [session?.completedSets, exercises]);
 
-  function completeSetAndAdvance(weight: number, reps: number): CompleteSetResult | null {
+  function completeSetAndAdvance(
+    weight: number,
+    reps: number
+  ): CompleteSetResult | null {
     if (!session || !currentExercise) return null;
     const completedSets = [...(session.completedSets ?? [])];
     completedSets.push({
@@ -95,8 +121,10 @@ export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSe
       });
       return "rest";
     }
-    const currentIndex = EXERCISES.findIndex((e) => e.id === session.currentExerciseId);
-    const next = EXERCISES[currentIndex + 1];
+    const currentIndex = exercises.findIndex(
+      (e) => e.id === session.currentExerciseId
+    );
+    const next = exercises[currentIndex + 1];
     if (next) {
       setSession({
         ...session,
@@ -117,9 +145,9 @@ export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSe
 
   function handleContinue(): void {
     if (!session) return;
-    const exercise = getExerciseById(EXERCISES, session.currentExerciseId);
+    const exercise = getExerciseById(exercises, session.currentExerciseId);
     if (!exercise) {
-      const first = EXERCISES[0];
+      const first = exercises[0];
       if (first) {
         setSession({
           ...session,
@@ -137,8 +165,10 @@ export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSe
       });
       return;
     }
-    const currentIndex = EXERCISES.findIndex((e) => e.id === session.currentExerciseId);
-    const next = EXERCISES[currentIndex + 1];
+    const currentIndex = exercises.findIndex(
+      (e) => e.id === session.currentExerciseId
+    );
+    const next = exercises[currentIndex + 1];
     if (next) {
       setSession({
         ...session,
@@ -153,25 +183,30 @@ export function useWorkoutSession(options?: WorkoutSessionOptions): UseWorkoutSe
 
   function handleFinish(): void {
     if (!session) return;
-    Alert.alert("Finish workout", "Are you sure you want to finish the workout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Finish",
-        onPress: () => {
-          const completedSession: WorkoutSession = {
-            ...session,
-            phase: SESSION_PHASES.completed,
-            startedAt: session.startedAt ?? Date.now(),
-            currentExerciseId: session.currentExerciseId ?? EXERCISES[0]?.id ?? "",
-            currentSetNumber: session.currentSetNumber ?? 1,
-          };
-          setStorageItem(STORAGE_KEYS.workoutSession, completedSession);
-          setSession(completedSession);
-          void options?.onComplete?.();
-          router.dismissAll();
+    Alert.alert(
+      "Finish workout",
+      "Are you sure you want to finish the workout?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Finish",
+          onPress: () => {
+            const completedSession: WorkoutSession = {
+              ...session,
+              phase: SESSION_PHASES.completed,
+              startedAt: session.startedAt ?? Date.now(),
+              currentExerciseId:
+                session.currentExerciseId ?? exercises[0]?.id ?? "",
+              currentSetNumber: session.currentSetNumber ?? 1,
+            };
+            setStorageItem(STORAGE_KEYS.workoutSession, completedSession);
+            setSession(completedSession);
+            void options?.onComplete?.();
+            router.dismissAll();
+          },
         },
-      },
-    ]);
+      ]
+    );
   }
 
   function clearAndBack(): void {

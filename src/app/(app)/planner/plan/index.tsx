@@ -3,7 +3,15 @@ import { Stack, useRouter } from "expo-router";
 import { View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
-import { Button, Card, CardContent, CardHeader, CardTitle, P, Text } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  P,
+  Text,
+} from "@/components/ui";
 import { Modal, useModal } from "@/components/ui/modal";
 import { useTheme } from "@/lib/theme-context";
 import {
@@ -18,8 +26,10 @@ import { LoadingState } from "@/components/feedback-states";
 export default function PlanScreen() {
   const router = useRouter();
   const { colors, tokens } = useTheme();
-  const [plan, setPlan] = useState<Awaited<ReturnType<typeof getActivePlan>>>(null);
-  const [splitOnly, setSplitOnly] = useState<Awaited<ReturnType<typeof getSplitIfExists>>>(null);
+  const [plan, setPlan] =
+    useState<Awaited<ReturnType<typeof getActivePlan>>>(null);
+  const [splitOnly, setSplitOnly] =
+    useState<Awaited<ReturnType<typeof getSplitIfExists>>>(null);
   const [loading, setLoading] = useState(true);
   const [resetting, setResetting] = useState(false);
   const resetModal = useModal();
@@ -55,7 +65,10 @@ export default function PlanScreen() {
 
   if (loading) {
     return (
-      <Screen safeAreaEdges={["top", "bottom"]} contentContainerClassName="pb-12">
+      <Screen
+        safeAreaEdges={["top", "bottom"]}
+        contentContainerClassName="pb-12"
+      >
         <Stack.Screen
           options={headerOptions({
             title: "Manage plan",
@@ -74,10 +87,16 @@ export default function PlanScreen() {
   const displaySplit = plan?.split ?? splitOnly?.split ?? null;
   const rotation = plan?.cycle ? parseRotation(plan.cycle.rotation) : [];
   const variantKeys =
-    plan?.variants.map((v) => v.key) ?? splitOnly?.variants.map((v) => v.key) ?? [];
+    plan?.variants.map((v) => v.key) ??
+    splitOnly?.variants.map((v) => v.key) ??
+    [];
 
   return (
-    <Screen safeAreaEdges={["top", "bottom"]} contentContainerClassName="pb-12" preset="scroll">
+    <Screen
+      safeAreaEdges={["top", "bottom"]}
+      contentContainerClassName="pb-12"
+      preset="scroll"
+    >
       <Stack.Screen options={headerOptions({ title: "Manage plan" })} />
       <AppHeader title="Manage plan" showBackButton />
       <View className="px-4 py-4">
@@ -89,7 +108,11 @@ export default function PlanScreen() {
               </CardHeader>
               <CardContent>
                 <Text
-                  style={{ fontSize: tokens.typography.sizes.sm, color: colors.mutedForeground }}>
+                  style={{
+                    fontSize: tokens.typography.sizes.sm,
+                    color: colors.mutedForeground,
+                  }}
+                >
                   Variants: {variantKeys.join(", ")}
                 </Text>
                 {rotation.length > 0 && (
@@ -98,12 +121,14 @@ export default function PlanScreen() {
                       <View
                         key={`${key}-${i}`}
                         className="rounded-full px-3 py-1"
-                        style={{ backgroundColor: colors.muted }}>
+                        style={{ backgroundColor: colors.muted }}
+                      >
                         <Text
                           style={{
                             fontSize: tokens.typography.sizes.sm,
                             color: colors.foreground,
-                          }}>
+                          }}
+                        >
                           {key}
                         </Text>
                       </View>
@@ -117,17 +142,23 @@ export default function PlanScreen() {
               <Button
                 label="Change split"
                 variant="outline"
-                onPress={() => router.push({ pathname: "/planner/split-template" } as never)}
+                onPress={() =>
+                  router.push({ pathname: "/planner/split-template" } as never)
+                }
               />
               <Button
                 label="Edit split"
                 variant="outline"
-                onPress={() => router.push({ pathname: "/planner/split-builder" } as never)}
+                onPress={() =>
+                  router.push({ pathname: "/planner/split-builder" } as never)
+                }
               />
               <Button
                 label="Edit rotation"
                 variant="outline"
-                onPress={() => router.push({ pathname: "/planner/rotation" } as never)}
+                onPress={() =>
+                  router.push({ pathname: "/planner/rotation" } as never)
+                }
               />
               <Button
                 label="Reset plan"
@@ -156,7 +187,8 @@ export default function PlanScreen() {
       <Modal ref={resetModal.ref} snapPoints={["35%"]} title="Reset plan?">
         <View className="px-4 pb-8">
           <P className="mb-4" style={{ color: colors.mutedForeground }}>
-            This will delete your current split and rotation. You can create a new plan afterward.
+            This will delete your current split and rotation. You can create a
+            new plan afterward.
           </P>
           <Button
             label="Reset plan"

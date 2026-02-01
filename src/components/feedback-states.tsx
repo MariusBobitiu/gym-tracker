@@ -1,6 +1,11 @@
 import React from "react";
 import { MotiView } from "moti";
-import { ActivityIndicator, View, type DimensionValue, type ViewProps } from "react-native";
+import {
+  ActivityIndicator,
+  View,
+  type DimensionValue,
+  type ViewProps,
+} from "react-native";
 
 import { Button, Text } from "@/components/ui";
 import { useReducedMotion } from "@/lib/motion";
@@ -34,7 +39,8 @@ export function EmptyState({
         },
         style,
       ]}
-      {...props}>
+      {...props}
+    >
       <Text
         style={{
           color: colors.foreground,
@@ -42,7 +48,8 @@ export function EmptyState({
           lineHeight: tokens.typography.lineHeights.lg,
           fontWeight: tokens.typography.weights.semibold,
           textAlign: "center",
-        }}>
+        }}
+      >
         {title}
       </Text>
       {description ? (
@@ -53,7 +60,8 @@ export function EmptyState({
             lineHeight: tokens.typography.lineHeights.md,
             textAlign: "center",
             marginTop: tokens.spacing.sm,
-          }}>
+          }}
+        >
           {description}
         </Text>
       ) : null}
@@ -94,7 +102,8 @@ export function ErrorState({
         },
         style,
       ]}
-      {...props}>
+      {...props}
+    >
       <Text
         style={{
           color: colors.destructive,
@@ -102,7 +111,8 @@ export function ErrorState({
           lineHeight: tokens.typography.lineHeights.lg,
           fontWeight: tokens.typography.weights.semibold,
           textAlign: "center",
-        }}>
+        }}
+      >
         {title}
       </Text>
       {description ? (
@@ -113,7 +123,8 @@ export function ErrorState({
             lineHeight: tokens.typography.lineHeights.md,
             textAlign: "center",
             marginTop: tokens.spacing.sm,
-          }}>
+          }}
+        >
           {description}
         </Text>
       ) : null}
@@ -130,7 +141,11 @@ type LoadingStateProps = ViewProps & {
   label?: string;
 };
 
-export function LoadingState({ label = "Loading...", style, ...props }: LoadingStateProps) {
+export function LoadingState({
+  label = "Loading...",
+  style,
+  ...props
+}: LoadingStateProps) {
   const { colors, tokens } = useTheme();
 
   return (
@@ -144,7 +159,8 @@ export function LoadingState({ label = "Loading...", style, ...props }: LoadingS
         },
         style,
       ]}
-      {...props}>
+      {...props}
+    >
       <ActivityIndicator color={colors.primary} />
       {label ? (
         <Text
@@ -153,7 +169,8 @@ export function LoadingState({ label = "Loading...", style, ...props }: LoadingS
             fontSize: tokens.typography.sizes.md,
             lineHeight: tokens.typography.lineHeights.md,
             marginTop: tokens.spacing.sm,
-          }}>
+          }}
+        >
           {label}
         </Text>
       ) : null}
@@ -202,7 +219,12 @@ export function Skeleton({
       style={baseStyle}
       from={{ opacity: 0.35 }}
       animate={{ opacity: 1 }}
-      transition={{ type: "timing", duration: 900, loop: true, repeatReverse: true }}
+      transition={{
+        type: "timing",
+        duration: 900,
+        loop: true,
+        repeatReverse: true,
+      }}
       {...props}
     />
   );

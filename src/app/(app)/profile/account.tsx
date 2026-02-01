@@ -29,7 +29,9 @@ export default function Account() {
               boxShadow: "0 0 10px 0 rgba(0, 0, 0, 0.1)",
               elevation: 10,
             }}
-            icon={<Ionicons name="pencil" size={24} color={colors.foreground} />}
+            icon={
+              <Ionicons name="pencil" size={24} color={colors.foreground} />
+            }
           />
         }
       />

@@ -174,7 +174,9 @@ export function SetInputStepper({
 
   return (
     <>
-      <View className={cn("flex-row items-center justify-center gap-4", className)}>
+      <View
+        className={cn("flex-row items-center justify-center gap-4", className)}
+      >
         <Pressable
           onPress={handleDecrementPress}
           onPressIn={handleDecrementPressIn}
@@ -188,7 +190,8 @@ export function SetInputStepper({
             borderColor: colors.primary,
             backgroundColor: colors.card,
             opacity: value <= min ? 0.5 : 1,
-          }}>
+          }}
+        >
           <Minus size={24} color={colors.primary} />
         </Pressable>
         <Pressable
@@ -196,13 +199,15 @@ export function SetInputStepper({
           hitSlop={hitSlop}
           accessibilityLabel="Select value"
           accessibilityRole="button"
-          className="min-w-[56px] items-center">
+          className="min-w-[56px] items-center"
+        >
           <Text
             style={{
               color: colors.foreground,
               fontSize: tokens.typography.sizes["2xl"],
               fontWeight: tokens.typography.weights.bold,
-            }}>
+            }}
+          >
             {value}
           </Text>
           {unit ? (
@@ -211,7 +216,8 @@ export function SetInputStepper({
                 color: colors.primary,
                 fontSize: tokens.typography.sizes.sm,
                 fontWeight: tokens.typography.weights.medium,
-              }}>
+              }}
+            >
               {unit}
             </Text>
           ) : null}
@@ -229,7 +235,8 @@ export function SetInputStepper({
             borderColor: colors.primary,
             backgroundColor: colors.card,
             opacity: value >= max ? 0.5 : 1,
-          }}>
+          }}
+        >
           <Plus size={24} color={colors.primary} />
         </Pressable>
       </View>

@@ -54,7 +54,9 @@ type SessionProviderProps = PropsWithChildren<{
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function readStoredToken(): TokenType | null {
-  const secureToken = secureStorage ? getSecureItem(SECURE_STORAGE_KEYS.authToken) : null;
+  const secureToken = secureStorage
+    ? getSecureItem(SECURE_STORAGE_KEYS.authToken)
+    : null;
   return secureToken ?? getStorageItem(STORAGE_KEYS.token);
 }
 
@@ -73,8 +75,15 @@ function clearStoredToken(): void {
   }
 }
 
-function isAuthSession(value: AuthCredentials | AuthSession): value is AuthSession {
-  return typeof value === "object" && value !== null && "token" in value && "user" in value;
+function isAuthSession(
+  value: AuthCredentials | AuthSession
+): value is AuthSession {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "token" in value &&
+    "user" in value
+  );
 }
 
 // Use this hook to access the auth user/session data.
@@ -97,7 +106,11 @@ export function useAuth() {
   return value;
 }
 
-export function SessionProvider({ children, authenticate, onSignOut }: SessionProviderProps) {
+export function SessionProvider({
+  children,
+  authenticate,
+  onSignOut,
+}: SessionProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<TokenType | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
@@ -205,7 +218,9 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
         }
 
         if (!session) {
-          throw new Error("Auth signIn not configured. Provide an authenticate handler.");
+          throw new Error(
+            "Auth signIn not configured. Provide an authenticate handler."
+          );
         }
 
         setUser(session.user ?? null);
@@ -243,10 +258,13 @@ export function SessionProvider({ children, authenticate, onSignOut }: SessionPr
   }, [status]);
 
   useEffect(() => {
-    async function handleRefresh(currentToken: string | null): Promise<string | null> {
+    async function handleRefresh(
+      currentToken: string | null
+    ): Promise<string | null> {
       const storedToken = token ?? readStoredToken();
       const refreshToken = storedToken?.refresh ?? null;
-      const tokenToRefresh = refreshToken || currentToken || storedToken?.access || null;
+      const tokenToRefresh =
+        refreshToken || currentToken || storedToken?.access || null;
 
       if (!tokenToRefresh) {
         return null;

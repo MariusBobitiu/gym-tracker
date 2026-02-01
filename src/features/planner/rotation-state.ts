@@ -53,7 +53,8 @@ export function getNextWorkout(plan: ActivePlan): NextWorkoutResult {
     setStoredPointer(pointer);
   }
 
-  const variantKey = rotation[pointer.variantIndex % rotation.length] ?? rotation[0];
+  const variantKey =
+    rotation[pointer.variantIndex % rotation.length] ?? rotation[0];
   const sessions = sessionsByKey[variantKey] ?? [];
   if (sessions.length === 0) return null;
 

@@ -41,7 +41,8 @@ export function FormField({
             lineHeight: tokens.typography.lineHeights.md,
             fontWeight: tokens.typography.weights.medium,
             marginBottom: tokens.spacing.xs,
-          }}>
+          }}
+        >
           {label}
           {required ? " *" : ""}
         </Text>
@@ -55,7 +56,8 @@ export function FormField({
             fontSize: tokens.typography.sizes.sm,
             lineHeight: tokens.typography.lineHeights.sm,
             marginTop: tokens.spacing.xs,
-          }}>
+          }}
+        >
           {helper}
         </Text>
       )}
@@ -67,7 +69,8 @@ export function FormField({
             fontSize: tokens.typography.sizes.sm,
             lineHeight: tokens.typography.lineHeights.sm,
             marginTop: tokens.spacing.xs,
-          }}>
+          }}
+        >
           {error}
         </Text>
       )}

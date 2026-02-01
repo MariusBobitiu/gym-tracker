@@ -1,4 +1,7 @@
-import { BottomSheetFlatList, type BottomSheetModal } from "@gorhom/bottom-sheet";
+import {
+  BottomSheetFlatList,
+  type BottomSheetModal,
+} from "@gorhom/bottom-sheet";
 import { FlashList } from "@shopify/flash-list";
 import * as React from "react";
 import type { FieldValues } from "react-hook-form";
@@ -20,7 +23,8 @@ const selectTv = tv({
   slots: {
     container: "mb-4",
     label: "text-grey-100 mb-1 text-lg",
-    input: "border-grey-50 mt-0 flex-row items-center justify-center rounded-xl border-[0.5px] p-3",
+    input:
+      "border-grey-50 mt-0 flex-row items-center justify-center rounded-xl border-[0.5px] p-3",
     inputValue: "",
   },
 
@@ -92,7 +96,8 @@ export const Options = React.forwardRef<BottomSheetModal, OptionsProps>(
           backgroundColor: themeColors.card,
           borderTopLeftRadius: tokens.radius.lg,
           borderTopRightRadius: tokens.radius.lg,
-        }}>
+        }}
+      >
         <List
           data={options}
           keyExtractor={keyExtractor}
@@ -124,7 +129,8 @@ const Option = React.memo(
           paddingHorizontal: tokens.spacing.md,
           paddingVertical: tokens.spacing.sm,
         }}
-        {...props}>
+        {...props}
+      >
         <Text className="flex-1" style={{ color: themeColors.foreground }}>
           {label}
         </Text>
@@ -200,7 +206,8 @@ export const Select = (props: SelectProps) => {
               fontSize: tokens.typography.sizes.md,
               lineHeight: tokens.typography.lineHeights.md,
               fontWeight: tokens.typography.weights.medium,
-            }}>
+            }}
+          >
             {label}
           </Text>
         )}
@@ -214,7 +221,8 @@ export const Select = (props: SelectProps) => {
             borderColor: error ? themeColors.destructive : themeColors.border,
             borderRadius: tokens.radius.md,
             padding: tokens.spacing.md,
-          }}>
+          }}
+        >
           <View className="flex-1">
             <Text
               className={styles.inputValue()}
@@ -222,7 +230,8 @@ export const Select = (props: SelectProps) => {
                 color: error ? themeColors.destructive : themeColors.foreground,
                 fontSize: tokens.typography.sizes.md,
                 lineHeight: tokens.typography.lineHeights.md,
-              }}>
+              }}
+            >
               {textValue}
             </Text>
           </View>
@@ -236,18 +245,26 @@ export const Select = (props: SelectProps) => {
               color: themeColors.destructive,
               fontSize: tokens.typography.sizes.sm,
               lineHeight: tokens.typography.lineHeights.sm,
-            }}>
+            }}
+          >
             {error}
           </Text>
         )}
       </View>
-      <Options testID={testID} ref={modal.ref} options={options} onSelect={onSelectOption} />
+      <Options
+        testID={testID}
+        ref={modal.ref}
+        options={options}
+        onSelect={onSelectOption}
+      />
     </>
   );
 };
 
 // only used with react-hook-form
-export function ControlledSelect<T extends FieldValues>(props: ControlledSelectProps<T>) {
+export function ControlledSelect<T extends FieldValues>(
+  props: ControlledSelectProps<T>
+) {
   const { name, control, rules, onSelect: onNSelect, ...selectProps } = props;
 
   const { field, fieldState } = useController({ control, name, rules });

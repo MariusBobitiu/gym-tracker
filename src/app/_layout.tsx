@@ -14,6 +14,7 @@ import { View } from "@/components/ui";
 import { LoadingState } from "@/components/feedback-states";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import FlashMessage from "react-native-flash-message";
 
 export default function Root() {
   // Set up the auth context and render your layout inside of it.
@@ -26,6 +27,7 @@ export default function Root() {
             <QueryClientProvider client={queryClient}>
               <SplashScreenController />
               <RootNavigator />
+              <FlashMessage position="top" />
             </QueryClientProvider>
           </SessionProvider>
         </BottomSheetModalProvider>
@@ -62,7 +64,8 @@ function RootNavigator() {
         headerShown: false,
         animation: "fade",
         animationDuration: 150,
-      }}>
+      }}
+    >
       <Stack.Protected guard={isAuthed}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>

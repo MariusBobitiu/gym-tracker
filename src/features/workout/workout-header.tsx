@@ -7,7 +7,9 @@ type WorkoutHeaderProps = {
   elapsedMs: number;
 };
 
-export function WorkoutHeader({ elapsedMs }: WorkoutHeaderProps): React.ReactElement {
+export function WorkoutHeader({
+  elapsedMs,
+}: WorkoutHeaderProps): React.ReactElement {
   const { colors } = useTheme();
   return (
     <View>

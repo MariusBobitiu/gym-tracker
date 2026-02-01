@@ -1,5 +1,12 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { useTheme } from "@/lib/theme-context";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -55,7 +62,12 @@ export function WheelPickerModal({
   const isIOS = Platform.OS === "ios";
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onDismiss}
+    >
       <Pressable style={styles.backdrop} onPress={onDismiss}>
         <Pressable
           style={[
@@ -65,7 +77,8 @@ export function WheelPickerModal({
               paddingBottom: insets.bottom + 16,
             },
           ]}
-          onPress={() => {}}>
+          onPress={() => {}}
+        >
           <View
             style={[
               styles.toolbar,
@@ -73,26 +86,42 @@ export function WheelPickerModal({
                 borderBottomColor: colors.border,
                 paddingTop: insets.top + 8,
               },
-            ]}>
-            <Pressable onPress={onDismiss} hitSlop={12} style={styles.toolbarSide}>
-              <Text style={{ color: colors.mutedForeground, fontSize: 16 }}>Cancel</Text>
+            ]}
+          >
+            <Pressable
+              onPress={onDismiss}
+              hitSlop={12}
+              style={styles.toolbarSide}
+            >
+              <Text style={{ color: colors.mutedForeground, fontSize: 16 }}>
+                Cancel
+              </Text>
             </Pressable>
             {title ? (
               <Text
                 style={[
                   styles.toolbarTitle,
-                  { color: colors.foreground, fontSize: tokens.typography.sizes.lg },
-                ]}>
+                  {
+                    color: colors.foreground,
+                    fontSize: tokens.typography.sizes.lg,
+                  },
+                ]}
+              >
                 {title}
               </Text>
             ) : null}
-            <Pressable onPress={handleDone} hitSlop={12} style={styles.toolbarSide}>
+            <Pressable
+              onPress={handleDone}
+              hitSlop={12}
+              style={styles.toolbarSide}
+            >
               <Text
                 style={{
                   color: colors.primary,
                   fontSize: 16,
                   fontWeight: "600",
-                }}>
+                }}
+              >
                 Done
               </Text>
             </Pressable>
@@ -110,9 +139,14 @@ export function WheelPickerModal({
                     }
                   : undefined
               }
-              mode="dialog">
+              mode="dialog"
+            >
               {options.map((opt) => (
-                <Picker.Item key={opt} label={unit ? `${opt} ${unit}` : String(opt)} value={opt} />
+                <Picker.Item
+                  key={opt}
+                  label={unit ? `${opt} ${unit}` : String(opt)}
+                  value={opt}
+                />
               ))}
             </Picker>
           </View>

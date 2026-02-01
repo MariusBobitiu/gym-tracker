@@ -5,6 +5,7 @@ import { db } from "@/lib/planner-db/database";
 import {
   cycleState,
   cycles,
+  sessionTemplateExercises,
   sessionTemplates,
   splitVariants,
   splits,
@@ -12,6 +13,7 @@ import {
   workoutSets,
 } from "@/lib/planner-db/schema";
 import type { InferSelectModel } from "drizzle-orm";
+import type { PlanExercise } from "@/types/workout-session";
 
 export type SplitRow = InferSelectModel<typeof splits>;
 export type SplitVariantRow = InferSelectModel<typeof splitVariants>;
@@ -20,6 +22,9 @@ export type CycleRow = InferSelectModel<typeof cycles>;
 export type CycleStateRow = InferSelectModel<typeof cycleState>;
 export type WorkoutSessionRow = InferSelectModel<typeof workoutSessions>;
 export type WorkoutSetRow = InferSelectModel<typeof workoutSets>;
+export type SessionTemplateExerciseRow = InferSelectModel<
+  typeof sessionTemplateExercises
+>;
 
 export type SessionTemplateView = {
   id: string;
@@ -438,6 +443,194 @@ export async function createWorkoutSession(
   return sessionId;
 }
 
+export type ProfileStats = {
+  totalSessions: number;
+  totalVolumeKg: number;
+  weeksTrained: number;
+};
+
+/** Aggregate stats for profile: total sessions, total volume, distinct weeks with at least one completed session. */
+export async function getProfileStats(): Promise<ProfileStats> {
+  const rows = await db
+    .select({
+      completedAt: workoutSessions.completed_at,
+      totalVolumeKg: workoutSessions.total_volume_kg,
+    })
+    .from(workoutSessions);
+  let totalVolumeKg = 0;
+  const weekStarts = new Set<number>();
+  for (const row of rows) {
+    totalVolumeKg += row.totalVolumeKg ?? 0;
+    const d = new Date(row.completedAt);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    weekStarts.add(d.getTime());
+  }
+  return {
+    totalSessions: rows.length,
+    totalVolumeKg,
+    weeksTrained: weekStarts.size,
+  };
+}
+
+export type BestLift = {
+  exerciseName: string;
+  weight: number;
+  reps: number;
+};
+
+/** Per-exercise PR: max weight and reps at that weight from workout_sets (all time). */
+export async function getBestLifts(): Promise<BestLift[]> {
+  const rows = await db
+    .select({
+      exerciseName: workoutSets.exercise_name,
+      weight: workoutSets.weight,
+      reps: workoutSets.reps,
+    })
+    .from(workoutSets)
+    .orderBy(desc(workoutSets.weight));
+  const byName = new Map<string, BestLift>();
+  for (const row of rows) {
+    if (!byName.has(row.exerciseName)) {
+      byName.set(row.exerciseName, {
+        exerciseName: row.exerciseName,
+        weight: row.weight,
+        reps: row.reps,
+      });
+    }
+  }
+  return Array.from(byName.values());
+}
+
+/** Last weight used for an exercise (any time). From workout_sets join workout_sessions, most recent first. */
+export async function getLastWeightForExercise(
+  exerciseId: string
+): Promise<number | null> {
+  const rows = await db
+    .select({ weight: workoutSets.weight })
+    .from(workoutSets)
+    .innerJoin(workoutSessions, eq(workoutSets.session_id, workoutSessions.id))
+    .where(eq(workoutSets.exercise_id, exerciseId))
+    .orderBy(desc(workoutSessions.completed_at))
+    .limit(1);
+  const row = rows[0];
+  return row?.weight ?? null;
+}
+
+/** Last weight used for an exercise in the previous calendar week (Monday–Sunday). */
+export async function getLastWeekWeightForExercise(
+  exerciseId: string
+): Promise<number | null> {
+  const now = new Date();
+  const thisWeekMonday = startOfWeek(now, { weekStartsOn: 1 });
+  const lastWeekMonday = new Date(thisWeekMonday);
+  lastWeekMonday.setDate(lastWeekMonday.getDate() - 7);
+  const lastWeekSunday = new Date(lastWeekMonday);
+  lastWeekSunday.setDate(lastWeekSunday.getDate() + 6);
+  lastWeekSunday.setHours(23, 59, 59, 999);
+  const startMs = lastWeekMonday.getTime();
+  const endMs = lastWeekSunday.getTime();
+
+  const rows = await db
+    .select({ weight: workoutSets.weight })
+    .from(workoutSets)
+    .innerJoin(workoutSessions, eq(workoutSets.session_id, workoutSessions.id))
+    .where(
+      and(
+        eq(workoutSets.exercise_id, exerciseId),
+        gte(workoutSessions.completed_at, startMs),
+        lte(workoutSessions.completed_at, endMs)
+      )
+    )
+    .orderBy(desc(workoutSessions.completed_at))
+    .limit(1);
+  const row = rows[0];
+  return row?.weight ?? null;
+}
+
+export async function getExercisesForSessionTemplate(
+  sessionTemplateId: string
+): Promise<PlanExercise[]> {
+  const rows = await db
+    .select()
+    .from(sessionTemplateExercises)
+    .where(eq(sessionTemplateExercises.session_template_id, sessionTemplateId))
+    .orderBy(sessionTemplateExercises.position);
+  return rows.map((r, i) => ({
+    id: r.id,
+    name: r.name,
+    sets: r.sets,
+    reps: r.reps,
+    weight: r.weight,
+  }));
+}
+
+export type SessionTemplateExerciseInput = {
+  name: string;
+  sets: number;
+  reps: number;
+  weight: number;
+};
+
+export async function addExerciseToSessionTemplate(
+  sessionTemplateId: string,
+  exercise: SessionTemplateExerciseInput,
+  position?: number
+): Promise<string> {
+  const id = String(uuid.v4());
+  let nextPosition: number;
+  if (typeof position === "number") {
+    nextPosition = position;
+  } else {
+    const posRows = await db
+      .select({ pos: sessionTemplateExercises.position })
+      .from(sessionTemplateExercises)
+      .where(
+        eq(sessionTemplateExercises.session_template_id, sessionTemplateId)
+      )
+      .orderBy(desc(sessionTemplateExercises.position))
+      .limit(1);
+    nextPosition = (posRows[0]?.pos ?? -1) + 1;
+  }
+  await db.insert(sessionTemplateExercises).values({
+    id,
+    session_template_id: sessionTemplateId,
+    name: exercise.name,
+    sets: exercise.sets,
+    reps: exercise.reps,
+    weight: exercise.weight,
+    position: nextPosition,
+  });
+  return id;
+}
+
+export async function updateSessionTemplateExercise(
+  exerciseRowId: string,
+  updates: Partial<SessionTemplateExerciseInput> & { position?: number }
+): Promise<void> {
+  const set: Partial<Record<keyof SessionTemplateExerciseRow, unknown>> = {};
+  if (updates.name !== undefined) set.name = updates.name;
+  if (updates.sets !== undefined) set.sets = updates.sets;
+  if (updates.reps !== undefined) set.reps = updates.reps;
+  if (updates.weight !== undefined) set.weight = updates.weight;
+  if (updates.position !== undefined) set.position = updates.position;
+  if (Object.keys(set).length === 0) return;
+  await db
+    .update(sessionTemplateExercises)
+    .set(set as Record<string, unknown>)
+    .where(eq(sessionTemplateExercises.id, exerciseRowId));
+}
+
+export async function deleteSessionTemplateExercise(
+  exerciseRowId: string
+): Promise<void> {
+  await db
+    .delete(sessionTemplateExercises)
+    .where(eq(sessionTemplateExercises.id, exerciseRowId));
+}
+
 const TEMPLATES = {
   "ppl-ab": {
     name: "Push / Pull / Legs (A/B)",
@@ -681,6 +874,7 @@ export async function updateSplit(
 /**
  * Updates split name and syncs variants/sessions to match the given payload.
  * Deletes existing variants/sessions for the split and reinserts.
+ * Migrates session template exercises by (variantKey, position) so edit doesn't wipe them.
  */
 export async function updateSplitWithVariantsAndSessions(
   splitId: string,
@@ -692,9 +886,46 @@ export async function updateSplitWithVariantsAndSessions(
   await db.update(splits).set({ name }).where(eq(splits.id, splitId));
 
   const variantRows = await db
-    .select({ id: splitVariants.id })
+    .select({ id: splitVariants.id, key: splitVariants.key })
     .from(splitVariants)
     .where(eq(splitVariants.split_id, splitId));
+
+  const oldExercisesByKey: Record<
+    string,
+    {
+      name: string;
+      sets: number;
+      reps: number;
+      weight: number;
+      position: number;
+    }[]
+  > = {};
+  for (const v of variantRows) {
+    const sessionRows = await db
+      .select({
+        id: sessionTemplates.id,
+        name: sessionTemplates.name,
+        position: sessionTemplates.position,
+      })
+      .from(sessionTemplates)
+      .where(eq(sessionTemplates.variant_id, v.id))
+      .orderBy(sessionTemplates.position);
+    for (const s of sessionRows) {
+      const exRows = await db
+        .select()
+        .from(sessionTemplateExercises)
+        .where(eq(sessionTemplateExercises.session_template_id, s.id))
+        .orderBy(sessionTemplateExercises.position);
+      const key = `${v.key}-${s.position}`;
+      oldExercisesByKey[key] = exRows.map((r) => ({
+        name: r.name,
+        sets: r.sets,
+        reps: r.reps,
+        weight: r.weight,
+        position: r.position,
+      }));
+    }
+  }
 
   for (const v of variantRows) {
     await db
@@ -703,8 +934,9 @@ export async function updateSplitWithVariantsAndSessions(
   }
   await db.delete(splitVariants).where(eq(splitVariants.split_id, splitId));
 
+  const newTemplateIdsByKey: Record<string, string> = {};
   for (let v = 0; v < variants.length; v += 1) {
-    const variantId = uuid.v4();
+    const variantId = String(uuid.v4());
     await db.insert(splitVariants).values({
       id: variantId,
       split_id: splitId,
@@ -712,14 +944,37 @@ export async function updateSplitWithVariantsAndSessions(
       name: `Week ${variants[v].key}`,
       position: v,
     });
-    const sessionRows = variants[v].sessionNames.map((sessionName, i) => ({
-      id: uuid.v4(),
-      variant_id: variantId,
-      name: sessionName,
-      muscle_groups: JSON.stringify([]),
-      position: i,
-    }));
+    const sessionRows = variants[v].sessionNames.map((sessionName, i) => {
+      const id = String(uuid.v4());
+      newTemplateIdsByKey[`${variants[v].key}-${i}`] = id;
+      return {
+        id,
+        variant_id: variantId,
+        name: sessionName,
+        muscle_groups: JSON.stringify([]),
+        position: i,
+      };
+    });
     await db.insert(sessionTemplates).values(sessionRows);
+  }
+
+  for (const key of Object.keys(oldExercisesByKey)) {
+    const exercises = oldExercisesByKey[key];
+    if (exercises.length === 0) continue;
+    const newTemplateId = newTemplateIdsByKey[key];
+    if (!newTemplateId) continue;
+    for (let i = 0; i < exercises.length; i += 1) {
+      const ex = exercises[i];
+      await db.insert(sessionTemplateExercises).values({
+        id: String(uuid.v4()),
+        session_template_id: newTemplateId,
+        name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
+        weight: ex.weight,
+        position: i,
+      });
+    }
   }
 }
 

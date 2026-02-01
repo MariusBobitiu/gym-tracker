@@ -1,5 +1,10 @@
 import React from "react";
-import type { Control, FieldValues, Path, RegisterOptions } from "react-hook-form";
+import type {
+  Control,
+  FieldValues,
+  Path,
+  RegisterOptions,
+} from "react-hook-form";
 import { useController } from "react-hook-form";
 
 import { Select, type SelectProps } from "@/components/ui/select";
@@ -39,7 +44,12 @@ export function ControlledSelectField<T extends FieldValues>({
   );
 
   return (
-    <FormField label={label} helper={helper} required={required} error={fieldState.error?.message}>
+    <FormField
+      label={label}
+      helper={helper}
+      required={required}
+      error={fieldState.error?.message}
+    >
       <Select
         value={field.value as string | number | undefined}
         onSelect={handleSelect}

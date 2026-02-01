@@ -1,5 +1,11 @@
 import { cssInterop } from "nativewind";
-import { ActivityIndicator, Pressable, ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Svg from "react-native-svg";
 
 // Apply cssInterop BEFORE exporting components to ensure className support

@@ -3,7 +3,15 @@ import { Stack, useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
-import { Button, Card, CardContent, CardHeader, CardTitle, P, Text } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  P,
+  Text,
+} from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
 import {
   getSplitIfExists,
@@ -16,16 +24,20 @@ import { LoadingState } from "@/components/feedback-states";
 export default function RotationScreen() {
   const router = useRouter();
   const { colors, tokens } = useTheme();
-  const [splitOnly, setSplitOnly] = useState<Awaited<ReturnType<typeof getSplitIfExists>>>(null);
+  const [splitOnly, setSplitOnly] =
+    useState<Awaited<ReturnType<typeof getSplitIfExists>>>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedRotationType, setSelectedRotationType] = useState<RotationType | null>(null);
+  const [selectedRotationType, setSelectedRotationType] =
+    useState<RotationType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     getSplitIfExists().then((s) => {
       setSplitOnly(s);
       if (s && s.variants.length > 0) {
-        setSelectedRotationType(s.variants.length === 1 ? "SAME_EVERY_WEEK" : "ALTERNATE_AB");
+        setSelectedRotationType(
+          s.variants.length === 1 ? "SAME_EVERY_WEEK" : "ALTERNATE_AB"
+        );
       }
       setLoading(false);
     });
@@ -36,7 +48,11 @@ export default function RotationScreen() {
     setIsSubmitting(true);
     try {
       const anchorWeekStart = startOfWeekMonday(new Date()).toISOString();
-      await createOrUpdateCycle(splitOnly.split.id, selectedRotationType, anchorWeekStart);
+      await createOrUpdateCycle(
+        splitOnly.split.id,
+        selectedRotationType,
+        anchorWeekStart
+      );
       router.replace({ pathname: "/planner/plan/summary" } as never);
     } catch (e) {
       console.error(e);
@@ -46,7 +62,10 @@ export default function RotationScreen() {
 
   if (loading) {
     return (
-      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+      <Screen
+        contentContainerClassName="pb-12"
+        safeAreaEdges={["top", "bottom"]}
+      >
         <Stack.Screen options={headerOptions({ title: "Set rotation" })} />
         <AppHeader title="Set rotation" showBackButton />
         <View className="flex-1 items-center justify-center">
@@ -58,14 +77,22 @@ export default function RotationScreen() {
 
   if (!splitOnly) {
     return (
-      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+      <Screen
+        contentContainerClassName="pb-12"
+        safeAreaEdges={["top", "bottom"]}
+      >
         <Stack.Screen options={headerOptions({ title: "Set rotation" })} />
         <AppHeader title="Set rotation" showBackButton />
         <View className="flex-1 items-center justify-center px-4">
           <Text style={{ color: colors.mutedForeground, textAlign: "center" }}>
             No split found. Create a split first.
           </Text>
-          <Button label="Back" variant="outline" className="mt-4" onPress={() => router.back()} />
+          <Button
+            label="Back"
+            variant="outline"
+            className="mt-4"
+            onPress={() => router.back()}
+          />
         </View>
       </Screen>
     );
@@ -93,20 +120,28 @@ export default function RotationScreen() {
           <Pressable
             key={opt.label}
             onPress={() => setSelectedRotationType(opt.rotationType)}
-            disabled={isSubmitting}>
+            disabled={isSubmitting}
+          >
             <Card
               className="mb-3"
               style={{
                 borderWidth: 2,
                 borderColor:
-                  selectedRotationType === opt.rotationType ? colors.primary : colors.border,
-              }}>
+                  selectedRotationType === opt.rotationType
+                    ? colors.primary
+                    : colors.border,
+              }}
+            >
               <CardHeader>
                 <CardTitle>{opt.label}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Text
-                  style={{ fontSize: tokens.typography.sizes.sm, color: colors.mutedForeground }}>
+                  style={{
+                    fontSize: tokens.typography.sizes.sm,
+                    color: colors.mutedForeground,
+                  }}
+                >
                   {opt.rotationType === "SAME_EVERY_WEEK"
                     ? "Same variant each time"
                     : "Alternate variants (A → B → A…)"}

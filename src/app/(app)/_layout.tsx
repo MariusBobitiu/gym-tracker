@@ -19,7 +19,8 @@ export default function Layout() {
             contentStyle: {
               backgroundColor: colors.background,
             },
-          }}>
+          }}
+        >
           <Stack.Screen name="index" />
           <Stack.Screen
             name="workout"

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ActivePlan, ActivePlanWithState } from "./planner-repository";
-import { getActiveCycleWithSplit, getSplitIfExists } from "./planner-repository";
+import {
+  getActiveCycleWithSplit,
+  getSplitIfExists,
+} from "./planner-repository";
 
 export type PlannerGateState =
   | { kind: "loading" }

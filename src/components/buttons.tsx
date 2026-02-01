@@ -7,16 +7,45 @@ export const Buttons = () => {
   return (
     <>
       <H1>Buttons</H1>
-      <ScrollView className="flex-1">
+      <ScrollView
+        className="flex-1"
+        keyboardShouldPersistTaps={"handled"}
+        showsVerticalScrollIndicator={false}
+      >
         <P className="mb-2">Small Buttons</P>
-        <ScrollView horizontal>
+        <ScrollView
+          horizontal
+          keyboardShouldPersistTaps={"handled"}
+          showsHorizontalScrollIndicator={false}
+        >
           <Button label="small" size="sm" className="mr-2" />
           <Button label="small" size="sm" className="mr-2" variant="primary" />
-          <Button label="small" loading size="sm" className="mr-2 min-w-[60px]" />
-          <Button label="small" size="sm" loading variant="primary" className="mr-2 min-w-[60px]" />
-          <Button label="small" size="sm" variant="secondary" className="mr-2" />
+          <Button
+            label="small"
+            loading
+            size="sm"
+            className="mr-2 min-w-[60px]"
+          />
+          <Button
+            label="small"
+            size="sm"
+            loading
+            variant="primary"
+            className="mr-2 min-w-[60px]"
+          />
+          <Button
+            label="small"
+            size="sm"
+            variant="secondary"
+            className="mr-2"
+          />
           <Button label="small" size="sm" variant="outline" className="mr-2" />
-          <Button label="small" size="sm" variant="destructive" className="mr-2" />
+          <Button
+            label="small"
+            size="sm"
+            variant="destructive"
+            className="mr-2"
+          />
           <Button label="small" size="sm" variant="ghost" className="mr-2" />
           <Button label="small" size="sm" disabled className="mr-2" />
         </ScrollView>
@@ -33,8 +62,16 @@ export const Buttons = () => {
         <P className="mb-2">Disabled Buttons</P>
         <Button label="Default Button Disabled" disabled />
         <Button label="Primary Button Disabled" disabled variant="primary" />
-        <Button label="Secondary Button Disabled" disabled variant="secondary" />
-        <Button label="Destructive Button Disabled" disabled variant="destructive" />
+        <Button
+          label="Secondary Button Disabled"
+          disabled
+          variant="secondary"
+        />
+        <Button
+          label="Destructive Button Disabled"
+          disabled
+          variant="destructive"
+        />
       </ScrollView>
     </>
   );

@@ -28,11 +28,20 @@
  *
  */
 
-import type { BottomSheetBackdropProps, BottomSheetModalProps } from "@gorhom/bottom-sheet";
+import type {
+  BottomSheetBackdropProps,
+  BottomSheetModalProps,
+} from "@gorhom/bottom-sheet";
 import { BottomSheetModal, useBottomSheet } from "@gorhom/bottom-sheet";
 import { BlurView } from "expo-blur";
 import * as React from "react";
-import { Platform, Pressable, StyleSheet, Text as RNText, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text as RNText,
+  View,
+} from "react-native";
 import Animated, {
   Extrapolation,
   interpolate,
@@ -78,21 +87,35 @@ export const Modal = React.forwardRef(
     }: ModalProps,
     ref: ModalRef
   ) => {
-    const detachedProps = React.useMemo(() => getDetachedProps(detached), [detached]);
+    const detachedProps = React.useMemo(
+      () => getDetachedProps(detached),
+      [detached]
+    );
     const modal = useModal();
     const snapPoints = React.useMemo(() => _snapPoints, [_snapPoints]);
 
-    React.useImperativeHandle(ref, () => (modal.ref.current as BottomSheetModal) || null);
+    React.useImperativeHandle(
+      ref,
+      () => (modal.ref.current as BottomSheetModal) || null
+    );
 
     const { colors: themeColors, tokens } = useTheme();
 
     const containerStyle = React.useMemo(
-      () => StyleSheet.flatten([{ backgroundColor: "transparent" }, containerStyleProp]),
+      () =>
+        StyleSheet.flatten([
+          { backgroundColor: "transparent" },
+          containerStyleProp,
+        ]),
       [containerStyleProp]
     );
 
     const backgroundStyle = React.useMemo(
-      () => StyleSheet.flatten([{ backgroundColor: themeColors.background }, backgroundStyleProp]),
+      () =>
+        StyleSheet.flatten([
+          { backgroundColor: themeColors.background },
+          backgroundStyleProp,
+        ]),
       [themeColors.background, backgroundStyleProp]
     );
 
@@ -124,7 +147,8 @@ export const Modal = React.forwardRef(
         enableDynamicSizing={false}
         containerStyle={containerStyle}
         backgroundStyle={backgroundStyle}
-        handleComponent={renderHandleComponent}>
+        handleComponent={renderHandleComponent}
+      >
         <>
           <ModalHeader title={title} dismiss={modal.dismiss} />
           {props.children}
@@ -146,7 +170,9 @@ const DISAPPEARS_ON_INDEX = 0;
 
 const CustomBackdrop = ({ style, animatedIndex }: BottomSheetBackdropProps) => {
   const { close } = useBottomSheet();
-  const [pointerEvents, setPointerEvents] = React.useState<"auto" | "box-none" | "none">("auto");
+  const [pointerEvents, setPointerEvents] = React.useState<
+    "auto" | "box-none" | "none"
+  >("auto");
 
   const backdropAnimatedStyle = useAnimatedStyle(
     () => ({
@@ -176,12 +202,14 @@ const CustomBackdrop = ({ style, animatedIndex }: BottomSheetBackdropProps) => {
   return (
     <Animated.View
       style={[StyleSheet.absoluteFill, style, backdropAnimatedStyle]}
-      pointerEvents={pointerEvents}>
+      pointerEvents={pointerEvents}
+    >
       <Pressable
         onPress={() => close()}
         style={StyleSheet.absoluteFill}
         accessibilityRole="button"
-        accessibilityLabel="Close modal">
+        accessibilityLabel="Close modal"
+      >
         <BlurView
           intensity={Platform.OS === "ios" ? 20 : 30}
           tint="dark"
@@ -199,7 +227,9 @@ const CustomBackdrop = ({ style, animatedIndex }: BottomSheetBackdropProps) => {
   );
 };
 
-export const renderBackdrop = (props: BottomSheetBackdropProps) => <CustomBackdrop {...props} />;
+export const renderBackdrop = (props: BottomSheetBackdropProps) => (
+  <CustomBackdrop {...props} />
+);
 
 /**
  *
@@ -245,7 +275,8 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
           style={{
             paddingHorizontal: tokens.spacing.sm,
             paddingVertical: tokens.spacing.lg,
-          }}>
+          }}
+        >
           <View style={{ height: 24, width: 24 }} />
           <View className="flex-1 justify-center">
             <RNText style={titleStyle} numberOfLines={1}>
@@ -275,7 +306,8 @@ const CloseButton = ({ close }: { close: () => void }) => {
       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       accessibilityLabel="close modal"
       accessibilityRole="button"
-      accessibilityHint="closes the modal">
+      accessibilityHint="closes the modal"
+    >
       <Svg width={24} height={24} fill="none" viewBox="0 0 24 24">
         <Path
           d="M18.707 6.707a1 1 0 0 0-1.414-1.414L12 10.586 6.707 5.293a1 1 0 0 0-1.414 1.414L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12l5.293-5.293Z"

@@ -43,7 +43,10 @@ export default function SignUp(): JSX.Element {
       );
       if (!hasFieldErrors) {
         showMessage({
-          message: resolveErrorMessage(error, "Unable to sign up. Please try again."),
+          message: resolveErrorMessage(
+            error,
+            "Unable to sign up. Please try again."
+          ),
           type: "danger",
           duration: 3500,
         });
@@ -52,7 +55,11 @@ export default function SignUp(): JSX.Element {
   });
 
   return (
-    <Screen preset="scroll" keyboardAvoiding keyboardOffset={Platform.OS === "ios" ? 10 : 0}>
+    <Screen
+      preset="scroll"
+      keyboardAvoiding
+      keyboardOffset={Platform.OS === "ios" ? 10 : 0}
+    >
       <Stack.Screen
         options={headerOptions({
           title: "Create Account",
@@ -61,7 +68,11 @@ export default function SignUp(): JSX.Element {
         })}
       />
       <AppHeader title="Create Account" />
-      <SignUpForm control={control} isSubmitting={isSubmitting} onSubmit={onSubmit} />
+      <SignUpForm
+        control={control}
+        isSubmitting={isSubmitting}
+        onSubmit={onSubmit}
+      />
     </Screen>
   );
 }

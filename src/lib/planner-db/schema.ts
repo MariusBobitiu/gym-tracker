@@ -36,6 +36,21 @@ export const sessionTemplates = sqliteTable("session_templates", {
   position: integer("position").notNull(),
 });
 
+export const sessionTemplateExercises = sqliteTable(
+  "session_template_exercises",
+  {
+    id: text("id").primaryKey(),
+    session_template_id: text("session_template_id")
+      .notNull()
+      .references(() => sessionTemplates.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    sets: integer("sets").notNull(),
+    reps: integer("reps").notNull(),
+    weight: real("weight").notNull(),
+    position: integer("position").notNull(),
+  }
+);
+
 export const cycles = sqliteTable("cycles", {
   id: text("id").primaryKey(),
   split_id: text("split_id")

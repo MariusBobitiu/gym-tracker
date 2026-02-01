@@ -3,7 +3,13 @@ import { differenceInCalendarWeeks, format, startOfWeek } from "date-fns";
 import { Stack, useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { LayoutChangeEvent, Pressable, View } from "react-native";
-import { ChevronLeft, ChevronRight, ChevronUp, Plus, Settings2 } from "lucide-react-native";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Plus,
+  Settings2,
+} from "lucide-react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import {
@@ -45,7 +51,8 @@ function PlanPill() {
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/planner/plan" } as never)}
-      hitSlop={getHitSlop()}>
+      hitSlop={getHitSlop()}
+    >
       <Settings2 size={28} color={colors.foreground} />
     </Pressable>
   );
@@ -54,10 +61,13 @@ function PlanPill() {
 export default function Planner() {
   const router = useRouter();
   const { colors, tokens } = useTheme();
-  const [viewedWeekStart, setViewedWeekStart] = useState(() => startOfWeekMonday(new Date()));
+  const [viewedWeekStart, setViewedWeekStart] = useState(() =>
+    startOfWeekMonday(new Date())
+  );
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [calendarHeight, setCalendarHeight] = useState(0);
-  const [selectedSession, setSelectedSession] = useState<PlannedSessionView | null>(null);
+  const [selectedSession, setSelectedSession] =
+    useState<PlannedSessionView | null>(null);
   const sessionModal = useModal();
   const reduceMotion = useReducedMotion();
 
@@ -68,6 +78,9 @@ export default function Planner() {
       refetch();
     }, [refetch])
   );
+
+  const thisWeekStart = useMemo(() => startOfWeekMonday(new Date()), []);
+  const canGoToPrevWeek = viewedWeekStart.getTime() > thisWeekStart.getTime();
 
   const [weekStartDate, weekEndDate] = useMemo(
     () => getWeekRange(viewedWeekStart),
@@ -95,7 +108,9 @@ export default function Planner() {
   }, [isCalendarOpen, weekRangeText, weekStartDate]);
 
   const weekData =
-    state.kind === "week_view" ? getWeekSessionsFromPlan(state.plan, viewedWeekStart) : null;
+    state.kind === "week_view"
+      ? getWeekSessionsFromPlan(state.plan, viewedWeekStart)
+      : null;
 
   const weekProgress =
     state.kind === "week_view"
@@ -108,7 +123,8 @@ export default function Planner() {
       : null;
   const upNextSessionId = weekProgress?.upNextSessionId ?? null;
 
-  const cycleStateForEffect = state.kind === "week_view" ? state.plan.cycleState : null;
+  const cycleStateForEffect =
+    state.kind === "week_view" ? state.plan.cycleState : null;
   useEffect(() => {
     if (state.kind !== "week_view") return;
   }, [state.kind, cycleStateForEffect]);
@@ -117,13 +133,20 @@ export default function Planner() {
     state.kind === "week_view" ? state.plan.cycle.anchor_week_start : undefined;
   useEffect(() => {
     if (state.kind !== "week_view" || !weekData) return;
-    const cycleStartWeekStart = startOfWeek(new Date(state.plan.cycle.anchor_week_start), {
-      weekStartsOn: 1,
-    });
+    const cycleStartWeekStart = startOfWeek(
+      new Date(state.plan.cycle.anchor_week_start),
+      {
+        weekStartsOn: 1,
+      }
+    );
     const viewedStart = startOfWeek(viewedWeekStart, { weekStartsOn: 1 });
-    const weekIndex = differenceInCalendarWeeks(viewedStart, cycleStartWeekStart, {
-      weekStartsOn: 1,
-    });
+    const weekIndex = differenceInCalendarWeeks(
+      viewedStart,
+      cycleStartWeekStart,
+      {
+        weekStartsOn: 1,
+      }
+    );
     const weekVariant = weekIndex % 2 === 0 ? "A" : "B";
     console.log("[Planner] Week calc", {
       cycleStartWeekStart: cycleStartWeekStart.toISOString(),
@@ -133,7 +156,13 @@ export default function Planner() {
     });
     // anchorWeekStartForEffect tracks state.plan.cycle.anchor_week_start when kind === "week_view"; state.plan not on all variants
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.kind, anchorWeekStartForEffect, viewedWeekStart, weekData?.variantKey, weekData]);
+  }, [
+    state.kind,
+    anchorWeekStartForEffect,
+    viewedWeekStart,
+    weekData?.variantKey,
+    weekData,
+  ]);
 
   const plannedSessions: PlannedSessionView[] = useMemo(() => {
     if (!weekData) return [];
@@ -152,6 +181,7 @@ export default function Planner() {
   }, [weekData, upNextSessionId, weekProgress?.completedCount]);
 
   const handlePrevWeek = () => {
+    if (!canGoToPrevWeek) return;
     const prev = new Date(viewedWeekStart);
     prev.setDate(prev.getDate() - 7);
     setViewedWeekStart(startOfWeekMonday(prev));
@@ -167,9 +197,14 @@ export default function Planner() {
     setIsCalendarOpen((prev) => !prev);
   }, []);
 
-  const handleCalendarDayPress = useCallback((date: Date): void => {
-    setViewedWeekStart(startOfWeekMonday(date));
-  }, []);
+  const handleCalendarDayPress = useCallback(
+    (date: Date): void => {
+      const weekStart = startOfWeekMonday(date);
+      if (weekStart.getTime() < thisWeekStart.getTime()) return;
+      setViewedWeekStart(weekStart);
+    },
+    [thisWeekStart]
+  );
 
   const handleSessionPress = (session: PlannedSessionView) => {
     setSelectedSession(session);
@@ -234,9 +269,17 @@ export default function Planner() {
 
   if (state.kind === "loading") {
     return (
-      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+      <Screen
+        contentContainerClassName="pb-12"
+        safeAreaEdges={["top", "bottom"]}
+      >
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
-        <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
+        <AppHeader
+          showBackButton={false}
+          title="Planner"
+          isMainScreen
+          rightAddon={<PlanPill />}
+        />
         <View className="flex-1 items-center justify-center">
           <LoadingState label="Loading plan..." />
         </View>
@@ -246,11 +289,25 @@ export default function Planner() {
 
   if (error) {
     return (
-      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+      <Screen
+        contentContainerClassName="pb-12"
+        safeAreaEdges={["top", "bottom"]}
+      >
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
-        <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
+        <AppHeader
+          showBackButton={false}
+          title="Planner"
+          isMainScreen
+          rightAddon={<PlanPill />}
+        />
         <View className="flex-1 items-center justify-center px-4">
-          <Text style={{ color: colors.destructive, textAlign: "center", marginBottom: 16 }}>
+          <Text
+            style={{
+              color: colors.destructive,
+              textAlign: "center",
+              marginBottom: 16,
+            }}
+          >
             {error.message}
           </Text>
           <Button label="Retry" onPress={() => refetch()} variant="outline" />
@@ -261,12 +318,23 @@ export default function Planner() {
 
   if (state.kind === "hard_empty") {
     return (
-      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+      <Screen
+        contentContainerClassName="pb-12"
+        safeAreaEdges={["top", "bottom"]}
+      >
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
-        <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
+        <AppHeader
+          showBackButton={false}
+          title="Planner"
+          isMainScreen
+          rightAddon={<PlanPill />}
+        />
         <View className="flex-1 items-center justify-center px-6">
           <H3 className="mb-2 text-center">Create your plan</H3>
-          <P className="mb-6 text-center" style={{ color: colors.mutedForeground }}>
+          <P
+            className="mb-6 text-center"
+            style={{ color: colors.mutedForeground }}
+          >
             Choose a template or build a custom split to get started.
           </P>
           <Button
@@ -274,7 +342,9 @@ export default function Planner() {
             icon={<Plus size={20} color={colors.background} className="mr-1" />}
             iconPlacement="left"
             className="w-full"
-            onPress={() => router.push({ pathname: "/planner/split-template" } as never)}
+            onPress={() =>
+              router.push({ pathname: "/planner/split-template" } as never)
+            }
           />
         </View>
       </Screen>
@@ -283,12 +353,23 @@ export default function Planner() {
 
   if (state.kind === "needs_rotation") {
     return (
-      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+      <Screen
+        contentContainerClassName="pb-12"
+        safeAreaEdges={["top", "bottom"]}
+      >
         <Stack.Screen options={headerOptions({ title: "Planner" })} />
-        <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
+        <AppHeader
+          showBackButton={false}
+          title="Planner"
+          isMainScreen
+          rightAddon={<PlanPill />}
+        />
         <View className="flex-1 items-center justify-center px-6">
           <H3 className="mb-2 text-center">Choose how your plan repeats</H3>
-          <P className="mb-6 text-center" style={{ color: colors.mutedForeground }}>
+          <P
+            className="mb-6 text-center"
+            style={{ color: colors.mutedForeground }}
+          >
             Set the rotation (e.g. A/B alternating) to see your week view.
           </P>
           <Button
@@ -296,7 +377,9 @@ export default function Planner() {
             icon={<Plus size={20} color={colors.background} className="mr-1" />}
             iconPlacement="left"
             className="w-full"
-            onPress={() => router.push({ pathname: "/planner/rotation" } as never)}
+            onPress={() =>
+              router.push({ pathname: "/planner/rotation" } as never)
+            }
           />
         </View>
       </Screen>
@@ -311,19 +394,32 @@ export default function Planner() {
   return (
     <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
       <Stack.Screen options={headerOptions({ title: "Planner" })} />
-      <AppHeader showBackButton={false} title="Planner" isMainScreen rightAddon={<PlanPill />} />
-      <ScrollView className="mb-8 flex-1 pb-8">
+      <AppHeader
+        showBackButton={false}
+        title="Planner"
+        isMainScreen
+        rightAddon={<PlanPill />}
+      />
+      <ScrollView
+        className="mb-8 flex-1 pb-8"
+        keyboardShouldPersistTaps={"handled"}
+        showsVerticalScrollIndicator={false}
+      >
         <View
           className="min-h-14 flex-row items-center justify-between px-4"
-          key={`week-nav-${viewedWeekStart.getTime()}`}>
+          key={`week-nav-${viewedWeekStart.getTime()}`}
+        >
           <Pressable
             onPress={handlePrevWeek}
+            disabled={!canGoToPrevWeek}
             className="flex-row items-center"
             style={{
               padding: tokens.spacing.sm,
               borderRadius: tokens.radius.md,
               backgroundColor: colors.muted,
-            }}>
+              opacity: canGoToPrevWeek ? 1 : 0.5,
+            }}
+          >
             <ChevronLeft size={20} color={colors.foreground} />
           </Pressable>
 
@@ -333,8 +429,11 @@ export default function Planner() {
             hitSlop={getHitSlop()}
             accessibilityRole="button"
             accessibilityLabel={resolveAccessibilityLabel({
-              fallback: isCalendarOpen ? "Collapse calendar" : "Expand calendar",
-            })}>
+              fallback: isCalendarOpen
+                ? "Collapse calendar"
+                : "Expand calendar",
+            })}
+          >
             <View className="items-center">
               <View className="flex-row items-center">
                 <AnimatePresence exitBeforeEnter>
@@ -350,13 +449,15 @@ export default function Planner() {
                       translateY: reduceMotion ? 0 : 4,
                     }}
                     transition={titleTransition}
-                    className="ml-6 flex-1 items-center justify-center">
+                    className="ml-6 flex-1 items-center justify-center"
+                  >
                     <Text
                       style={{
                         fontSize: tokens.typography.sizes.md,
                         color: colors.mutedForeground,
                         fontWeight: tokens.typography.weights.medium,
-                      }}>
+                      }}
+                    >
                       {calendarTitleText}
                     </Text>
                   </MotiView>
@@ -365,7 +466,8 @@ export default function Planner() {
                   animate={{
                     rotate: isCalendarOpen ? "180deg" : "0deg",
                   }}
-                  transition={chevronTransition}>
+                  transition={chevronTransition}
+                >
                   <ChevronUp size={18} color={colors.mutedForeground} />
                 </MotiView>
               </View>
@@ -379,7 +481,8 @@ export default function Planner() {
               padding: tokens.spacing.sm,
               borderRadius: tokens.radius.md,
               backgroundColor: colors.muted,
-            }}>
+            }}
+          >
             <ChevronRight size={20} color={colors.foreground} />
           </Pressable>
         </View>
@@ -388,7 +491,8 @@ export default function Planner() {
           <View
             pointerEvents="none"
             onLayout={handleCalendarLayout}
-            style={{ position: "absolute", left: 0, right: 0, opacity: 0 }}>
+            style={{ position: "absolute", left: 0, right: 0, opacity: 0 }}
+          >
             <PlannerMonthCalendar
               monthDate={weekStartDate}
               rangeStart={weekStartDate}
@@ -410,7 +514,8 @@ export default function Planner() {
             from={{
               height: 0,
               opacity: 0,
-            }}>
+            }}
+          >
             <PlannerMonthCalendar
               monthDate={weekStartDate}
               rangeStart={weekStartDate}
@@ -421,7 +526,8 @@ export default function Planner() {
         </View>
 
         <View>
-          {weekData && getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
+          {weekData &&
+          getRotationType(state.plan.cycle.rotation) === "ALTERNATE_AB" ? (
             <P
               style={{
                 fontSize: tokens.typography.sizes.md,
@@ -430,7 +536,8 @@ export default function Planner() {
                 marginBottom: tokens.spacing.md,
                 textAlign: "center",
                 marginTop: isCalendarOpen ? 4 : 0,
-              }}>
+              }}
+            >
               {state.plan.split.name} • Week {weekData.variantKey}
             </P>
           ) : (
@@ -442,7 +549,8 @@ export default function Planner() {
                 marginBottom: tokens.spacing.md,
                 textAlign: "center",
                 marginTop: isCalendarOpen ? 4 : 0,
-              }}>
+              }}
+            >
               {state.plan.split.name}
             </P>
           )}
@@ -455,13 +563,15 @@ export default function Planner() {
               backgroundColor: colors.card,
               borderWidth: 1,
               borderColor: colors.border,
-            }}>
+            }}
+          >
             <Text
               style={{
                 fontSize: tokens.typography.sizes.md,
                 fontWeight: tokens.typography.weights.semibold,
                 color: colors.foreground,
-              }}>
+              }}
+            >
               {completedCount} / {totalPlanned} sessions done
             </Text>
             {missedCount > 0 && isPastWeek && (
@@ -470,7 +580,8 @@ export default function Planner() {
                   fontSize: tokens.typography.sizes.sm,
                   color: colors.destructive,
                   marginTop: 4,
-                }}>
+                }}
+              >
                 {missedCount} missed
               </Text>
             )}
@@ -479,7 +590,8 @@ export default function Planner() {
 
         <View
           className="px-4"
-          key={`sessions-${viewedWeekStart.getTime()}-${weekData?.variantKey ?? ""}`}>
+          key={`sessions-${viewedWeekStart.getTime()}-${weekData?.variantKey ?? ""}`}
+        >
           <H3 className="mb-3">{sessionsHeaderText}</H3>
           {completedCount >= totalPlanned && totalPlanned > 0 && (
             <View
@@ -488,13 +600,15 @@ export default function Planner() {
                 backgroundColor: `${colors.primary}12`,
                 borderWidth: 1,
                 borderColor: `${colors.primary}40`,
-              }}>
+              }}
+            >
               <Text
                 style={{
                   fontSize: tokens.typography.sizes.sm,
                   color: colors.primary,
                   fontWeight: tokens.typography.weights.semibold,
-                }}>
+                }}
+              >
                 All sessions complete
               </Text>
               <Text
@@ -502,7 +616,8 @@ export default function Planner() {
                   fontSize: tokens.typography.sizes.sm,
                   color: colors.mutedForeground,
                   marginTop: 4,
-                }}>
+                }}
+              >
                 Nice work! You’re done for this week.
               </Text>
             </View>
@@ -531,7 +646,8 @@ export default function Planner() {
       <Modal
         ref={sessionModal.ref}
         snapPoints={["50%"]}
-        title={selectedSession?.title || "Session Actions"}>
+        title={selectedSession?.title || "Session Actions"}
+      >
         {selectedSession && (
           <View className="px-4 pb-8">
             {!isCurrentWeek && (
@@ -541,12 +657,14 @@ export default function Planner() {
                   backgroundColor: `${colors.muted}40`,
                   borderWidth: 1,
                   borderColor: colors.border,
-                }}>
+                }}
+              >
                 <Text
                   style={{
                     fontSize: tokens.typography.sizes.sm,
                     color: colors.mutedForeground,
-                  }}>
+                  }}
+                >
                   Only current week sessions can be started or marked complete.
                 </Text>
               </View>
@@ -617,7 +735,8 @@ function getWeekProgress(input: WeekProgressInput): WeekProgressResult | null {
     completedCount = total;
   }
 
-  const upNextSessionId = completedCount >= total ? null : (sessions[nextIndex]?.id ?? null);
+  const upNextSessionId =
+    completedCount >= total ? null : (sessions[nextIndex]?.id ?? null);
 
   return { completedCount, upNextSessionId };
 }
@@ -653,24 +772,29 @@ function SessionCard({ session, onPress, isPastWeek }: SessionCardProps) {
           opacity: isPastWeek && session.status === "missed" ? 0.6 : 1,
           borderWidth: session.isUpNext ? 2 : 1,
           borderColor: session.isUpNext ? colors.primary : colors.border,
-        }}>
+        }}
+      >
         <CardHeader>
           <View className="flex-row items-start justify-between">
             <View className="flex-1">
               <CardTitle>{session.title}</CardTitle>
-              {session.variantNotes && <CardDescription>{session.variantNotes}</CardDescription>}
+              {session.variantNotes && (
+                <CardDescription>{session.variantNotes}</CardDescription>
+              )}
               {session.tags && session.tags.length > 0 && (
                 <View className="mt-2 flex-row flex-wrap gap-2">
                   {session.tags.map((tag) => (
                     <View
                       key={tag}
                       className="rounded-full px-2 py-1"
-                      style={{ backgroundColor: colors.muted }}>
+                      style={{ backgroundColor: colors.muted }}
+                    >
                       <Text
                         style={{
                           fontSize: tokens.typography.sizes.xs,
                           color: colors.mutedForeground,
-                        }}>
+                        }}
+                      >
                         {tag}
                       </Text>
                     </View>
@@ -678,14 +802,18 @@ function SessionCard({ session, onPress, isPastWeek }: SessionCardProps) {
                 </View>
               )}
             </View>
-            <View className="rounded-full px-3 py-1" style={{ backgroundColor: statusBg }}>
+            <View
+              className="rounded-full px-3 py-1"
+              style={{ backgroundColor: statusBg }}
+            >
               <Text
                 style={{
                   fontSize: tokens.typography.sizes.xs,
                   fontWeight: tokens.typography.weights.medium,
                   color: statusColor,
                   textTransform: "uppercase",
-                }}>
+                }}
+              >
                 {session.status}
               </Text>
             </View>
@@ -695,13 +823,15 @@ function SessionCard({ session, onPress, isPastWeek }: SessionCardProps) {
           <CardContent>
             <View
               className="rounded-lg px-3 py-2"
-              style={{ backgroundColor: `${colors.primary}15` }}>
+              style={{ backgroundColor: `${colors.primary}15` }}
+            >
               <Text
                 style={{
                   fontSize: tokens.typography.sizes.sm,
                   color: colors.primary,
                   fontWeight: tokens.typography.weights.medium,
-                }}>
+                }}
+              >
                 Up next
               </Text>
             </View>
@@ -713,7 +843,8 @@ function SessionCard({ session, onPress, isPastWeek }: SessionCardProps) {
               style={{
                 fontSize: tokens.typography.sizes.sm,
                 color: colors.mutedForeground,
-              }}>
+              }}
+            >
               Estimated: {session.estimatedMins} min
             </Text>
           </CardFooter>

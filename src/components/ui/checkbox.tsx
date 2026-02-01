@@ -44,7 +44,8 @@ export const Root = ({
       className={`flex-row items-center ${className} ${disabled ? "opacity-50" : ""}`}
       accessibilityState={{ checked }}
       disabled={disabled}
-      {...props}>
+      {...props}
+    >
       {children}
     </Pressable>
   );
@@ -62,7 +63,11 @@ const Label = ({ text, testID, className = "" }: LabelProps) => {
     <Text
       testID={testID}
       className={` ${className}`}
-      style={{ paddingLeft: tokens.spacing.sm, paddingRight: tokens.spacing.sm }}>
+      style={{
+        paddingLeft: tokens.spacing.sm,
+        paddingRight: tokens.spacing.sm,
+      }}
+    >
       {text}
     </Text>
   );
@@ -88,11 +93,13 @@ export const CheckboxIcon = ({ checked = false }: IconProps) => {
       transition={{
         backgroundColor: { type: "timing", duration: 100 },
         borderColor: { type: "timing", duration: 100 },
-      }}>
+      }}
+    >
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: checked ? 1 : 0 }}
-        transition={{ opacity: { type: "timing", duration: 100 } }}>
+        transition={{ opacity: { type: "timing", duration: 100 } }}
+      >
         <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <Path
             d="m16.726 7-.64.633c-2.207 2.212-3.878 4.047-5.955 6.158l-2.28-1.928-.69-.584L6 12.66l.683.577 2.928 2.477.633.535.591-.584c2.421-2.426 4.148-4.367 6.532-6.756l.633-.64L16.726 7Z"
@@ -122,7 +129,9 @@ const CheckboxBase = ({
   return (
     <CheckboxRoot checked={checked} testID={testID} {...props}>
       <CheckboxIcon checked={checked} />
-      {label ? <Label text={label} testID={testID ? `${testID}-label` : undefined} /> : null}
+      {label ? (
+        <Label text={label} testID={testID ? `${testID}-label` : undefined} />
+      ) : null}
     </CheckboxRoot>
   );
 };
@@ -149,7 +158,8 @@ export const RadioIcon = ({ checked = false }: IconProps) => {
       animate={{
         borderColor: color,
       }}
-      transition={{ borderColor: { duration: 100, type: "timing" } }}>
+      transition={{ borderColor: { duration: 100, type: "timing" } }}
+    >
       <MotiView
         className={`size-[10px] ${checked && "bg-primary-300"} `}
         style={{ borderRadius: tokens.radius.pill }}
@@ -178,7 +188,9 @@ const RadioBase = ({
   return (
     <RadioRoot checked={checked} testID={testID} {...props}>
       <RadioIcon checked={checked} />
-      {label ? <Label text={label} testID={testID ? `${testID}-label` : undefined} /> : null}
+      {label ? (
+        <Label text={label} testID={testID ? `${testID}-label` : undefined} />
+      ) : null}
     </RadioRoot>
   );
 };
@@ -191,13 +203,18 @@ export const Radio = Object.assign(RadioBase, {
 
 export const SwitchIcon = ({ checked = false }: IconProps) => {
   const { tokens } = useTheme();
-  const translateX = checked ? THUMB_OFFSET : WIDTH - THUMB_WIDTH - THUMB_OFFSET;
+  const translateX = checked
+    ? THUMB_OFFSET
+    : WIDTH - THUMB_WIDTH - THUMB_OFFSET;
 
   const backgroundColor = checked ? colors.primary[300] : colors.charcoal[400];
 
   return (
     <View className="w-[50px] justify-center">
-      <View className="overflow-hidden" style={{ borderRadius: tokens.radius.pill }}>
+      <View
+        className="overflow-hidden"
+        style={{ borderRadius: tokens.radius.pill }}
+      >
         <View
           style={{
             width: WIDTH,
@@ -241,7 +258,9 @@ const SwitchBase = ({
   return (
     <SwitchRoot checked={checked} testID={testID} {...props}>
       <SwitchIcon checked={checked} />
-      {label ? <Label text={label} testID={testID ? `${testID}-label` : undefined} /> : null}
+      {label ? (
+        <Label text={label} testID={testID ? `${testID}-label` : undefined} />
+      ) : null}
     </SwitchRoot>
   );
 };

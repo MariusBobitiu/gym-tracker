@@ -82,12 +82,18 @@ export function ProgressRing({
           <View className="absolute inset-0 items-center justify-center">
             {icon ? <View className="mb-1">{icon}</View> : null}
             {label ? (
-              <Text className="font-inter font-semibold" style={{ color: colors.foreground }}>
+              <Text
+                className="font-inter font-semibold"
+                style={{ color: colors.foreground }}
+              >
                 {label}
               </Text>
             ) : null}
             {subLabel ? (
-              <Text className="text-xs" style={{ color: colors.mutedForeground }}>
+              <Text
+                className="text-xs"
+                style={{ color: colors.mutedForeground }}
+              >
                 {subLabel}
               </Text>
             ) : null}

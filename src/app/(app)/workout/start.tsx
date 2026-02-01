@@ -111,10 +111,15 @@ export default function WorkoutStart() {
             fontWeight: tokens.typography.weights.semibold,
             color: colors.foreground,
             marginBottom: 8,
-          }}>
+          }}
+        >
           Today: Variant {nextWorkout.variantKey} — {nextWorkout.sessionName}
         </Text>
-        <Button label="Complete workout" className="mt-4 w-full" onPress={handleCompleteWorkout} />
+        <Button
+          label="Complete workout"
+          className="mt-4 w-full"
+          onPress={handleCompleteWorkout}
+        />
       </View>
     </Screen>
   );

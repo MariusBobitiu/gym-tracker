@@ -1,6 +1,7 @@
 export { db } from "./database";
 export {
   cycles,
+  sessionTemplateExercises,
   sessionTemplates,
   splitVariants,
   splits,

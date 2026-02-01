@@ -27,13 +27,17 @@ type ScreenProps = {
   scrollProps?: ScrollViewProps;
 };
 
-const joinClassName = (...values: (string | undefined)[]) => values.filter(Boolean).join(" ");
+const joinClassName = (...values: (string | undefined)[]) =>
+  values.filter(Boolean).join(" ");
 
 function ModalGrabber(): React.ReactElement {
   const { colors } = useTheme();
 
   return (
-    <View className="items-center pb-2 pt-4" style={{ backgroundColor: "transparent" }}>
+    <View
+      className="items-center pb-2 pt-4"
+      style={{ backgroundColor: "transparent" }}
+    >
       <View
         className="rounded-full"
         style={{
@@ -61,7 +65,10 @@ export function Screen({
 }: ScreenProps) {
   const { tokens, colors } = useTheme();
   const containerClassName = joinClassName("flex-1", className);
-  const scrollContainerClassName = joinClassName("flex-grow", contentContainerClassName);
+  const scrollContainerClassName = joinClassName(
+    "flex-grow",
+    contentContainerClassName
+  );
 
   const paddingValue = React.useMemo(() => {
     switch (padding) {
@@ -79,10 +86,16 @@ export function Screen({
   }, [padding, tokens.spacing]);
 
   // Add extra bottom padding to avoid content being hidden behind bottom navigation
-  const containerStyle = React.useMemo(() => ({ padding: paddingValue }), [paddingValue]);
+  const containerStyle = React.useMemo(
+    () => ({ padding: paddingValue }),
+    [paddingValue]
+  );
 
   // Add extra bottom padding to avoid content being hidden behind bottom navigation
-  const scrollContentStyle = React.useMemo(() => ({ padding: paddingValue }), [paddingValue]);
+  const scrollContentStyle = React.useMemo(
+    () => ({ padding: paddingValue }),
+    [paddingValue]
+  );
 
   const isModal = preset === "modal";
   const insets = useSafeAreaInsets();
@@ -95,16 +108,28 @@ export function Screen({
       paddingLeft: edges.includes("left") ? insets.left : 0,
       paddingRight: edges.includes("right") ? insets.right : 0,
     };
-  }, [isModal, safeAreaEdges, insets.top, insets.bottom, insets.left, insets.right]);
+  }, [
+    isModal,
+    safeAreaEdges,
+    insets.top,
+    insets.bottom,
+    insets.left,
+    insets.right,
+  ]);
 
   const content =
     preset === "scroll" || preset === "modal" ? (
       <ScrollView
         className="flex-1"
         contentContainerClassName={scrollContainerClassName}
-        contentContainerStyle={[scrollContentStyle, scrollProps?.contentContainerStyle]}
+        contentContainerStyle={[
+          scrollContentStyle,
+          scrollProps?.contentContainerStyle,
+        ]}
         keyboardShouldPersistTaps="handled"
-        {...scrollProps}>
+        showsVerticalScrollIndicator={false}
+        {...scrollProps}
+      >
         {children}
       </ScrollView>
     ) : (
@@ -117,7 +142,8 @@ export function Screen({
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={keyboardOffset}>
+      keyboardVerticalOffset={keyboardOffset}
+    >
       {content}
     </KeyboardAvoidingView>
   ) : (
@@ -125,9 +151,15 @@ export function Screen({
   );
 
   return (
-    <View className="flex-1" style={isModal ? { backgroundColor: colors.background } : undefined}>
+    <View
+      className="flex-1"
+      style={isModal ? { backgroundColor: colors.background } : undefined}
+    >
       {background === "gradient" && !isModal ? <BackgroundGradient /> : null}
-      <View className="flex-1 border-t border-border/10" style={safeAreaPadding}>
+      <View
+        className="flex-1 border-t border-border/10"
+        style={safeAreaPadding}
+      >
         {isModal && <ModalGrabber />}
         {wrappedContent}
       </View>

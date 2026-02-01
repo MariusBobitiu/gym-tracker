@@ -48,8 +48,15 @@ function normalizeToken(payload: LoginResponse): TokenType | null {
     return { access: payload.accessToken, refresh: payload.refreshToken ?? "" };
   }
 
-  if ("token" in payload && typeof payload.token === "object" && payload.token) {
-    return { access: payload.token.access, refresh: payload.token.refresh ?? "" };
+  if (
+    "token" in payload &&
+    typeof payload.token === "object" &&
+    payload.token
+  ) {
+    return {
+      access: payload.token.access,
+      refresh: payload.token.refresh ?? "",
+    };
   }
 
   if ("access" in payload) {
@@ -59,7 +66,10 @@ function normalizeToken(payload: LoginResponse): TokenType | null {
   return null;
 }
 
-function buildTokenFailure(status: number, details: unknown): ApiFailure<ApiError> {
+function buildTokenFailure(
+  status: number,
+  details: unknown
+): ApiFailure<ApiError> {
   return {
     ok: false,
     status,
@@ -132,7 +142,9 @@ export async function register(
   } satisfies ApiSuccess<LoginResult>;
 }
 
-export async function refreshSession(token: string): Promise<ApiResult<LoginResult, ApiError>> {
+export async function refreshSession(
+  token: string
+): Promise<ApiResult<LoginResult, ApiError>> {
   const result = await request<LoginResponse>(AUTH_ENDPOINTS.refresh, {
     method: "POST",
     body: { token },
@@ -156,10 +168,14 @@ export async function refreshSession(token: string): Promise<ApiResult<LoginResu
   } satisfies ApiSuccess<LoginResult>;
 }
 
-export async function getMe(accessToken?: string): Promise<ApiResult<User, ApiError>> {
+export async function getMe(
+  accessToken?: string
+): Promise<ApiResult<User, ApiError>> {
   return request<User>(AUTH_ENDPOINTS.me, {
     auth: !accessToken,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+    headers: accessToken
+      ? { Authorization: `Bearer ${accessToken}` }
+      : undefined,
   });
 }
 

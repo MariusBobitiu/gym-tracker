@@ -68,11 +68,15 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
     const redirectPath = hrefToPathname(mergedOptions.redirectTo);
     const authenticatedPath = hrefToPathname(mergedOptions.authenticatedRoute);
     const onboardingHref = mergedOptions.onboardingRoute ?? null;
-    const onboardingPath = onboardingHref ? hrefToPathname(onboardingHref) : null;
+    const onboardingPath = onboardingHref
+      ? hrefToPathname(onboardingHref)
+      : null;
     const allowlistPaths = mergedOptions.allowlist
       ? mergedOptions.allowlist.map(hrefToPathname)
       : [];
-    const isAllowlisted = allowlistPaths.length ? pathMatches(pathname, allowlistPaths) : false;
+    const isAllowlisted = allowlistPaths.length
+      ? pathMatches(pathname, allowlistPaths)
+      : false;
 
     if (!hasSession) {
       if (isInAppGroup && !isAllowlisted && pathname !== redirectPath) {
@@ -81,7 +85,11 @@ export function useAuthGuard(options: AuthGuardOptions = {}) {
       return;
     }
 
-    if (onboardingHref && mergedOptions.isOnboarded === false && pathname !== onboardingPath) {
+    if (
+      onboardingHref &&
+      mergedOptions.isOnboarded === false &&
+      pathname !== onboardingPath
+    ) {
       router.replace(onboardingHref);
       return;
     }

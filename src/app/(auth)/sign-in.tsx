@@ -30,7 +30,10 @@ export default function SignIn() {
       );
       if (!hasFieldErrors) {
         showMessage({
-          message: resolveErrorMessage(error, "Unable to sign in. Please try again."),
+          message: resolveErrorMessage(
+            error,
+            "Unable to sign in. Please try again."
+          ),
           type: "danger",
           duration: 3500,
         });
@@ -39,7 +42,11 @@ export default function SignIn() {
   });
 
   return (
-    <Screen preset="scroll" keyboardAvoiding keyboardOffset={Platform.OS === "ios" ? 10 : 0}>
+    <Screen
+      preset="scroll"
+      keyboardAvoiding
+      keyboardOffset={Platform.OS === "ios" ? 10 : 0}
+    >
       <Stack.Screen
         options={headerOptions({
           title: "Welcome Back",
@@ -48,7 +55,11 @@ export default function SignIn() {
         })}
       />
       <AppHeader title="Welcome Back" />
-      <SignInForm control={control} isSubmitting={isSubmitting} onSubmit={onSubmit} />
+      <SignInForm
+        control={control}
+        isSubmitting={isSubmitting}
+        onSubmit={onSubmit}
+      />
     </Screen>
   );
 }

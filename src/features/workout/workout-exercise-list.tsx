@@ -35,11 +35,15 @@ export function WorkoutExerciseList({
               style={{
                 backgroundColor: isCompleted ? colors.muted : colors.card,
                 borderColor: colors.border,
-              }}>
+              }}
+            >
               {isCompleted ? (
                 <CheckCircle size={24} color="#22C55E" />
               ) : isActive ? (
-                <View className="size-3 rounded-full" style={{ backgroundColor: colors.primary }} />
+                <View
+                  className="size-3 rounded-full"
+                  style={{ backgroundColor: colors.primary }}
+                />
               ) : (
                 <View
                   className="size-3 rounded-full"
@@ -53,7 +57,8 @@ export function WorkoutExerciseList({
                 style={{
                   color: colors.foreground,
                   fontWeight: tokens.typography.weights.bold,
-                }}>
+                }}
+              >
                 {item.name}
               </Text>
               <View className="flex-1 flex-row items-center justify-end gap-2">
@@ -62,7 +67,8 @@ export function WorkoutExerciseList({
                     color: colors.mutedForeground,
                     opacity: 0.8,
                     fontSize: tokens.typography.sizes.sm,
-                  }}>
+                  }}
+                >
                   {item.sets} sets
                 </Text>
                 <Text
@@ -70,7 +76,8 @@ export function WorkoutExerciseList({
                     color: colors.mutedForeground,
                     opacity: 0.8,
                     fontSize: tokens.typography.sizes.sm,
-                  }}>
+                  }}
+                >
                   {item.reps} reps
                 </Text>
                 <Text
@@ -78,7 +85,8 @@ export function WorkoutExerciseList({
                     color: colors.mutedForeground,
                     opacity: 0.8,
                     fontSize: tokens.typography.sizes.sm,
-                  }}>
+                  }}
+                >
                   {item.weight} lbs
                 </Text>
                 <ChevronRight size={16} color={colors.mutedForeground} />

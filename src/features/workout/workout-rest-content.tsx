@@ -25,7 +25,9 @@ export function WorkoutRestContent({
   onSkipRest,
 }: WorkoutRestContentProps): React.ReactElement {
   const { colors } = useTheme();
-  const [remainingSeconds, setRemainingSeconds] = useState(REST_DURATION_SECONDS);
+  const [remainingSeconds, setRemainingSeconds] = useState(
+    REST_DURATION_SECONDS
+  );
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const handleSkip = useCallback(() => {
@@ -55,7 +57,8 @@ export function WorkoutRestContent({
     };
   }, [onSkipRest]);
 
-  const progressValue = remainingSeconds <= 0 ? 1 : 1 - remainingSeconds / REST_DURATION_SECONDS;
+  const progressValue =
+    remainingSeconds <= 0 ? 1 : 1 - remainingSeconds / REST_DURATION_SECONDS;
 
   return (
     <>
@@ -69,7 +72,10 @@ export function WorkoutRestContent({
           label="Rest"
           subLabel={formatRemainingSeconds(remainingSeconds)}
         />
-        <P className="mt-6 text-center" style={{ color: colors.mutedForeground }}>
+        <P
+          className="mt-6 text-center"
+          style={{ color: colors.mutedForeground }}
+        >
           {completedLabel}
         </P>
       </View>

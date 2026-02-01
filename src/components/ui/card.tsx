@@ -11,7 +11,10 @@ type CardProps = ViewProps & {
 export function Card({ className = "", style, children, ...props }: CardProps) {
   const { colors, tokens } = useTheme();
 
-  const cardStyle = React.useMemo(() => twMerge("border shadow-sm", className), [className]);
+  const cardStyle = React.useMemo(
+    () => twMerge("border shadow-sm", className),
+    [className]
+  );
 
   const nStyle = React.useMemo(
     () =>
@@ -39,7 +42,12 @@ type CardHeaderProps = ViewProps & {
   className?: string;
 };
 
-export function CardHeader({ className = "", style, children, ...props }: CardHeaderProps) {
+export function CardHeader({
+  className = "",
+  style,
+  children,
+  ...props
+}: CardHeaderProps) {
   const { tokens } = useTheme();
   const headerStyle = React.useMemo(
     () => twMerge("flex flex-col space-y-1.5", className),
@@ -68,10 +76,18 @@ type CardTitleProps = TextProps & {
   className?: string;
 };
 
-export function CardTitle({ className = "", style, children, ...props }: CardTitleProps) {
+export function CardTitle({
+  className = "",
+  style,
+  children,
+  ...props
+}: CardTitleProps) {
   const { colors, tokens } = useTheme();
 
-  const titleStyle = React.useMemo(() => twMerge("tracking-tight", className), [className]);
+  const titleStyle = React.useMemo(
+    () => twMerge("tracking-tight", className),
+    [className]
+  );
 
   const nStyle = React.useMemo(
     () =>
@@ -107,7 +123,10 @@ export function CardDescription({
 }: CardDescriptionProps) {
   const { colors, tokens } = useTheme();
 
-  const descriptionStyle = React.useMemo(() => twMerge("", className), [className]);
+  const descriptionStyle = React.useMemo(
+    () => twMerge("", className),
+    [className]
+  );
 
   const nStyle = React.useMemo(
     () =>
@@ -134,7 +153,12 @@ type CardContentProps = ViewProps & {
   className?: string;
 };
 
-export function CardContent({ className = "", style, children, ...props }: CardContentProps) {
+export function CardContent({
+  className = "",
+  style,
+  children,
+  ...props
+}: CardContentProps) {
   const { tokens } = useTheme();
   const contentStyle = React.useMemo(() => twMerge("", className), [className]);
 
@@ -160,7 +184,12 @@ type CardFooterProps = ViewProps & {
   className?: string;
 };
 
-export function CardFooter({ className = "", style, children, ...props }: CardFooterProps) {
+export function CardFooter({
+  className = "",
+  style,
+  children,
+  ...props
+}: CardFooterProps) {
   const footerStyle = React.useMemo(
     () => twMerge("flex flex-row items-center", className),
     [className]

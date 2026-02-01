@@ -54,7 +54,11 @@ const AppHeader = ({
 }: AppHeaderProps) => {
   const { colors } = useTheme();
   const resolvedTitle =
-    typeof title === "string" ? <P style={{ fontSize: 20, fontWeight: "600" }}>{title}</P> : title;
+    typeof title === "string" ? (
+      <P style={{ fontSize: 20, fontWeight: "600" }}>{title}</P>
+    ) : (
+      title
+    );
 
   const rightContent = isMainScreen ? (
     <View className="flex-row items-center gap-2">
@@ -86,7 +90,9 @@ const AppHeader = ({
           <BackButton />
         </View>
       ) : null}
-      <View className={cn("flex-[2]", left || showBackButton ? "items-center" : "")}>
+      <View
+        className={cn("flex-[2]", left || showBackButton ? "items-center" : "")}
+      >
         {resolvedTitle ?? null}
       </View>
       <View className="flex-1 items-end">{rightContent}</View>

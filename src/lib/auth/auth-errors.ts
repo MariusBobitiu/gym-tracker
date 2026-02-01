@@ -1,7 +1,10 @@
 import type { ApiError } from "@/lib/api-client";
 import type { FieldValues, UseFormSetError, Path } from "react-hook-form";
 
-export function resolveErrorMessage(error: unknown, fallback = "Something went wrong."): string {
+export function resolveErrorMessage(
+  error: unknown,
+  fallback = "Something went wrong."
+): string {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: unknown }).message;
     if (typeof message === "string" && message.trim().length > 0) {
@@ -31,7 +34,9 @@ export function applyFieldErrors<T extends FieldValues>(
   }
 
   let applied = false;
-  for (const [key, value] of Object.entries(details as Record<string, unknown>)) {
+  for (const [key, value] of Object.entries(
+    details as Record<string, unknown>
+  )) {
     if (!fields.includes(key as keyof T)) {
       continue;
     }

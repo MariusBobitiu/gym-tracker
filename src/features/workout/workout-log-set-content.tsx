@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Card, H1, P, View } from "@/components/ui";
 import { SetInputStepper } from "@/features/workout";
+import { DEFAULT_WEIGHT_KG } from "@/lib/default-workout";
 import { useTheme } from "@/lib/theme-context";
 import type { PlanExercise } from "@/types/workout-session";
 import { Check } from "lucide-react-native";
@@ -18,6 +19,8 @@ type WorkoutLogSetContentProps = {
   currentExercise: PlanExercise;
   onComplete: (weight: number, reps: number) => void;
   clearAndBack: () => void;
+  /** Override default weight (e.g. last week / last exercise); falls back to currentExercise.weight ?? 20 */
+  initialWeight?: number;
 };
 
 export function WorkoutLogSetContent({
@@ -27,9 +30,11 @@ export function WorkoutLogSetContent({
   currentExercise,
   onComplete,
   clearAndBack,
+  initialWeight,
 }: WorkoutLogSetContentProps): React.ReactElement {
   const { colors } = useTheme();
-  const defaultWeight = currentExercise?.weight ?? 0;
+  const defaultWeight =
+    initialWeight ?? currentExercise?.weight ?? DEFAULT_WEIGHT_KG;
   const defaultReps = currentExercise?.reps ?? 10;
   const [weight, setWeight] = useState(defaultWeight);
   const [reps, setReps] = useState(defaultReps);
@@ -53,7 +58,15 @@ export function WorkoutLogSetContent({
       <View className="mt-8 flex-1">
         <Card className="p-5" style={{ backgroundColor: colors.muted }}>
           <View className="mb-2 flex-row items-center justify-between">
-            <P style={{ color: colors.primary, fontWeight: "600", letterSpacing: 1 }}>WEIGHT</P>
+            <P
+              style={{
+                color: colors.primary,
+                fontWeight: "600",
+                letterSpacing: 1,
+              }}
+            >
+              WEIGHT
+            </P>
             <P style={{ color: colors.primary, fontSize: 16 }}>kg</P>
           </View>
           <View className="mb-6 items-center py-6">
@@ -72,7 +85,12 @@ export function WorkoutLogSetContent({
         <Card className="mt-4 p-5" style={{ backgroundColor: colors.muted }}>
           <P
             className="mb-2"
-            style={{ color: colors.primary, fontWeight: "600", letterSpacing: 1 }}>
+            style={{
+              color: colors.primary,
+              fontWeight: "600",
+              letterSpacing: 1,
+            }}
+          >
             REPS
           </P>
           <View className="mb-6 items-center py-6">
@@ -93,7 +111,13 @@ export function WorkoutLogSetContent({
           label="Complete set"
           variant="primary"
           size="lg"
-          icon={<Check size={24} color={colors.primaryForeground} className="mr-2" />}
+          icon={
+            <Check
+              size={24}
+              color={colors.primaryForeground}
+              className="mr-2"
+            />
+          }
           iconPlacement="left"
           onPress={() => onComplete(weight, reps)}
           accessibilityLabel="Complete set"

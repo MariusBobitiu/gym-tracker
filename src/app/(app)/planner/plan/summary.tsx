@@ -4,9 +4,20 @@ import { useFocusEffect } from "@react-navigation/native";
 import { View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
-import { Button, Card, CardContent, CardHeader, CardTitle, P, Text } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  P,
+  Text,
+} from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
-import { getActivePlan, getRotationType } from "@/features/planner/planner-repository";
+import {
+  getActivePlan,
+  getRotationType,
+} from "@/features/planner/planner-repository";
 import type { ActivePlan } from "@/features/planner/planner-repository";
 import { LoadingState } from "@/components/feedback-states";
 import { ScrollView } from "moti";
@@ -75,13 +86,22 @@ export default function PlanSummaryScreen() {
   }
 
   const rotationType = getRotationType(plan.cycle.rotation);
-  const variantKeysToShow = rotationType === "SAME_EVERY_WEEK" ? ["A"] : ["A", "B"];
+  const variantKeysToShow =
+    rotationType === "SAME_EVERY_WEEK" ? ["A"] : ["A", "B"];
 
   return (
-    <Screen safeAreaEdges={["top", "bottom"]} contentContainerClassName="pb-12" preset="scroll">
+    <Screen
+      safeAreaEdges={["top", "bottom"]}
+      contentContainerClassName="pb-12"
+      preset="scroll"
+    >
       <Stack.Screen options={headerOptions({ title: "Your plan" })} />
       <AppHeader title="Your plan is ready" showBackButton />
-      <ScrollView className="flex-1 px-4 py-4">
+      <ScrollView
+        className="flex-1 px-4 py-4"
+        keyboardShouldPersistTaps={"handled"}
+        showsVerticalScrollIndicator={false}
+      >
         <Card className="mb-4">
           <CardHeader>
             <CardTitle>{plan.split.name}</CardTitle>
@@ -100,7 +120,8 @@ export default function PlanSummaryScreen() {
                       fontWeight: tokens.typography.weights.semibold,
                       color: colors.foreground,
                       marginBottom: 8,
-                    }}>
+                    }}
+                  >
                     Variant {key}
                   </Text>
                   {sessions.map((s) => (
@@ -111,12 +132,14 @@ export default function PlanSummaryScreen() {
                         backgroundColor: colors.muted + "40",
                         borderWidth: 1,
                         borderColor: colors.border,
-                      }}>
+                      }}
+                    >
                       <Text
                         style={{
                           fontSize: tokens.typography.sizes.sm,
                           color: colors.foreground,
-                        }}>
+                        }}
+                      >
                         {s.name}
                       </Text>
                     </View>
@@ -133,20 +156,23 @@ export default function PlanSummaryScreen() {
             backgroundColor: colors.muted + "40",
             borderWidth: 1,
             borderColor: colors.border,
-          }}>
+          }}
+        >
           <Text
             style={{
               fontSize: tokens.typography.sizes.sm,
               color: colors.foreground,
               marginBottom: 4,
-            }}>
+            }}
+          >
             {rotationRuleText(plan)}
           </Text>
           <Text
             style={{
               fontSize: tokens.typography.sizes.sm,
               color: colors.mutedForeground,
-            }}>
+            }}
+          >
             Schedule: flexible — train whenever you want
           </Text>
         </View>

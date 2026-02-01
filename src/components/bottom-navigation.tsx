@@ -25,7 +25,10 @@ const tabs: TabItem[] = [
     name: "index",
     label: "Today",
     icon: (active, isDark) => (
-      <Dumbbell size={20} color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"} />
+      <Dumbbell
+        size={20}
+        color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"}
+      />
     ),
     showLabel: true,
   },
@@ -33,7 +36,10 @@ const tabs: TabItem[] = [
     name: "planner",
     label: "Planner",
     icon: (active, isDark) => (
-      <Notebook size={20} color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"} />
+      <Notebook
+        size={20}
+        color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"}
+      />
     ),
     showLabel: true,
   },
@@ -41,7 +47,10 @@ const tabs: TabItem[] = [
     name: "history",
     label: "History",
     icon: (active, isDark) => (
-      <CalendarClock size={20} color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"} />
+      <CalendarClock
+        size={20}
+        color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"}
+      />
     ),
     showLabel: true,
   },
@@ -49,7 +58,10 @@ const tabs: TabItem[] = [
     name: "profile",
     label: "Profile",
     icon: (active, isDark) => (
-      <User size={20} color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"} />
+      <User
+        size={20}
+        color={active ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000"}
+      />
     ),
     showLabel: true,
   },
@@ -59,12 +71,16 @@ type Props = {
   className?: string;
 };
 
-export function BottomNavigation({ className = "" }: Props): React.ReactElement {
+export function BottomNavigation({
+  className = "",
+}: Props): React.ReactElement {
   const { colors, isDark } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
 
-  const tabPositions = React.useRef<Map<string, { x: number; width: number }>>(new Map());
+  const tabPositions = React.useRef<Map<string, { x: number; width: number }>>(
+    new Map()
+  );
   const translateX = useSharedValue(0);
   const width = useSharedValue(0);
   const isInitialized = React.useRef(false);
@@ -72,7 +88,7 @@ export function BottomNavigation({ className = "" }: Props): React.ReactElement 
   function getActiveTab(): string {
     if (pathname === "/") return "index";
     const path = pathname.replace("/", "");
-    return tabs.find((tab) => path.startsWith(tab.name))?.name || "index";
+    return tabs.find((tab) => path.startsWith(tab.name))?.name || "";
   }
 
   const activeTab = getActiveTab();
@@ -161,8 +177,11 @@ export function BottomNavigation({ className = "" }: Props): React.ReactElement 
           shadowRadius: 12,
           elevation: 10,
           borderColor: isDark ? `${colors.border}90` : `${colors.border}70`,
-          backgroundColor: isDark ? `${colors.background}95` : `${colors.background}95`,
-        }}>
+          backgroundColor: isDark
+            ? `${colors.background}95`
+            : `${colors.background}95`,
+        }}
+      >
         <View className="relative flex-row items-center px-2 py-1">
           <Animated.View
             style={[
@@ -188,16 +207,22 @@ export function BottomNavigation({ className = "" }: Props): React.ReactElement 
                 onPress={() => handlePress(tab.name)}
                 onLayout={(event) => handleTabLayout(tab.name, event)}
                 className="z-10 items-center justify-center"
-                style={{ flex: 1 }}>
+                style={{ flex: 1 }}
+              >
                 <View className="items-center justify-center p-2">
                   {tab.icon(isActive, isDark)}
                   {tab.showLabel && (
                     <Text
                       style={{
-                        color: isActive ? "#ffa90a" : isDark ? "#FFFFFF" : "#000000",
+                        color: isActive
+                          ? "#ffa90a"
+                          : isDark
+                            ? "#FFFFFF"
+                            : "#000000",
                         fontSize: 12,
                         fontWeight: isActive ? "600" : "400",
-                      }}>
+                      }}
+                    >
                       {tab.label}
                     </Text>
                   )}

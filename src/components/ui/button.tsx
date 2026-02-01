@@ -8,7 +8,8 @@ import { useTheme } from "@/lib/theme-context";
 
 const button = tv({
   slots: {
-    container: "my-2 flex flex-row items-center justify-center rounded-full px-4",
+    container:
+      "my-2 flex flex-row items-center justify-center rounded-full px-4",
     label: "font-inter text-base font-semibold",
     indicator: "h-6",
   },
@@ -375,7 +376,8 @@ export const Button = React.forwardRef<View, Props>(
         hitSlop={hitSlop ?? getHitSlop()}
         {...props}
         ref={ref}
-        testID={testID}>
+        testID={testID}
+      >
         {props.children ? (
           props.children
         ) : (
@@ -392,7 +394,8 @@ export const Button = React.forwardRef<View, Props>(
               <Text
                 testID={testID ? `${testID}-label` : undefined}
                 className={styles.label({ className: textClassName })}
-                style={labelStyle}>
+                style={labelStyle}
+              >
                 {text}
               </Text>
             )}

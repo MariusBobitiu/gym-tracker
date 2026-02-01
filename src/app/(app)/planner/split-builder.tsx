@@ -13,7 +13,7 @@ import {
   type CustomVariantInput,
 } from "@/features/planner/planner-repository";
 import { FormField } from "@/components/forms";
-import { Plus, Trash2 } from "lucide-react-native";
+import { ChevronRight, Plus, Trash2 } from "lucide-react-native";
 import { ScrollView } from "moti";
 import { LoadingState } from "@/components/feedback-states";
 
@@ -22,9 +22,15 @@ export default function SplitBuilderScreen() {
   const { splitId } = useLocalSearchParams<{ splitId?: string }>();
   const { colors, tokens } = useTheme();
   const [splitName, setSplitName] = useState("My split");
-  const [variantA, setVariantA] = useState<string[]>(["Session 1", "Session 2"]);
+  const [variantA, setVariantA] = useState<string[]>([
+    "Session 1",
+    "Session 2",
+  ]);
   const [variantB, setVariantB] = useState<string[] | null>(null);
   const [variantC, setVariantC] = useState<string[] | null>(null);
+  const [sessionIdsA, setSessionIdsA] = useState<string[]>(["", ""]);
+  const [sessionIdsB, setSessionIdsB] = useState<string[]>([]);
+  const [sessionIdsC, setSessionIdsC] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(!!splitId);
 
@@ -44,54 +50,108 @@ export default function SplitBuilderScreen() {
         }
         setSplitName(data.split.name);
         const sessionsA = data.sessionsByVariant["A"] ?? [];
-        setVariantA(sessionsA.length > 0 ? sessionsA.map((s) => s.name) : ["Session 1"]);
+        setVariantA(
+          sessionsA.length > 0 ? sessionsA.map((s) => s.name) : ["Session 1"]
+        );
+        setSessionIdsA(sessionsA.length > 0 ? sessionsA.map((s) => s.id) : []);
         const hasB = data.variants.some((v) => v.key === "B");
         const sessionsB = data.sessionsByVariant["B"] ?? [];
         setVariantB(
-          hasB ? (sessionsB.length > 0 ? sessionsB.map((s) => s.name) : ["Session 1"]) : null
+          hasB
+            ? sessionsB.length > 0
+              ? sessionsB.map((s) => s.name)
+              : ["Session 1"]
+            : null
+        );
+        setSessionIdsB(
+          hasB && sessionsB.length > 0 ? sessionsB.map((s) => s.id) : []
         );
         const hasC = data.variants.some((v) => v.key === "C");
         const sessionsC = data.sessionsByVariant["C"] ?? [];
         setVariantC(
-          hasC ? (sessionsC.length > 0 ? sessionsC.map((s) => s.name) : ["Session 1"]) : null
+          hasC
+            ? sessionsC.length > 0
+              ? sessionsC.map((s) => s.name)
+              : ["Session 1"]
+            : null
+        );
+        setSessionIdsC(
+          hasC && sessionsC.length > 0 ? sessionsC.map((s) => s.id) : []
         );
       })
       .finally(() => setLoading(false));
   }, [splitId]);
 
   const addSession = (variant: "A" | "B" | "C"): void => {
-    if (variant === "A") setVariantA((prev) => [...prev, `Session ${prev.length + 1}`]);
-    if (variant === "B")
-      setVariantB((prev) => [...(prev ?? []), `Session ${(prev?.length ?? 0) + 1}`]);
-    if (variant === "C")
-      setVariantC((prev) => [...(prev ?? []), `Session ${(prev?.length ?? 0) + 1}`]);
+    if (variant === "A") {
+      setVariantA((prev) => [...prev, `Session ${prev.length + 1}`]);
+      setSessionIdsA((prev) => [...prev, ""]);
+    }
+    if (variant === "B") {
+      setVariantB((prev) => [
+        ...(prev ?? []),
+        `Session ${(prev?.length ?? 0) + 1}`,
+      ]);
+      setSessionIdsB((prev) => [...prev, ""]);
+    }
+    if (variant === "C") {
+      setVariantC((prev) => [
+        ...(prev ?? []),
+        `Session ${(prev?.length ?? 0) + 1}`,
+      ]);
+      setSessionIdsC((prev) => [...prev, ""]);
+    }
   };
 
   const removeSession = (variant: "A" | "B" | "C", index: number): void => {
-    if (variant === "A") setVariantA((prev) => prev.filter((_, i) => i !== index));
-    if (variant === "B" && variantB)
+    if (variant === "A") {
+      setVariantA((prev) => prev.filter((_, i) => i !== index));
+      setSessionIdsA((prev) => prev.filter((_, i) => i !== index));
+    }
+    if (variant === "B" && variantB) {
       setVariantB((prev) => (prev ?? []).filter((_, i) => i !== index));
-    if (variant === "C" && variantC)
+      setSessionIdsB((prev) => prev.filter((_, i) => i !== index));
+    }
+    if (variant === "C" && variantC) {
       setVariantC((prev) => (prev ?? []).filter((_, i) => i !== index));
+      setSessionIdsC((prev) => prev.filter((_, i) => i !== index));
+    }
   };
 
-  const updateSessionName = (variant: "A" | "B" | "C", index: number, name: string): void => {
-    if (variant === "A") setVariantA((prev) => prev.map((s, i) => (i === index ? name : s)));
+  const updateSessionName = (
+    variant: "A" | "B" | "C",
+    index: number,
+    name: string
+  ): void => {
+    if (variant === "A")
+      setVariantA((prev) => prev.map((s, i) => (i === index ? name : s)));
     if (variant === "B" && variantB)
-      setVariantB((prev) => (prev ?? []).map((s, i) => (i === index ? name : s)));
+      setVariantB((prev) =>
+        (prev ?? []).map((s, i) => (i === index ? name : s))
+      );
     if (variant === "C" && variantC)
-      setVariantC((prev) => (prev ?? []).map((s, i) => (i === index ? name : s)));
+      setVariantC((prev) =>
+        (prev ?? []).map((s, i) => (i === index ? name : s))
+      );
   };
 
   const handleSave = async (): Promise<void> => {
     if (!splitName.trim()) return;
-    const variants: CustomVariantInput[] = [{ key: "A", sessionNames: variantA }];
-    if (variantB && variantB.length > 0) variants.push({ key: "B", sessionNames: variantB });
-    if (variantC && variantC.length > 0) variants.push({ key: "C", sessionNames: variantC });
+    const variants: CustomVariantInput[] = [
+      { key: "A", sessionNames: variantA },
+    ];
+    if (variantB && variantB.length > 0)
+      variants.push({ key: "B", sessionNames: variantB });
+    if (variantC && variantC.length > 0)
+      variants.push({ key: "C", sessionNames: variantC });
     setIsSubmitting(true);
     try {
       if (isEdit && splitId) {
-        await updateSplitWithVariantsAndSessions(splitId, splitName.trim(), variants);
+        await updateSplitWithVariantsAndSessions(
+          splitId,
+          splitName.trim(),
+          variants
+        );
         router.replace({ pathname: "/planner/plan/summary" } as never);
       } else {
         await createCustomSplit(splitName.trim(), variants);
@@ -105,7 +165,10 @@ export default function SplitBuilderScreen() {
 
   if (loading) {
     return (
-      <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+      <Screen
+        contentContainerClassName="pb-12"
+        safeAreaEdges={["top", "bottom"]}
+      >
         <Stack.Screen options={headerOptions({ title: "Custom split" })} />
         <AppHeader title="Custom split" showBackButton />
         <View className="flex-1 items-center justify-center">
@@ -116,10 +179,18 @@ export default function SplitBuilderScreen() {
   }
 
   return (
-    <Screen keyboardAvoiding contentContainerClassName="pb-12" safeAreaEdges={["bottom", "top"]}>
+    <Screen
+      keyboardAvoiding
+      contentContainerClassName="pb-12"
+      safeAreaEdges={["bottom", "top"]}
+    >
       <Stack.Screen options={headerOptions({ title: "Custom split" })} />
       <AppHeader title="Custom split" showBackButton />
-      <ScrollView className="mb-12 flex-1 px-4 py-4">
+      <ScrollView
+        className="mb-12 flex-1 px-4 py-4"
+        keyboardShouldPersistTaps={"handled"}
+        showsVerticalScrollIndicator={false}
+      >
         <FormField label="Split name">
           <Input
             value={splitName}
@@ -129,22 +200,55 @@ export default function SplitBuilderScreen() {
           />
         </FormField>
 
-        <P className="mb-2 mt-4" style={{ fontWeight: tokens.typography.weights.semibold }}>
+        <P
+          className="mb-2 mt-4"
+          style={{ fontWeight: tokens.typography.weights.semibold }}
+        >
           Variant A (required)
         </P>
         {variantA.map((name, index) => (
-          <View key={`a-${index}`} className="mb-2 w-full flex-row items-center gap-2">
-            <View className="min-w-0 flex-1">
-              <Input
-                value={name}
-                onChangeText={(text) => updateSessionName("A", index, text)}
-                placeholder="Session name"
-                editable={!isSubmitting}
-              />
+          <View key={`a-${index}`} className="mb-2 w-full">
+            <View className="flex-row items-center gap-2">
+              <View className="min-w-0 flex-1">
+                <Input
+                  value={name}
+                  onChangeText={(text) => updateSessionName("A", index, text)}
+                  placeholder="Session name"
+                  editable={!isSubmitting}
+                />
+              </View>
+              <Pressable
+                onPress={() => removeSession("A", index)}
+                disabled={variantA.length <= 1}
+              >
+                <Trash2 size={20} color={colors.destructive} />
+              </Pressable>
             </View>
-            <Pressable onPress={() => removeSession("A", index)} disabled={variantA.length <= 1}>
-              <Trash2 size={20} color={colors.destructive} />
-            </Pressable>
+            {isEdit && sessionIdsA[index] ? (
+              <Pressable
+                onPress={() =>
+                  router.push({
+                    pathname: "/planner/session-exercises",
+                    params: {
+                      sessionTemplateId: sessionIdsA[index],
+                      sessionName: name,
+                    },
+                  } as never)
+                }
+                className="mt-1 flex-row items-center"
+                style={{ paddingVertical: tokens.spacing.xs }}
+              >
+                <P
+                  style={{
+                    color: colors.primary,
+                    fontSize: tokens.typography.sizes.sm,
+                  }}
+                >
+                  Exercises
+                </P>
+                <ChevronRight size={14} color={colors.primary} />
+              </Pressable>
+            ) : null}
           </View>
         ))}
         <Button
@@ -169,24 +273,57 @@ export default function SplitBuilderScreen() {
           />
         ) : (
           <>
-            <P className="mb-2" style={{ fontWeight: tokens.typography.weights.semibold }}>
+            <P
+              className="mb-2"
+              style={{ fontWeight: tokens.typography.weights.semibold }}
+            >
               Variant B
             </P>
             {variantB.map((name, index) => (
-              <View key={`b-${index}`} className="mb-2 w-full flex-row items-center gap-2">
-                <View className="min-w-0 flex-1">
-                  <Input
-                    value={name}
-                    onChangeText={(text) => updateSessionName("B", index, text)}
-                    placeholder="Session name"
-                    editable={!isSubmitting}
-                  />
+              <View key={`b-${index}`} className="mb-2 w-full">
+                <View className="flex-row items-center gap-2">
+                  <View className="min-w-0 flex-1">
+                    <Input
+                      value={name}
+                      onChangeText={(text) =>
+                        updateSessionName("B", index, text)
+                      }
+                      placeholder="Session name"
+                      editable={!isSubmitting}
+                    />
+                  </View>
+                  <Pressable
+                    onPress={() => removeSession("B", index)}
+                    disabled={variantB.length <= 1}
+                  >
+                    <Trash2 size={20} color={colors.destructive} />
+                  </Pressable>
                 </View>
-                <Pressable
-                  onPress={() => removeSession("B", index)}
-                  disabled={variantB.length <= 1}>
-                  <Trash2 size={20} color={colors.destructive} />
-                </Pressable>
+                {isEdit && sessionIdsB[index] ? (
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: "/planner/session-exercises",
+                        params: {
+                          sessionTemplateId: sessionIdsB[index],
+                          sessionName: name,
+                        },
+                      } as never)
+                    }
+                    className="mt-1 flex-row items-center"
+                    style={{ paddingVertical: tokens.spacing.xs }}
+                  >
+                    <P
+                      style={{
+                        color: colors.primary,
+                        fontSize: tokens.typography.sizes.sm,
+                      }}
+                    >
+                      Exercises
+                    </P>
+                    <ChevronRight size={14} color={colors.primary} />
+                  </Pressable>
+                ) : null}
               </View>
             ))}
             <Button
@@ -213,24 +350,57 @@ export default function SplitBuilderScreen() {
           />
         ) : variantC !== null ? (
           <>
-            <P className="mb-2" style={{ fontWeight: tokens.typography.weights.semibold }}>
+            <P
+              className="mb-2"
+              style={{ fontWeight: tokens.typography.weights.semibold }}
+            >
               Variant C
             </P>
             {variantC.map((name, index) => (
-              <View key={`c-${index}`} className="mb-2 w-full flex-row items-center gap-2">
-                <View className="min-w-0 flex-1">
-                  <Input
-                    value={name}
-                    onChangeText={(text) => updateSessionName("C", index, text)}
-                    placeholder="Session name"
-                    editable={!isSubmitting}
-                  />
+              <View key={`c-${index}`} className="mb-2 w-full">
+                <View className="flex-row items-center gap-2">
+                  <View className="min-w-0 flex-1">
+                    <Input
+                      value={name}
+                      onChangeText={(text) =>
+                        updateSessionName("C", index, text)
+                      }
+                      placeholder="Session name"
+                      editable={!isSubmitting}
+                    />
+                  </View>
+                  <Pressable
+                    onPress={() => removeSession("C", index)}
+                    disabled={variantC.length <= 1}
+                  >
+                    <Trash2 size={20} color={colors.destructive} />
+                  </Pressable>
                 </View>
-                <Pressable
-                  onPress={() => removeSession("C", index)}
-                  disabled={variantC.length <= 1}>
-                  <Trash2 size={20} color={colors.destructive} />
-                </Pressable>
+                {isEdit && sessionIdsC[index] ? (
+                  <Pressable
+                    onPress={() =>
+                      router.push({
+                        pathname: "/planner/session-exercises",
+                        params: {
+                          sessionTemplateId: sessionIdsC[index],
+                          sessionName: name,
+                        },
+                      } as never)
+                    }
+                    className="mt-1 flex-row items-center"
+                    style={{ paddingVertical: tokens.spacing.xs }}
+                  >
+                    <P
+                      style={{
+                        color: colors.primary,
+                        fontSize: tokens.typography.sizes.sm,
+                      }}
+                    >
+                      Exercises
+                    </P>
+                    <ChevronRight size={14} color={colors.primary} />
+                  </Pressable>
+                ) : null}
               </View>
             ))}
             <Button

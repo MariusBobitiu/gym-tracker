@@ -194,7 +194,9 @@ export default function HistorySessionDetail(): React.ReactElement {
       <Stack.Screen options={headerOptions({ title: "Session" })} />
       <AppHeader showBackButton title="Session" />
       <ScrollView
+        className="flex-1"
         contentContainerClassName="pb-16"
+        keyboardShouldPersistTaps={"handled"}
         showsVerticalScrollIndicator={false}
       >
         <HistorySessionSummary session={session} />

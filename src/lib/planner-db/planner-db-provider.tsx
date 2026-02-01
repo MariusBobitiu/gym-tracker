@@ -7,13 +7,16 @@ import { Text } from "@/components/ui/text";
 import { useTheme } from "@/lib/theme-context";
 
 type MigrationConfig = {
-  journal: { entries: { idx: number; when: number; tag: string; breakpoints: boolean }[] };
+  journal: {
+    entries: { idx: number; when: number; tag: string; breakpoints: boolean }[];
+  };
   migrations: Record<string, string>;
 };
 
 // Load generated migrations (drizzle/migrations.js imports .sql; babel inline-import inlines .sql)
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const migrationsConfig = require("../../../drizzle/migrations.js").default as MigrationConfig;
+const migrationsConfig = require("../../../drizzle/migrations.js")
+  .default as MigrationConfig;
 
 type PlannerDbProviderProps = {
   children: React.ReactNode;
@@ -23,7 +26,9 @@ type PlannerDbProviderProps = {
  * Runs Drizzle migrations for the planner DB before rendering children.
  * Use inside (app) layout so planner screens never read before migrations complete.
  */
-export function PlannerDbProvider({ children }: PlannerDbProviderProps): React.ReactElement {
+export function PlannerDbProvider({
+  children,
+}: PlannerDbProviderProps): React.ReactElement {
   const { success, error } = useMigrations(db, migrationsConfig);
   const { colors } = useTheme();
 
@@ -35,7 +40,14 @@ export function PlannerDbProvider({ children }: PlannerDbProviderProps): React.R
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", padding: 24 }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
         <Text style={{ color: colors.destructive, textAlign: "center" }}>
           Database error: {error.message}
         </Text>

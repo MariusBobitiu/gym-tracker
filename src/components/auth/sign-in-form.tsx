@@ -12,7 +12,11 @@ type Props = {
   onSubmit: () => void;
 };
 
-export function SignInForm({ control, isSubmitting, onSubmit }: Props): React.ReactElement {
+export function SignInForm({
+  control,
+  isSubmitting,
+  onSubmit,
+}: Props): React.ReactElement {
   const { colors } = useTheme();
 
   return (
@@ -50,14 +54,21 @@ export function SignInForm({ control, isSubmitting, onSubmit }: Props): React.Re
         />
         <P
           className="mt-4 px-8 text-center"
-          style={{ color: colors.mutedForeground, fontSize: 14 }}>
+          style={{ color: colors.mutedForeground, fontSize: 14 }}
+        >
           Don&apos;t have an account?{" "}
-          <Link href="/(auth)/sign-up" style={{ color: colors.primary, fontWeight: "600" }}>
+          <Link
+            href="/(auth)/sign-up"
+            style={{ color: colors.primary, fontWeight: "600" }}
+          >
             Sign Up
           </Link>
         </P>
       </View>
-      <Small className="mt-4 px-8 pb-4 text-center" style={{ color: colors.mutedForeground }}>
+      <Small
+        className="mt-4 px-8 pb-4 text-center"
+        style={{ color: colors.mutedForeground }}
+      >
         By signing in, you agree to our Terms of Service and Privacy Policy.
       </Small>
     </View>

@@ -29,10 +29,12 @@ export function SetsProgressIndicator({
   return (
     <View
       className="mx-auto w-1/2 flex-row items-center justify-center"
-      style={{ paddingVertical: 12 }}>
+      style={{ paddingVertical: 12 }}
+    >
       <View
         className="flex-1 flex-row items-center justify-end gap-8"
-        style={{ position: "relative" }}>
+        style={{ position: "relative" }}
+      >
         {/* Track background */}
         <View
           className="absolute rounded-full"

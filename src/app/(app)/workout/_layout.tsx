@@ -14,7 +14,8 @@ export default function WorkoutLayout() {
         contentStyle: {
           backgroundColor: colors.background,
         },
-      }}>
+      }}
+    >
       <Stack.Screen
         name="index"
         options={{

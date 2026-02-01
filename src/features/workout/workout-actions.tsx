@@ -32,7 +32,13 @@ export function WorkoutActions({
           label="Continue"
           variant="primary"
           size="lg"
-          icon={<ChevronRight size={24} className="mt-[0.25px]" color={colors.primaryForeground} />}
+          icon={
+            <ChevronRight
+              size={24}
+              className="mt-[0.25px]"
+              color={colors.primaryForeground}
+            />
+          }
           iconPlacement="right"
           onPress={onContinue}
           accessibilityLabel="Continue to next exercise"

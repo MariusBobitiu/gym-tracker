@@ -8,7 +8,8 @@ export default function Layout() {
         headerShown: false,
         animation: "ios_from_right",
         animationDuration: 150,
-      }}>
+      }}
+    >
       <Stack.Screen name="index" options={{ title: "Profile" }} />
     </Stack>
   );

@@ -73,6 +73,14 @@ export default function History() {
   const weekData = historyData?.weekData ?? null;
   const weekStats = historyData?.weekStats;
 
+  const todayMonthStart = useMemo(() => startOfMonth(new Date()), []);
+  const nextMonthStart = useMemo(
+    () => startOfMonth(addMonths(viewedMonthStart, 1)),
+    [viewedMonthStart]
+  );
+  const canGoToNextMonth =
+    nextMonthStart.getTime() <= todayMonthStart.getTime();
+
   const handlePrevMonth = useCallback(() => {
     const targetMonthStart = startOfMonth(subMonths(viewedMonthStart, 1));
     const today = new Date();
@@ -86,6 +94,7 @@ export default function History() {
   }, [viewedMonthStart]);
 
   const handleNextMonth = useCallback(() => {
+    if (!canGoToNextMonth) return;
     const targetMonthStart = startOfMonth(addMonths(viewedMonthStart, 1));
     const today = new Date();
     if (isSameMonth(targetMonthStart, today)) {
@@ -95,9 +104,12 @@ export default function History() {
       setViewedMonthStart(targetMonthStart);
       setViewedWeekStart(startOfWeekMonday(targetMonthStart));
     }
-  }, [viewedMonthStart]);
+  }, [viewedMonthStart, canGoToNextMonth]);
 
   const handleCalendarDayPress = useCallback((date: Date): void => {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (date.getTime() > today.getTime()) return;
     const weekStart = startOfWeekMonday(date);
     setViewedWeekStart(weekStart);
     setViewedMonthStart(startOfMonth(weekStart));
@@ -231,11 +243,13 @@ export default function History() {
 
           <Pressable
             onPress={handleNextMonth}
+            disabled={!canGoToNextMonth}
             className="flex-row items-center"
             style={{
               padding: tokens.spacing.sm,
               borderRadius: tokens.radius.md,
               backgroundColor: colors.muted,
+              opacity: canGoToNextMonth ? 1 : 0.5,
             }}
           >
             <ChevronRight size={20} color={colors.foreground} />

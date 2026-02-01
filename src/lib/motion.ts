@@ -13,7 +13,10 @@ export function useReducedMotion() {
       }
     });
 
-    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
+    const subscription = AccessibilityInfo.addEventListener(
+      "reduceMotionChanged",
+      setReduceMotion
+    );
 
     return () => {
       isMounted = false;

@@ -24,6 +24,7 @@ import {
 import { useWorkoutSession } from "@/hooks/use-workout-session";
 import {
   DEFAULT_WORKOUT_EXERCISES,
+  DEFAULT_WEIGHT_KG,
   getExerciseById,
 } from "@/lib/default-workout";
 import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
@@ -34,8 +35,13 @@ import {
   completePlannedSession,
   createWorkoutSession,
   getActiveCycleWithSplit,
+  getExercisesForSessionTemplate,
+  getLastWeightForExercise,
+  getLastWeekWeightForExercise,
 } from "@/features/planner/planner-repository";
 import { usePlannerStore } from "@/features/planner/planner-store";
+import type { PlanExercise } from "@/types/workout-session";
+import { LoadingState } from "@/components/feedback-states";
 
 type WorkoutView = "list" | "log-set" | "rest";
 
@@ -80,6 +86,37 @@ export default function Workout(): React.ReactElement {
       setActivePlannedSessionId(null);
     }
   }, [activePlannedSessionId, setActivePlannedSessionId]);
+
+  const [sessionExercises, setSessionExercises] = useState<
+    PlanExercise[] | null
+  >(null);
+  useEffect(() => {
+    if (!activePlannedSessionId) {
+      setSessionExercises(null);
+      return;
+    }
+    let cancelled = false;
+    getExercisesForSessionTemplate(activePlannedSessionId)
+      .then((list) => {
+        if (!cancelled) setSessionExercises(list);
+      })
+      .catch(() => {
+        if (!cancelled) setSessionExercises([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activePlannedSessionId]);
+
+  const exercises = useMemo(
+    () =>
+      sessionExercises?.length ? sessionExercises : DEFAULT_WORKOUT_EXERCISES,
+    [sessionExercises]
+  );
+
+  const isLoadingSessionExercises =
+    Boolean(activePlannedSessionId) && sessionExercises === null;
+
   const {
     session,
     elapsedMs,
@@ -90,10 +127,38 @@ export default function Workout(): React.ReactElement {
     currentExercise,
     completeSetAndAdvance,
     handleFinish,
-  } = useWorkoutSession({ onComplete: advancePlannerState });
+  } = useWorkoutSession({
+    onComplete: advancePlannerState,
+    exercises: isLoadingSessionExercises ? undefined : exercises,
+    skipInitialization: isLoadingSessionExercises,
+  });
 
   const [view, setView] = useState<WorkoutView>("list");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [defaultWeightByExerciseId, setDefaultWeightByExerciseId] = useState<
+    Record<string, number>
+  >({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async (): Promise<void> => {
+      const next: Record<string, number> = {};
+      for (const ex of exercises) {
+        if (cancelled) return;
+        const lastWeek = await getLastWeekWeightForExercise(ex.id);
+        const weight =
+          lastWeek ??
+          (await getLastWeightForExercise(ex.id)) ??
+          DEFAULT_WEIGHT_KG;
+        next[ex.id] = weight;
+      }
+      if (!cancelled) setDefaultWeightByExerciseId(next);
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [exercises]);
 
   const handleContinue = useCallback(() => setView("log-set"), []);
 
@@ -138,10 +203,7 @@ export default function Workout(): React.ReactElement {
     const totalSets = session.completedSets.length;
 
     const sets = session.completedSets.map((set) => {
-      const exercise = getExerciseById(
-        DEFAULT_WORKOUT_EXERCISES,
-        set.exerciseId
-      );
+      const exercise = getExerciseById(exercises, set.exerciseId);
       return {
         exerciseId: set.exerciseId,
         exerciseName: exercise?.name ?? "Exercise",
@@ -163,10 +225,11 @@ export default function Workout(): React.ReactElement {
       totalReps,
       sets,
     });
-  }, [activePlannedSessionId, session]);
+  }, [activePlannedSessionId, session, exercises]);
 
   const handleWorkoutComplete = useCallback(() => {
     void (async () => {
+      // Log to DB first, then advance planner state so today, planner, and history stay in sync
       await logWorkoutSession();
       await advancePlannerState();
       setStorageItem(STORAGE_KEYS.workoutSession, null);
@@ -188,7 +251,7 @@ export default function Workout(): React.ReactElement {
     ? session.completedSets[session.completedSets.length - 1]
     : undefined;
   const lastExercise = lastCompleted
-    ? getExerciseById(DEFAULT_WORKOUT_EXERCISES, lastCompleted.exerciseId)
+    ? getExerciseById(exercises, lastCompleted.exerciseId)
     : undefined;
   const restCompletedLabel =
     lastExercise && lastCompleted
@@ -213,6 +276,23 @@ export default function Workout(): React.ReactElement {
     }),
     []
   );
+
+  if (isLoadingSessionExercises) {
+    return (
+      <>
+        <Stack.Screen options={stackScreenOptions} />
+        <BackgroundGradient />
+        <Screen
+          preset="modal"
+          background="gradient"
+          safeAreaEdges={[]}
+          contentContainerClassName="flex-1 items-center justify-center px-4 pt-8"
+        >
+          <LoadingState label="Loading workout..." />
+        </Screen>
+      </>
+    );
+  }
 
   return (
     <>
@@ -258,7 +338,7 @@ export default function Workout(): React.ReactElement {
                   setsTotal={setsTotal}
                 />
                 <WorkoutExerciseList
-                  exercises={DEFAULT_WORKOUT_EXERCISES}
+                  exercises={exercises}
                   currentExerciseId={session?.currentExerciseId}
                   completedExerciseIds={completedExerciseIds}
                 />
@@ -287,6 +367,7 @@ export default function Workout(): React.ReactElement {
               currentExercise={currentExercise}
               onComplete={handleCompleteSet}
               clearAndBack={() => setView("list")}
+              initialWeight={defaultWeightByExerciseId[currentExercise.id]}
             />
           </Animated.View>
         )}

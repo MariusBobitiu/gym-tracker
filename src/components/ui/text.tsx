@@ -11,7 +11,10 @@ interface Props extends TextProps {
 export const Text = ({ className = "", style, children, ...props }: Props) => {
   const { colors, tokens } = useTheme();
 
-  const textStyle = React.useMemo(() => twMerge("font-inter", className), [className]);
+  const textStyle = React.useMemo(
+    () => twMerge("font-inter", className),
+    [className]
+  );
 
   const nStyle = React.useMemo(
     () =>

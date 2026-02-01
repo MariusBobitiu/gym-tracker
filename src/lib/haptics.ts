@@ -1,7 +1,13 @@
 import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
 
-export type HapticStyle = "light" | "medium" | "heavy" | "success" | "warning" | "error";
+export type HapticStyle =
+  | "light"
+  | "medium"
+  | "heavy"
+  | "success"
+  | "warning"
+  | "error";
 
 const impactMap: Record<
   Exclude<HapticStyle, "success" | "warning" | "error">,
@@ -12,7 +18,10 @@ const impactMap: Record<
   heavy: Haptics.ImpactFeedbackStyle.Heavy,
 };
 
-const notificationMap: Record<"success" | "warning" | "error", Haptics.NotificationFeedbackType> = {
+const notificationMap: Record<
+  "success" | "warning" | "error",
+  Haptics.NotificationFeedbackType
+> = {
   success: Haptics.NotificationFeedbackType.Success,
   warning: Haptics.NotificationFeedbackType.Warning,
   error: Haptics.NotificationFeedbackType.Error,

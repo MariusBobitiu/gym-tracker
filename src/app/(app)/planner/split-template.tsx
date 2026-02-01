@@ -3,11 +3,26 @@ import { Stack, useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
-import { Button, Card, CardContent, CardHeader, CardTitle, P, Text } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  P,
+  Text,
+} from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
-import { createTemplateSplit, type TemplateId } from "@/features/planner/planner-repository";
+import {
+  createTemplateSplit,
+  type TemplateId,
+} from "@/features/planner/planner-repository";
 
-const TEMPLATE_OPTIONS: { id: TemplateId; title: string; description: string }[] = [
+const TEMPLATE_OPTIONS: {
+  id: TemplateId;
+  title: string;
+  description: string;
+}[] = [
   {
     id: "ppl-ab",
     title: "Push / Pull / Legs (A/B)",
@@ -30,7 +45,9 @@ export default function SplitTemplateScreen() {
   const { colors, tokens } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSelectTemplate = async (templateId: TemplateId): Promise<void> => {
+  const handleSelectTemplate = async (
+    templateId: TemplateId
+  ): Promise<void> => {
     setIsSubmitting(true);
     try {
       await createTemplateSplit(templateId);
@@ -57,26 +74,39 @@ export default function SplitTemplateScreen() {
           <Pressable
             key={opt.id}
             onPress={() => handleSelectTemplate(opt.id)}
-            disabled={isSubmitting}>
+            disabled={isSubmitting}
+          >
             <Card className="mb-3">
               <CardHeader>
                 <CardTitle>{opt.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Text
-                  style={{ fontSize: tokens.typography.sizes.sm, color: colors.mutedForeground }}>
+                  style={{
+                    fontSize: tokens.typography.sizes.sm,
+                    color: colors.mutedForeground,
+                  }}
+                >
                   {opt.description}
                 </Text>
               </CardContent>
             </Card>
           </Pressable>
         ))}
-        <Card className="mb-3" style={{ borderStyle: "dashed", borderWidth: 2 }}>
+        <Card
+          className="mb-3"
+          style={{ borderStyle: "dashed", borderWidth: 2 }}
+        >
           <CardHeader>
             <CardTitle>Custom</CardTitle>
           </CardHeader>
           <CardContent>
-            <Text style={{ fontSize: tokens.typography.sizes.sm, color: colors.mutedForeground }}>
+            <Text
+              style={{
+                fontSize: tokens.typography.sizes.sm,
+                color: colors.mutedForeground,
+              }}
+            >
               Name your split and add sessions per variant (A, B, C).
             </Text>
           </CardContent>

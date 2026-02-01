@@ -8,10 +8,18 @@ type TypographyProps = TextProps & {
   className?: string;
 };
 
-export function H1({ className = "", style, children, ...props }: TypographyProps) {
+export function H1({
+  className = "",
+  style,
+  children,
+  ...props
+}: TypographyProps) {
   const { colors, tokens } = useTheme();
 
-  const textStyle = React.useMemo(() => twMerge("tracking-tight", className), [className]);
+  const textStyle = React.useMemo(
+    () => twMerge("tracking-tight", className),
+    [className]
+  );
 
   const nStyle = React.useMemo(
     () =>
@@ -35,10 +43,18 @@ export function H1({ className = "", style, children, ...props }: TypographyProp
   );
 }
 
-export function H2({ className = "", style, children, ...props }: TypographyProps) {
+export function H2({
+  className = "",
+  style,
+  children,
+  ...props
+}: TypographyProps) {
   const { colors, tokens } = useTheme();
 
-  const textStyle = React.useMemo(() => twMerge("tracking-tight", className), [className]);
+  const textStyle = React.useMemo(
+    () => twMerge("tracking-tight", className),
+    [className]
+  );
 
   const nStyle = React.useMemo(
     () =>
@@ -62,10 +78,18 @@ export function H2({ className = "", style, children, ...props }: TypographyProp
   );
 }
 
-export function H3({ className = "", style, children, ...props }: TypographyProps) {
+export function H3({
+  className = "",
+  style,
+  children,
+  ...props
+}: TypographyProps) {
   const { colors, tokens } = useTheme();
 
-  const textStyle = React.useMemo(() => twMerge("tracking-tight", className), [className]);
+  const textStyle = React.useMemo(
+    () => twMerge("tracking-tight", className),
+    [className]
+  );
 
   const nStyle = React.useMemo(
     () =>
@@ -89,7 +113,12 @@ export function H3({ className = "", style, children, ...props }: TypographyProp
   );
 }
 
-export function P({ className = "", style, children, ...props }: TypographyProps) {
+export function P({
+  className = "",
+  style,
+  children,
+  ...props
+}: TypographyProps) {
   const { colors, tokens } = useTheme();
 
   const textStyle = React.useMemo(() => twMerge("", className), [className]);
@@ -115,7 +144,12 @@ export function P({ className = "", style, children, ...props }: TypographyProps
   );
 }
 
-export function Small({ className = "", style, children, ...props }: TypographyProps) {
+export function Small({
+  className = "",
+  style,
+  children,
+  ...props
+}: TypographyProps) {
   const { colors, tokens } = useTheme();
 
   const textStyle = React.useMemo(() => twMerge("", className), [className]);

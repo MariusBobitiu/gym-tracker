@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { CalendarClock, Dumbbell, Timer } from "lucide-react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
@@ -7,6 +8,17 @@ import { Card, H3, P, Small, Text, View } from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
 import { useSession } from "@/lib/auth/context";
 import { LinearGradient } from "expo-linear-gradient";
+import {
+  getProfileStats,
+  getBestLifts,
+  getWorkoutSessionsInRange,
+  getWeekSessionsFromPlan,
+  getUpNextSession,
+} from "@/features/planner/planner-repository";
+import { getWeekRange, startOfWeekMonday } from "@/features/planner/date-utils";
+import { useActivePlan } from "@/features/planner/use-active-plan";
+import { useHistoryWeek } from "@/hooks/use-history-week";
+import { LoadingState } from "@/components/feedback-states";
 
 type StatItem = {
   label: string;
@@ -18,17 +30,18 @@ type LiftItem = {
   detail: string;
 };
 
-const stats: StatItem[] = [
-  { label: "Weeks trained", value: "12" },
-  { label: "Sessions", value: "48" },
-  { label: "Total weight lifted", value: "1.2M kg" },
-];
+function formatVolumeKg(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M kg`;
+  if (value >= 1000) return `${(value / 1000).toFixed(1)}k kg`;
+  return `${value.toLocaleString("en-GB", { maximumFractionDigits: 0 })} kg`;
+}
 
-const bestLifts: LiftItem[] = [
-  { name: "Bench Press", detail: "100 kg x 5" },
-  { name: "Squat", detail: "140 kg x 3" },
-  { name: "Deadlift", detail: "180 kg x 2" },
-];
+function formatDurationMins(mins: number): string {
+  if (mins < 60) return `${mins}m`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 
 function StatBlock({ label, value }: StatItem): React.ReactElement {
   const { colors, tokens } = useTheme();
@@ -56,7 +69,7 @@ function StatBlock({ label, value }: StatItem): React.ReactElement {
   );
 }
 
-function ProfileHeader(): React.ReactElement {
+function ProfileHeader({ stats }: { stats: StatItem[] }): React.ReactElement {
   const { colors, tokens } = useTheme();
   const avatarSize = tokens.spacing["3xl"] + tokens.spacing.xl;
   const { user } = useSession();
@@ -148,8 +161,35 @@ function BentoCard({
   );
 }
 
-function BentoGrid(): React.ReactElement {
+type BentoGridProps = {
+  thisWeekCompleted: number;
+  thisWeekTotal: number;
+  upNextSessionName: string | null;
+  lastWeekCompleted: number;
+  lastWeekTotal: number;
+  last14DaysMins: number;
+};
+
+function BentoGrid({
+  thisWeekCompleted,
+  thisWeekTotal,
+  upNextSessionName,
+  lastWeekCompleted,
+  lastWeekTotal,
+  last14DaysMins,
+}: BentoGridProps): React.ReactElement {
   const { colors } = useTheme();
+  const progressPct =
+    thisWeekTotal > 0
+      ? Math.min((thisWeekCompleted / thisWeekTotal) * 100, 100)
+      : 0;
+  const upNext = thisWeekTotal - thisWeekCompleted;
+  const upNextLabel =
+    upNext > 0 && upNextSessionName
+      ? `Next: ${upNextSessionName}`
+      : upNext > 0
+        ? "Session remaining"
+        : "All done this week";
 
   return (
     <View className="gap-3">
@@ -168,9 +208,11 @@ function BentoGrid(): React.ReactElement {
                 lineHeight: 32,
               }}
             >
-              2
+              {thisWeekCompleted}
             </Text>
-            <P style={{ color: colors.mutedForeground }}>of 3 sessions</P>
+            <P style={{ color: colors.mutedForeground }}>
+              of {thisWeekTotal > 0 ? thisWeekTotal : 0} sessions
+            </P>
           </View>
           <View
             className="h-2 w-full overflow-hidden rounded-full"
@@ -178,17 +220,24 @@ function BentoGrid(): React.ReactElement {
           >
             <View
               className="h-2 rounded-full"
-              style={{ width: "66%", backgroundColor: colors.primary }}
+              style={{
+                width: `${progressPct}%`,
+                backgroundColor: colors.primary,
+              }}
             />
           </View>
-          <P style={{ color: colors.mutedForeground }}>Next: Core + Upper</P>
+          <P style={{ color: colors.mutedForeground }}>{upNextLabel}</P>
         </Card>
         <View className="flex-1 gap-3">
-          <BentoCard title="Up next" value="1" subtitle="Session remaining" />
+          <BentoCard
+            title="Up next"
+            value={String(Math.max(0, upNext))}
+            subtitle="Session remaining"
+          />
           <BentoCard
             title="Last week"
-            value="3"
-            subtitle="Sessions completed"
+            value={String(lastWeekCompleted)}
+            subtitle={`of ${lastWeekTotal} sessions`}
           />
         </View>
       </View>
@@ -208,28 +257,9 @@ function BentoGrid(): React.ReactElement {
               lineHeight: 24,
             }}
           >
-            5h 20m
+            {last14DaysMins > 0 ? formatDurationMins(last14DaysMins) : "—"}
           </Text>
           <Small style={{ color: colors.mutedForeground }}>Last 14 days</Small>
-        </Card>
-        <Card className="flex-1 gap-2">
-          <View className="flex-row items-center gap-2">
-            <Dumbbell size={18} color={colors.mutedForeground} />
-            <Small style={{ color: colors.mutedForeground }}>Volume PRs</Small>
-          </View>
-          <Text
-            style={{
-              color: colors.foreground,
-              fontSize: 24,
-              fontWeight: "700",
-              lineHeight: 24,
-            }}
-          >
-            +12%
-          </Text>
-          <Small style={{ color: colors.mutedForeground }}>
-            Since last cycle
-          </Small>
         </Card>
       </View>
     </View>
@@ -273,25 +303,162 @@ function BestLiftRow({
   );
 }
 
-function BestLifts(): React.ReactElement {
+function BestLiftsSection({
+  lifts,
+}: {
+  lifts: LiftItem[];
+}): React.ReactElement {
+  const { colors } = useTheme();
   return (
     <View className="gap-3">
       <H3>Best lifts</H3>
-      <Card>
-        {bestLifts.map((lift, index) => (
-          <BestLiftRow
-            key={lift.name}
-            name={lift.name}
-            detail={lift.detail}
-            showDivider={index < bestLifts.length - 1}
-          />
-        ))}
-      </Card>
+      {lifts.length === 0 ? (
+        <Card>
+          <P style={{ color: colors.mutedForeground }}>
+            Complete workouts to see your PRs here.
+          </P>
+        </Card>
+      ) : (
+        <Card>
+          {lifts.map((lift, index) => (
+            <BestLiftRow
+              key={lift.name}
+              name={lift.name}
+              detail={lift.detail}
+              showDivider={index < lifts.length - 1}
+            />
+          ))}
+        </Card>
+      )}
     </View>
   );
 }
 
 export function ProfileScreen(): React.ReactElement {
+  const thisWeekStart = useMemo(() => startOfWeekMonday(new Date()), []);
+  const { state: planState, refetch: refetchPlan } = useActivePlan();
+  const plan = planState.kind === "week_view" ? planState.plan : null;
+  const {
+    data: thisWeekData,
+    loading: thisWeekLoading,
+    refetch: refetchThisWeek,
+  } = useHistoryWeek(plan, thisWeekStart);
+
+  const [profileStats, setProfileStats] = useState<{
+    totalSessions: number;
+    totalVolumeKg: number;
+    weeksTrained: number;
+  } | null>(null);
+  const [bestLiftsList, setBestLiftsList] = useState<LiftItem[]>([]);
+  const [lastWeekCompleted, setLastWeekCompleted] = useState(0);
+  const [lastWeekTotal, setLastWeekTotal] = useState(0);
+  const [last14DaysMins, setLast14DaysMins] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const loadProfileData = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const [stats, lifts] = await Promise.all([
+        getProfileStats(),
+        getBestLifts(),
+      ]);
+      setProfileStats(stats);
+      setBestLiftsList(
+        lifts.map((l) => ({
+          name: l.exerciseName,
+          detail: `${l.weight} kg × ${l.reps}`,
+        }))
+      );
+
+      const now = Date.now();
+      const fourteenDaysAgo = now - 14 * 24 * 60 * 60 * 1000;
+      const sessions14 = await getWorkoutSessionsInRange(fourteenDaysAgo, now);
+      const totalMins = sessions14.reduce(
+        (sum, s) => sum + (s.durationMins ?? 0),
+        0
+      );
+      setLast14DaysMins(totalMins);
+
+      if (plan) {
+        const lastWeekMon = new Date(thisWeekStart);
+        lastWeekMon.setDate(lastWeekMon.getDate() - 7);
+        const [lastWeekStartDate, lastWeekEndDate] = getWeekRange(lastWeekMon);
+        const lastWeekSessions = await getWorkoutSessionsInRange(
+          lastWeekStartDate.getTime(),
+          lastWeekEndDate.getTime()
+        );
+        const lastWeekPlan = getWeekSessionsFromPlan(plan, lastWeekStartDate);
+        const lastWeekIds = new Set(
+          lastWeekSessions
+            .map((s) => s.plannedSessionTemplateId)
+            .filter((id): id is string => Boolean(id))
+        );
+        setLastWeekCompleted(
+          Math.min(lastWeekIds.size, lastWeekPlan.totalPlanned)
+        );
+        setLastWeekTotal(lastWeekPlan.totalPlanned);
+      } else {
+        setLastWeekCompleted(0);
+        setLastWeekTotal(0);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [plan, thisWeekStart]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchPlan();
+      void refetchThisWeek();
+      void loadProfileData();
+    }, [refetchPlan, refetchThisWeek, loadProfileData])
+  );
+
+  useEffect(() => {
+    void loadProfileData();
+  }, [loadProfileData]);
+
+  const stats: StatItem[] = useMemo(() => {
+    if (!profileStats) {
+      return [
+        { label: "Weeks trained", value: "—" },
+        { label: "Sessions", value: "—" },
+        { label: "Total weight lifted", value: "—" },
+      ];
+    }
+    return [
+      { label: "Weeks trained", value: String(profileStats.weeksTrained) },
+      { label: "Sessions", value: String(profileStats.totalSessions) },
+      {
+        label: "Total weight lifted",
+        value: formatVolumeKg(profileStats.totalVolumeKg),
+      },
+    ];
+  }, [profileStats]);
+
+  const thisWeekCompleted = thisWeekData?.weekStats?.completedCount ?? 0;
+  const thisWeekTotal = thisWeekData?.weekData?.totalPlanned ?? 0;
+  const upNextSession = useMemo(() => {
+    if (!plan) return null;
+    return getUpNextSession(plan, plan.cycleState);
+  }, [plan]);
+  const upNextSessionName = upNextSession?.sessionName ?? null;
+
+  if (loading && !profileStats) {
+    return (
+      <Screen
+        preset="scroll"
+        padding="none"
+        safeAreaEdges={["bottom", "top"]}
+        contentContainerClassName="flex-1 items-center justify-center pb-20"
+      >
+        <Stack.Screen options={headerOptions({ title: "Profile" })} />
+        <AppHeader showBackButton={false} title="Profile" isMainScreen />
+        <LoadingState label="Loading profile..." />
+      </Screen>
+    );
+  }
+
   return (
     <Screen
       preset="scroll"
@@ -303,9 +470,16 @@ export function ProfileScreen(): React.ReactElement {
       <View className="px-4 pt-2">
         <AppHeader showBackButton={false} title="Profile" isMainScreen />
         <View className="gap-8">
-          <ProfileHeader />
-          <BentoGrid />
-          <BestLifts />
+          <ProfileHeader stats={stats} />
+          <BentoGrid
+            thisWeekCompleted={thisWeekCompleted}
+            thisWeekTotal={thisWeekTotal}
+            upNextSessionName={upNextSessionName}
+            lastWeekCompleted={lastWeekCompleted}
+            lastWeekTotal={lastWeekTotal}
+            last14DaysMins={last14DaysMins}
+          />
+          <BestLiftsSection lifts={bestLiftsList} />
         </View>
       </View>
     </Screen>
