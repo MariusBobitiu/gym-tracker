@@ -91,6 +91,11 @@ export default function Planner() {
     const viewedStart = startOfWeek(viewedWeekStart, { weekStartsOn: 1 });
     return todayWeekStart.getTime() === viewedStart.getTime();
   }, [viewedWeekStart]);
+  const isNextWeek = useMemo(() => {
+    const nextWeekStart = new Date(thisWeekStart);
+    nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+    return nextWeekStart.getTime() === viewedWeekStart.getTime();
+  }, [thisWeekStart, viewedWeekStart]);
   const sessionsHeaderText = useMemo(
     () =>
       isCurrentWeek
@@ -112,6 +117,11 @@ export default function Planner() {
       ? getWeekSessionsFromPlan(state.plan, viewedWeekStart)
       : null;
 
+  const currentWeekData =
+    state.kind === "week_view"
+      ? getWeekSessionsFromPlan(state.plan, thisWeekStart)
+      : null;
+
   const weekProgress =
     state.kind === "week_view"
       ? getWeekProgress({
@@ -121,7 +131,38 @@ export default function Planner() {
           weekEndDate,
         })
       : null;
-  const upNextSessionId = weekProgress?.upNextSessionId ?? null;
+
+  const currentWeekProgress =
+    state.kind === "week_view"
+      ? getWeekProgress({
+          weekData: currentWeekData,
+          cycleState: state.plan.cycleState,
+          weekStartDate: thisWeekStart,
+          weekEndDate: new Date(
+            thisWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000
+          ),
+        })
+      : null;
+
+  const isCurrentWeekComplete =
+    (currentWeekProgress?.totalPlanned ?? 0) > 0 &&
+    (currentWeekProgress?.completedCount ?? 0) >=
+      (currentWeekProgress?.totalPlanned ?? 0);
+
+  const upNextSessionId = useMemo(() => {
+    if (!weekData) return null;
+    if (isCurrentWeek) return weekProgress?.upNextSessionId ?? null;
+    if (isNextWeek && isCurrentWeekComplete) {
+      return weekData.sessions[0]?.id ?? null;
+    }
+    return null;
+  }, [
+    isCurrentWeek,
+    isNextWeek,
+    isCurrentWeekComplete,
+    weekData,
+    weekProgress,
+  ]);
 
   const cycleStateForEffect =
     state.kind === "week_view" ? state.plan.cycleState : null;
@@ -707,6 +748,7 @@ type WeekProgressInput = {
 type WeekProgressResult = {
   completedCount: number;
   upNextSessionId: string | null;
+  totalPlanned: number;
 };
 
 function getWeekProgress(input: WeekProgressInput): WeekProgressResult | null {
@@ -738,7 +780,7 @@ function getWeekProgress(input: WeekProgressInput): WeekProgressResult | null {
   const upNextSessionId =
     completedCount >= total ? null : (sessions[nextIndex]?.id ?? null);
 
-  return { completedCount, upNextSessionId };
+  return { completedCount, upNextSessionId, totalPlanned: total };
 }
 
 type SessionCardProps = {
