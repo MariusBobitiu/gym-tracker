@@ -2,6 +2,39 @@
 
 Starter template for a React Native app powered by Expo Router, NativeWind, and theme-aware UI primitives.
 
+## Setup
+
+- `pnpm install`
+- `pnpm start` (dev client)
+- Apple Sign-In requires an EAS/dev-client build (not supported in Expo Go).
+
+## Usage
+
+- `pnpm start` — dev client
+- `pnpm ios` / `pnpm android` — native runs
+- `pnpm web` — web dev server
+- `pnpm lint` / `pnpm format` — linting/formatting
+
+## Stack
+
+- Expo + Expo Router
+- React Native + TypeScript
+- Nativewind (Tailwind for RN)
+- TanStack Query
+- Zustand
+- Drizzle ORM + OP-SQLite
+- MMKV
+
+## Folder Structure
+
+- `src/app` — Expo Router screens and layouts
+- `src/components` — shared UI and forms
+- `src/features` — feature modules (planner, workout)
+- `src/hooks` — reusable hooks
+- `src/lib` — shared utilities, auth, query, storage
+- `src/store` — zustand stores
+- `src/types` — shared types
+
 ## App Shell
 
 App shell components live in `src/components` and standardize screen layout and headers.

@@ -777,8 +777,10 @@ function getWeekProgress(input: WeekProgressInput): WeekProgressResult | null {
     completedCount = total;
   }
 
+  // When no completion in this week (e.g. new week), "up next" is the first session of the week.
+  const indexForUpNext = isInWeek ? nextIndex : 0;
   const upNextSessionId =
-    completedCount >= total ? null : (sessions[nextIndex]?.id ?? null);
+    completedCount >= total ? null : (sessions[indexForUpNext]?.id ?? null);
 
   return { completedCount, upNextSessionId, totalPlanned: total };
 }

@@ -1,12 +1,9 @@
 import { API_BASE_URL_OVERRIDE } from "@/lib/api-base-url";
 import { Env } from "@/lib/env";
-import {
-  getSecureItem,
-  getStorageItem,
-  SECURE_STORAGE_KEYS,
-  STORAGE_KEYS,
-  secureStorage,
-} from "@/lib/storage";
+import type { AuthConnectionStatus } from "@/lib/auth/auth-store";
+import { OfflineAuthError, SignedOutError } from "@/lib/auth/auth-errors";
+
+export { OfflineAuthError, SignedOutError } from "@/lib/auth/auth-errors";
 
 export type ApiSuccess<T> = {
   ok: true;
@@ -35,6 +32,7 @@ export type ApiRequestOptions<TBody = unknown> = {
   headers?: HeadersInit;
   body?: TBody;
   signal?: AbortSignal;
+  /** If true, ensure valid access token before request and add Authorization. Default true. */
   auth?: boolean;
   parse?: (response: Response) => Promise<unknown>;
 };
@@ -72,14 +70,25 @@ export function setRefreshHandler(handler: RefreshHandler | null): void {
   refreshHandler = handler;
 }
 
-function getAccessToken(): string | null {
-  const secureToken = secureStorage
-    ? getSecureItem(SECURE_STORAGE_KEYS.authToken)
-    : null;
-  const token = secureToken ?? getStorageItem(STORAGE_KEYS.token);
-  // Use the raw JWT/string as-is; do not base64-encode before sending.
-  return token?.access ?? null;
+let getAuthStoreToken: (() => string | null) | null = null;
+/** Set by SessionProvider so API client can read token from auth store without circular import. */
+export function setAuthStoreGetters(
+  getToken: () => string | null,
+  ensureValid: () => Promise<void>,
+  getStatus: () => AuthConnectionStatus
+): void {
+  getAuthStoreToken = getToken;
+  ensureValidAccessTokenGlobal = ensureValid;
+  getStatusGlobal = getStatus;
 }
+
+/** Token getter used when config.getToken is not provided (e.g. before context mounts). */
+function getAccessTokenFallback(): string | null {
+  return getAuthStoreToken?.() ?? null;
+}
+
+let ensureValidAccessTokenGlobal: (() => Promise<void>) | null = null;
+let getStatusGlobal: (() => AuthConnectionStatus) | null = null;
 
 function buildUrl(baseUrl: string, path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
@@ -142,33 +151,42 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       const headers = new Headers(config.headers);
       const { method = "GET", body, signal, auth = true, parse } = options;
 
-      if (auth && config.getToken) {
-        const token = config.getToken();
-        if (token) {
-          headers.set("Authorization", `Bearer ${token}`);
-        }
-      }
-
-      if (options.headers) {
-        for (const [key, value] of new Headers(options.headers)) {
-          headers.set(key, value);
-        }
-      }
-
-      const resolvedBody = resolveBody(body, headers);
-
-      async function executeRequest(
-        requestHeaders: Headers
-      ): Promise<Response> {
-        return fetch(url, {
-          method,
-          headers: requestHeaders,
-          body: resolvedBody,
-          signal,
-        });
-      }
+      const getToken = (): string | null =>
+        config.getToken?.() ?? getAccessTokenFallback();
 
       try {
+        // 1) If request requires auth, ensure we have a valid access token first (refresh if needed).
+        //    Throws OfflineAuthError (network) or SignedOutError (invalid refresh); we rethrow so callers can handle.
+        if (auth && ensureValidAccessTokenGlobal) {
+          await ensureValidAccessTokenGlobal();
+        }
+
+        if (auth) {
+          const token = getToken();
+          if (token) {
+            headers.set("Authorization", `Bearer ${token}`);
+          }
+        }
+
+        if (options.headers) {
+          for (const [key, value] of new Headers(options.headers)) {
+            headers.set(key, value);
+          }
+        }
+
+        const resolvedBody = resolveBody(body, headers);
+
+        async function executeRequest(
+          requestHeaders: Headers
+        ): Promise<Response> {
+          return fetch(url, {
+            method,
+            headers: requestHeaders,
+            body: resolvedBody,
+            signal,
+          });
+        }
+
         let response = await executeRequest(headers);
 
         const status = response.status;
@@ -194,10 +212,9 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
           };
         }
 
+        // 2) On 401: attempt refresh once (refresh lock is inside store), then retry request once.
         if (auth && status === 401 && refreshHandler) {
-          const refreshedToken = await refreshHandler(
-            config.getToken?.() ?? null
-          );
+          const refreshedToken = await refreshHandler(getToken());
           if (refreshedToken) {
             const retryHeaders = new Headers(headers);
             retryHeaders.set("Authorization", `Bearer ${refreshedToken}`);
@@ -237,9 +254,17 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
               headers: response.headers,
             };
           }
+
+          // Refresh returned null: either offline (signedInOffline) or invalid refresh (signedOut).
+          if (getStatusGlobal?.() === "signedInOffline") {
+            throw new OfflineAuthError();
+          }
+          if (unauthorizedHandler) {
+            unauthorizedHandler(401);
+          }
         }
 
-        if (auth && status === 401 && unauthorizedHandler) {
+        if (auth && status === 401 && unauthorizedHandler && !refreshHandler) {
           unauthorizedHandler(status);
         }
 
@@ -250,6 +275,12 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
           headers: response.headers,
         };
       } catch (error) {
+        if (
+          error instanceof OfflineAuthError ||
+          error instanceof SignedOutError
+        ) {
+          throw error;
+        }
         const message =
           error instanceof Error ? error.message : "Network request failed";
         return { ok: false, error: { message, statusCode: 0 } as E, status: 0 };
@@ -261,7 +292,7 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 export const apiClient = createApiClient({
   baseUrl: API_BASE_URL,
   headers: { Accept: "application/json" },
-  getToken: getAccessToken,
+  getToken: getAccessTokenFallback,
 });
 
 export const request = apiClient.request;

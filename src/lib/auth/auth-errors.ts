@@ -1,6 +1,26 @@
 import type { ApiError } from "@/lib/api-client";
 import type { FieldValues, UseFormSetError, Path } from "react-hook-form";
 
+/** Thrown when a network request cannot proceed because we're offline or refresh failed due to network. User stays signed in locally. */
+export class OfflineAuthError extends Error {
+  readonly name = "OfflineAuthError";
+  constructor(
+    message = "Offline — sync paused. Changes will sync when back online."
+  ) {
+    super(message);
+    Object.setPrototypeOf(this, OfflineAuthError.prototype);
+  }
+}
+
+/** Thrown when refresh token is invalid/expired. User must sign in again. */
+export class SignedOutError extends Error {
+  readonly name = "SignedOutError";
+  constructor(message = "Session expired. Please sign in again.") {
+    super(message);
+    Object.setPrototypeOf(this, SignedOutError.prototype);
+  }
+}
+
 export function resolveErrorMessage(
   error: unknown,
   fallback = "Something went wrong."

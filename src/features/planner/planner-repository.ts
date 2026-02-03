@@ -308,12 +308,53 @@ export async function ensureCycleState(
   return getOrCreateCycleState(cycleId);
 }
 
-/** Returns active plan plus cycle_state (created if missing). */
+/**
+ * If last_completed_at is in a past week (strictly before current week), resets cycle_state
+ * to the start of the new week (indices 0, current_variant_key first in rotation).
+ * Returns the (possibly updated) state.
+ */
+async function ensureCycleStateForCurrentWeek(
+  plan: ActivePlan,
+  state: CycleStateRow
+): Promise<CycleStateRow> {
+  const lastCompletedAt = state.last_completed_at
+    ? new Date(state.last_completed_at)
+    : null;
+  if (!lastCompletedAt) return state;
+
+  const now = new Date();
+  const currentWeekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const lastWeekStart = startOfWeek(lastCompletedAt, { weekStartsOn: 1 });
+  if (lastWeekStart.getTime() >= currentWeekStart.getTime()) return state;
+
+  const rotation = parseRotation(plan.cycle.rotation);
+  const firstVariantKey = rotation[0] ?? "A";
+
+  await db
+    .update(cycleState)
+    .set({
+      session_index_a: 0,
+      session_index_b: 0,
+      session_index_c: 0,
+      current_variant_key: firstVariantKey,
+    })
+    .where(eq(cycleState.cycle_id, plan.cycle.id));
+
+  const rows = await db
+    .select()
+    .from(cycleState)
+    .where(eq(cycleState.cycle_id, plan.cycle.id))
+    .limit(1);
+  return rows[0] ?? state;
+}
+
+/** Returns active plan plus cycle_state (created if missing). Resets state to start of week when week has rolled over. */
 export async function getActiveCycleWithSplit(): Promise<ActivePlanWithState | null> {
   const plan = await getActivePlan();
   if (!plan) return null;
   const state = await ensureCycleState(plan.cycle.id);
-  return { ...plan, cycleState: state };
+  const normalizedState = await ensureCycleStateForCurrentWeek(plan, state);
+  return { ...plan, cycleState: normalizedState };
 }
 
 export async function getWorkoutSessionsInRange(

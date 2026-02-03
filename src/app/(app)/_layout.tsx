@@ -2,14 +2,19 @@ import { Stack } from "expo-router";
 import { View } from "@/components/ui";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { BackgroundGradient } from "@/components/background-gradient";
+import { OfflineBanner } from "@/components/offline-banner";
 import { useTheme } from "@/lib/theme-context";
 import { PlannerDbProvider } from "@/lib/planner-db/planner-db-provider";
+import { useConnectivityRecovery } from "@/hooks/use-connectivity-recovery";
 
 export default function Layout() {
   const { colors } = useTheme();
+  useConnectivityRecovery();
+
   return (
     <View className="flex-1">
       <BackgroundGradient />
+      <OfflineBanner />
       <PlannerDbProvider>
         <Stack
           screenOptions={{

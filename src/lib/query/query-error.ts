@@ -1,4 +1,5 @@
 import { showMessage } from "react-native-flash-message";
+import { OfflineAuthError } from "@/lib/auth/auth-errors";
 
 const FALLBACK_MESSAGE = "Something went wrong";
 
@@ -24,7 +25,20 @@ function extractMessage(error: unknown): string {
   return FALLBACK_MESSAGE;
 }
 
+/**
+ * Show error toast. OfflineAuthError is shown as info (sync paused), not as a fatal error.
+ */
 export function showQueryError(error: unknown): void {
+  if (error instanceof OfflineAuthError) {
+    showMessage({
+      message: "Offline",
+      description: error.message,
+      type: "info",
+      duration: 4000,
+      icon: "info",
+    });
+    return;
+  }
   showMessage({
     message: "Error",
     description: extractMessage(error),

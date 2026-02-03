@@ -2,6 +2,7 @@ import { View } from "react-native";
 
 import { Dumbbell } from "lucide-react-native";
 import { useTheme } from "@/lib/theme-context";
+import { AppleSignInButton } from "@/components/auth/apple-sign-in-button";
 import { Button, H1, P } from "@/components/ui";
 import { router } from "expo-router";
 import { Screen } from "@/components/screen";
@@ -44,29 +45,7 @@ export default function SignIn() {
         onPress={() => router.push("/(auth)/sign-in")}
         label="Sign In"
       />
-      <View className="mt-3 w-full flex-row items-center justify-center px-16">
-        <View
-          className="h-px w-1/2"
-          style={{ backgroundColor: colors.foreground, opacity: 0.2 }}
-        />
-        <P
-          className="z-10 px-4 text-center"
-          style={{ color: colors.mutedForeground, fontWeight: "600" }}
-        >
-          OR
-        </P>
-        <View
-          className="h-px w-1/2"
-          style={{ backgroundColor: colors.foreground, opacity: 0.2 }}
-        />
-      </View>
-      <Button
-        size="lg"
-        variant="secondary"
-        className="mt-3 w-full"
-        // onPress={() => router.push("/onboarding")}
-        label="Sign in with Apple (Coming Soon)"
-      />
+      <AppleSignInButton className="mt-3 w-full" />
     </Screen>
   );
 }

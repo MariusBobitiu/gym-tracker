@@ -11,6 +11,7 @@ import type { User } from "@/types";
 export const AUTH_ENDPOINTS = {
   signup: "/v1/auth/signup",
   login: "/v1/auth/login",
+  apple: "/v1/auth/apple",
   refresh: "/v1/auth/refresh",
   me: "/v1/me",
   logout: "/v1/auth/logout",
@@ -27,6 +28,24 @@ export type RegisterCredentials = {
   email: string;
   password: string;
   confirmPassword: string;
+};
+
+export type AppleAuthFullName = {
+  givenName?: string;
+  familyName?: string;
+};
+
+export type AppleAuthPayload = {
+  identityToken: string;
+  authorizationCode: string;
+  nonce: string;
+  fullName?: AppleAuthFullName;
+  email?: string;
+};
+
+export type AppleAuthSession = {
+  token: TokenType;
+  user: User;
 };
 
 type LoginResponse =
@@ -81,6 +100,21 @@ function buildTokenFailure(
   };
 }
 
+function buildUserFailure(
+  status: number,
+  details: unknown
+): ApiFailure<ApiError> {
+  return {
+    ok: false,
+    status,
+    error: {
+      statusCode: status,
+      message: "User missing from response.",
+      details,
+    },
+  };
+}
+
 export async function login(
   credentials: LoginCredentials
 ): Promise<ApiResult<LoginResult, ApiError>> {
@@ -105,6 +139,49 @@ export async function login(
     headers: result.headers,
     data: { token },
   } satisfies ApiSuccess<LoginResult>;
+}
+
+export async function loginWithApple(
+  payload: AppleAuthPayload
+): Promise<ApiResult<AppleAuthSession, ApiError>> {
+  const result = await request<{
+    accessToken?: string;
+    refreshToken?: string;
+    user?: User;
+  }>(AUTH_ENDPOINTS.apple, {
+    method: "POST",
+    body: payload,
+    auth: false,
+  });
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const accessToken = result.data.accessToken ?? "";
+  const refreshToken = result.data.refreshToken ?? "";
+  const user = result.data.user ?? null;
+
+  if (!accessToken || !refreshToken) {
+    return buildTokenFailure(result.status, result.data);
+  }
+
+  if (!user) {
+    return buildUserFailure(result.status, result.data);
+  }
+
+  return {
+    ok: true,
+    status: result.status,
+    headers: result.headers,
+    data: {
+      token: {
+        access: accessToken,
+        refresh: refreshToken,
+      },
+      user,
+    },
+  } satisfies ApiSuccess<AppleAuthSession>;
 }
 
 export async function register(
