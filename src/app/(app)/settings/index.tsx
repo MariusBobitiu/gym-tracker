@@ -46,7 +46,7 @@ export default function Settings(): React.ReactElement {
 
   async function handleSignOut(): Promise<void> {
     await signOut();
-    router.replace("/(auth)/sign-in");
+    router.replace("/(auth)");
   }
 
   async function handleResetDatabase(): Promise<void> {

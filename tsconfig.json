@@ -6,8 +6,7 @@
       "@/*": ["./src/*"],
       "@env": ["./src/lib/env.js"]
     },
-    "esModuleInterop": true,
-    "checkJs": true
+    "esModuleInterop": true
   },
   "exclude": [
     "node_modules",

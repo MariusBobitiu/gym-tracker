@@ -26,7 +26,7 @@ import {
   setRefreshHandler,
   setUnauthorizedHandler,
 } from "@/lib/api-client";
-import { getMe, login } from "@/lib/auth/auth-api";
+import { getMe, login, logout } from "@/lib/auth/auth-api";
 import {
   useAuthStore,
   hydrateAccessTokenFromStorage,
@@ -237,9 +237,8 @@ export function SessionProvider({
     useAuthStore.getState().setStatus("loading");
     if (onSignOut) await onSignOut();
     useAuthStore.getState().logout();
-    const { logout: apiLogout } = await import("@/lib/auth/auth-api");
-    void apiLogout();
-    router.replace("/(auth)/sign-in");
+    await logout();
+    router.replace("/(auth)");
   }, [onSignOut]);
 
   useEffect(() => {
@@ -250,7 +249,7 @@ export function SessionProvider({
     );
     setRefreshHandler(() => useAuthStore.getState().refreshAccessToken());
     setUnauthorizedHandler(() => {
-      router.replace("/(auth)/sign-in");
+      router.replace("/(auth)");
     });
 
     return () => {

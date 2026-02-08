@@ -26,6 +26,11 @@ type PlannerDbProviderProps = {
   children: React.ReactNode;
 };
 
+type PlannerDbProviderInnerProps = {
+  dbName: string;
+  children: React.ReactNode;
+};
+
 /**
  * Runs Drizzle migrations for the planner DB before rendering children.
  * Use inside (app) layout so planner screens never read before migrations complete.
@@ -33,15 +38,33 @@ type PlannerDbProviderProps = {
 export function PlannerDbProvider({
   children,
 }: PlannerDbProviderProps): React.ReactElement {
-  const { user } = useAuth();
-  const targetDbName = useMemo(
-    () => resolvePlannerDbName(user?.id ?? null),
-    [user?.id]
+  const { user, status } = useAuth();
+  const { colors } = useTheme();
+  const targetDbName = useMemo(() => {
+    if (status === "loading") return null;
+    return resolvePlannerDbName(user?.id ?? null);
+  }, [status, user?.id]);
+
+  if (!targetDbName) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: colors.mutedForeground }}>Preparing...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <PlannerDbProviderInner key={targetDbName} dbName={targetDbName}>
+      {children}
+    </PlannerDbProviderInner>
   );
-  const activeDb = useMemo(
-    () => setActivePlannerDbName(targetDbName),
-    [targetDbName]
-  );
+}
+
+function PlannerDbProviderInner({
+  dbName,
+  children,
+}: PlannerDbProviderInnerProps): React.ReactElement {
+  const activeDb = useMemo(() => setActivePlannerDbName(dbName), [dbName]);
   const { success, error } = useMigrations(activeDb, migrationsConfig);
   const { colors } = useTheme();
 
