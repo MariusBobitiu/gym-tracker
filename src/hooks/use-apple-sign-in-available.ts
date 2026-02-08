@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Platform } from "react-native";
 import * as AppleAuthentication from "expo-apple-authentication";
+import { getErrorDetails, logInfo, logWarn } from "@/lib/app-logger";
 
 export function useAppleSignInAvailable(): boolean {
   const [isAvailable, setIsAvailable] = React.useState(false);
@@ -12,11 +13,22 @@ export function useAppleSignInAvailable(): boolean {
         isMounted = false;
       };
 
+    logInfo({ scope: "auth.apple", message: "checking availability" });
     AppleAuthentication.isAvailableAsync()
       .then((available) => {
+        logInfo({
+          scope: "auth.apple",
+          message: "availability result",
+          data: { available },
+        });
         if (isMounted) setIsAvailable(available);
       })
-      .catch(() => {
+      .catch((error) => {
+        logWarn({
+          scope: "auth.apple",
+          message: "availability check failed",
+          data: getErrorDetails(error),
+        });
         if (isMounted) setIsAvailable(false);
       });
 

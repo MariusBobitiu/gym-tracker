@@ -14,6 +14,7 @@ import {
   type BugReport,
 } from "@/lib/storage";
 import { triggerHaptic } from "@/lib/haptics";
+import { getAppLogs } from "@/lib/app-logger";
 
 const SUPPORT_EMAIL = "support@example.com";
 const BUG_SUBJECT = "Gym Tracker – Bug report";
@@ -44,11 +45,13 @@ export default function ReportBugSettings(): React.ReactElement {
     triggerHaptic("light");
     try {
       const reports = getStorageItem(STORAGE_KEYS.bugReports) ?? [];
+      const logs = getAppLogs();
       const report: BugReport = {
         id: uuid.v4() as string,
         subject: trimmedSubject,
         description: trimmedDescription,
         stepsToReproduce: stepsToReproduce.trim() || undefined,
+        logs: logs.length ? logs : undefined,
         createdAt: Date.now(),
       };
       setStorageItem(STORAGE_KEYS.bugReports, [...reports, report]);

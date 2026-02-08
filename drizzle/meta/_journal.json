@@ -29,6 +29,13 @@
       "when": 1769960000000,
       "tag": "0003_session_template_exercises",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1770587206000,
+      "tag": "0004_supersets",
+      "breakpoints": true
     }
   ]
 }

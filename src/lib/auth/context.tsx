@@ -185,8 +185,8 @@ export function SessionProvider({
             : null;
 
         if (!session && !authenticate) {
-          const email = credentials.email;
-          const password = credentials.password;
+          const email = (credentials as any).email;
+          const password = (credentials as any).password;
           if (!email || !password) {
             throw new Error("Email and password are required to sign in.");
           }

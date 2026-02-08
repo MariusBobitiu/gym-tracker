@@ -1,10 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { View } from "react-native";
 import { useMigrations } from "drizzle-orm/op-sqlite/migrator";
-import { db } from "@/lib/planner-db/database";
+import {
+  resolvePlannerDbName,
+  setActivePlannerDbName,
+} from "@/lib/planner-db/database";
 import { runPlannerDbDiagnostics } from "@/lib/planner-db/diagnostics";
 import { Text } from "@/components/ui/text";
 import { useTheme } from "@/lib/theme-context";
+import { useAuth } from "@/lib/auth/context";
 
 type MigrationConfig = {
   journal: {
@@ -29,7 +33,16 @@ type PlannerDbProviderProps = {
 export function PlannerDbProvider({
   children,
 }: PlannerDbProviderProps): React.ReactElement {
-  const { success, error } = useMigrations(db, migrationsConfig);
+  const { user } = useAuth();
+  const targetDbName = useMemo(
+    () => resolvePlannerDbName(user?.id ?? null),
+    [user?.id]
+  );
+  const activeDb = useMemo(
+    () => setActivePlannerDbName(targetDbName),
+    [targetDbName]
+  );
+  const { success, error } = useMigrations(activeDb, migrationsConfig);
   const { colors } = useTheme();
 
   useEffect(() => {

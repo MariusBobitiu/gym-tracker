@@ -1,5 +1,5 @@
 import { differenceInCalendarWeeks, startOfWeek } from "date-fns";
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import uuid from "react-native-uuid";
 import { db } from "@/lib/planner-db/database";
 import {
@@ -605,7 +605,144 @@ export async function getExercisesForSessionTemplate(
     sets: r.sets,
     reps: r.reps,
     weight: r.weight,
+    supersetGroupId: r.superset_group ?? null,
   }));
+}
+
+export async function setSupersetForExercises(
+  exerciseRowIds: string[],
+  supersetGroupId: string | null
+): Promise<void> {
+  if (exerciseRowIds.length === 0) return;
+  await db
+    .update(sessionTemplateExercises)
+    .set({ superset_group: supersetGroupId })
+    .where(inArray(sessionTemplateExercises.id, exerciseRowIds));
+}
+
+export async function copyVariantSessionsAndExercises(
+  splitId: string,
+  fromVariantKey: "A" | "B" | "C",
+  toVariantKey: "A" | "B" | "C"
+): Promise<boolean> {
+  if (fromVariantKey === toVariantKey) return false;
+
+  const variantRows = await db
+    .select()
+    .from(splitVariants)
+    .where(eq(splitVariants.split_id, splitId))
+    .orderBy(splitVariants.position);
+  const fromVariant = variantRows.find((v) => v.key === fromVariantKey);
+  if (!fromVariant) return false;
+
+  let toVariant = variantRows.find((v) => v.key === toVariantKey);
+  if (!toVariant) {
+    const nextPosition =
+      variantRows.reduce((max, v) => Math.max(max, v.position), -1) + 1;
+    const id = String(uuid.v4());
+    await db.insert(splitVariants).values({
+      id,
+      split_id: splitId,
+      key: toVariantKey,
+      name: null,
+      position: nextPosition,
+    });
+    toVariant = {
+      ...fromVariant,
+      id,
+      key: toVariantKey,
+      position: nextPosition,
+    };
+  }
+
+  const sourceSessions = await db
+    .select()
+    .from(sessionTemplates)
+    .where(eq(sessionTemplates.variant_id, fromVariant.id))
+    .orderBy(sessionTemplates.position);
+  const targetSessions = await db
+    .select()
+    .from(sessionTemplates)
+    .where(eq(sessionTemplates.variant_id, toVariant.id))
+    .orderBy(sessionTemplates.position);
+
+  const sourceExercisesBySessionId = new Map<
+    string,
+    SessionTemplateExerciseRow[]
+  >();
+  for (const session of sourceSessions) {
+    const exercises = await db
+      .select()
+      .from(sessionTemplateExercises)
+      .where(eq(sessionTemplateExercises.session_template_id, session.id))
+      .orderBy(sessionTemplateExercises.position);
+    sourceExercisesBySessionId.set(session.id, exercises);
+  }
+
+  for (let i = 0; i < sourceSessions.length; i += 1) {
+    const source = sourceSessions[i];
+    const target = targetSessions[i];
+    const sourceExercises = sourceExercisesBySessionId.get(source.id) ?? [];
+
+    if (target) {
+      await db
+        .update(sessionTemplates)
+        .set({
+          name: source.name,
+          muscle_groups: source.muscle_groups,
+          position: i,
+        })
+        .where(eq(sessionTemplates.id, target.id));
+      await db
+        .delete(sessionTemplateExercises)
+        .where(eq(sessionTemplateExercises.session_template_id, target.id));
+      if (sourceExercises.length > 0) {
+        const insertRows = sourceExercises.map((row, index) => ({
+          id: String(uuid.v4()),
+          session_template_id: target.id,
+          name: row.name,
+          sets: row.sets,
+          reps: row.reps,
+          weight: row.weight,
+          position: index,
+        }));
+        await db.insert(sessionTemplateExercises).values(insertRows);
+      }
+      continue;
+    }
+
+    const newSessionId = String(uuid.v4());
+    await db.insert(sessionTemplates).values({
+      id: newSessionId,
+      variant_id: toVariant.id,
+      name: source.name,
+      muscle_groups: source.muscle_groups,
+      position: i,
+    });
+    if (sourceExercises.length > 0) {
+      const insertRows = sourceExercises.map((row, index) => ({
+        id: String(uuid.v4()),
+        session_template_id: newSessionId,
+        name: row.name,
+        sets: row.sets,
+        reps: row.reps,
+        weight: row.weight,
+        position: index,
+      }));
+      await db.insert(sessionTemplateExercises).values(insertRows);
+    }
+  }
+
+  if (targetSessions.length > sourceSessions.length) {
+    const extras = targetSessions.slice(sourceSessions.length);
+    for (const extra of extras) {
+      await db
+        .delete(sessionTemplates)
+        .where(eq(sessionTemplates.id, extra.id));
+    }
+  }
+
+  return true;
 }
 
 export type SessionTemplateExerciseInput = {

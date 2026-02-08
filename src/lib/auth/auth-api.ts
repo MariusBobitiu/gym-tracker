@@ -224,11 +224,16 @@ export async function refreshSession(
 ): Promise<ApiResult<LoginResult, ApiError>> {
   const result = await request<LoginResponse>(AUTH_ENDPOINTS.refresh, {
     method: "POST",
-    body: { token },
+    body: { token, refreshToken: token, refresh: token },
     auth: false,
   });
 
   if (!result.ok) {
+    console.warn("[auth][refresh] request failed", {
+      status: result.status,
+      message: result.error.message,
+      details: result.error.details,
+    });
     return result;
   }
 

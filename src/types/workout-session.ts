@@ -29,4 +29,5 @@ export type PlanExercise = {
   sets: number;
   reps: number;
   weight: number;
+  supersetGroupId?: string | null;
 };

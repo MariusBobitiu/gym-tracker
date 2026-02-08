@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { Pressable, View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
@@ -7,6 +7,7 @@ import { Button, P } from "@/components/ui";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/lib/theme-context";
 import {
+  copyVariantSessionsAndExercises,
   createCustomSplit,
   getSplitBySplitId,
   updateSplitWithVariantsAndSessions,
@@ -39,18 +40,16 @@ export default function SplitBuilderScreen() {
 
   const isEdit = Boolean(splitId);
 
-  useEffect(() => {
-    if (!splitId) {
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    getSplitBySplitId(splitId)
-      .then((data) => {
-        if (!data) {
-          setLoading(false);
-          return;
-        }
+  const loadSplit = useCallback(
+    async (showSpinner = true): Promise<void> => {
+      if (!splitId) {
+        setLoading(false);
+        return;
+      }
+      if (showSpinner) setLoading(true);
+      try {
+        const data = await getSplitBySplitId(splitId);
+        if (!data) return;
         setSplitName(data.split.name);
         const sessionsA = data.sessionsByVariant["A"] ?? [];
         setVariantA(
@@ -81,9 +80,16 @@ export default function SplitBuilderScreen() {
         setSessionIdsC(
           hasC && sessionsC.length > 0 ? sessionsC.map((s) => s.id) : []
         );
-      })
-      .finally(() => setLoading(false));
-  }, [splitId]);
+      } finally {
+        if (showSpinner) setLoading(false);
+      }
+    },
+    [splitId]
+  );
+
+  useEffect(() => {
+    void loadSplit(true);
+  }, [loadSplit]);
 
   const addSession = (variant: "A" | "B" | "C"): void => {
     if (variant === "A") {
@@ -138,8 +144,7 @@ export default function SplitBuilderScreen() {
       );
   };
 
-  const handleSave = async (): Promise<void> => {
-    if (!splitName.trim()) return;
+  const buildVariants = useCallback((): CustomVariantInput[] => {
     const variants: CustomVariantInput[] = [
       { key: "A", sessionNames: variantA },
     ];
@@ -147,6 +152,12 @@ export default function SplitBuilderScreen() {
       variants.push({ key: "B", sessionNames: variantB });
     if (variantC && variantC.length > 0)
       variants.push({ key: "C", sessionNames: variantC });
+    return variants;
+  }, [variantA, variantB, variantC]);
+
+  const handleSave = async (): Promise<void> => {
+    if (!splitName.trim()) return;
+    const variants = buildVariants();
     setIsSubmitting(true);
     try {
       if (isEdit && splitId) {
@@ -165,6 +176,106 @@ export default function SplitBuilderScreen() {
       setIsSubmitting(false);
     }
   };
+
+  const handleEditSession = useCallback(
+    async (
+      variantKey: "A" | "B" | "C",
+      index: number,
+      name: string,
+      sessionId?: string
+    ): Promise<void> => {
+      if (sessionId) {
+        router.push({
+          pathname: "/planner/session-exercises",
+          params: {
+            sessionTemplateId: sessionId,
+            sessionName: name,
+          },
+        } as never);
+        return;
+      }
+      if (!isEdit || !splitId) return;
+      setIsSubmitting(true);
+      try {
+        const variants = buildVariants();
+        await updateSplitWithVariantsAndSessions(
+          splitId,
+          splitName.trim() || "My split",
+          variants
+        );
+        const refreshed = await getSplitBySplitId(splitId);
+        const session =
+          refreshed?.sessionsByVariant[variantKey]?.[index] ?? null;
+        if (session) {
+          router.push({
+            pathname: "/planner/session-exercises",
+            params: {
+              sessionTemplateId: session.id,
+              sessionName: session.name,
+            },
+          } as never);
+        }
+        await loadSplit(false);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [buildVariants, isEdit, loadSplit, router, splitId, splitName]
+  );
+
+  const copyVariantNames = useCallback(
+    (from: "A" | "B" | "C", to: "B" | "C"): void => {
+      const source =
+        from === "A" ? variantA : from === "B" ? variantB : variantC;
+      if (!source || source.length === 0) return;
+      if (to === "B") {
+        setVariantB([...source]);
+        setSessionIdsB(source.map(() => ""));
+      } else {
+        setVariantC([...source]);
+        setSessionIdsC(source.map(() => ""));
+      }
+    },
+    [variantA, variantB, variantC]
+  );
+
+  const hasUnsavedSessions = useCallback(
+    (variantKey: "A" | "B" | "C"): boolean => {
+      const ids =
+        variantKey === "A"
+          ? sessionIdsA
+          : variantKey === "B"
+            ? sessionIdsB
+            : sessionIdsC;
+      return ids.some((id) => !id);
+    },
+    [sessionIdsA, sessionIdsB, sessionIdsC]
+  );
+
+  const handleCopyVariant = useCallback(
+    async (from: "A" | "B" | "C", to: "B" | "C"): Promise<void> => {
+      if (!isEdit || !splitId) {
+        copyVariantNames(from, to);
+        return;
+      }
+      if (hasUnsavedSessions(from)) {
+        copyVariantNames(from, to);
+        return;
+      }
+      setIsSubmitting(true);
+      try {
+        const copied = await copyVariantSessionsAndExercises(splitId, from, to);
+        if (!copied) {
+          copyVariantNames(from, to);
+          return;
+        }
+        await loadSplit(false);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [copyVariantNames, hasUnsavedSessions, isEdit, loadSplit, splitId]
+  );
 
   if (loading) {
     return (
@@ -220,20 +331,22 @@ export default function SplitBuilderScreen() {
                   editable={!isSubmitting}
                 />
               </View>
-              {isEdit && sessionIdsA[index] ? (
+              {isEdit ? (
                 <Pressable
                   onPress={() =>
-                    router.push({
-                      pathname: "/planner/session-exercises",
-                      params: {
-                        sessionTemplateId: sessionIdsA[index],
-                        sessionName: name,
-                      },
-                    } as never)
+                    void handleEditSession("A", index, name, sessionIdsA[index])
                   }
+                  disabled={isSubmitting}
                   accessibilityLabel={`Edit exercises for ${name}`}
                 >
-                  <Pencil size={20} color={colors.foreground} />
+                  <Pencil
+                    size={20}
+                    color={
+                      sessionIdsA[index]
+                        ? colors.foreground
+                        : colors.mutedForeground
+                    }
+                  />
                 </Pressable>
               ) : null}
               <Pressable
@@ -257,22 +370,36 @@ export default function SplitBuilderScreen() {
         />
 
         {variantB === null ? (
-          <Button
-            label="Add variant B"
-            variant="ghost"
-            size="sm"
-            onPress={() => setVariantB(["Session 1"])}
-            disabled={isSubmitting}
-            className="mb-4"
-          />
+          <View className="mb-4 flex-row items-center gap-2">
+            <Button
+              label="Add variant B"
+              variant="ghost"
+              size="sm"
+              onPress={() => setVariantB(["Session 1"])}
+              disabled={isSubmitting}
+            />
+            <Button
+              label="Copy A → B"
+              variant="ghost"
+              size="sm"
+              onPress={() => void handleCopyVariant("A", "B")}
+              disabled={isSubmitting || variantA.length === 0}
+            />
+          </View>
         ) : (
           <>
-            <P
-              className="mb-2"
-              style={{ fontWeight: tokens.typography.weights.semibold }}
-            >
-              Variant B
-            </P>
+            <View className="mb-2 flex-row items-center justify-between">
+              <P style={{ fontWeight: tokens.typography.weights.semibold }}>
+                Variant B
+              </P>
+              <Button
+                label="Copy A → B"
+                variant="ghost"
+                size="sm"
+                onPress={() => void handleCopyVariant("A", "B")}
+                disabled={isSubmitting || variantA.length === 0}
+              />
+            </View>
             {variantB.map((name, index) => (
               <View key={`b-${index}`} className="mb-2 w-full">
                 <View className="flex-row items-center gap-2">
@@ -286,20 +413,27 @@ export default function SplitBuilderScreen() {
                       editable={!isSubmitting}
                     />
                   </View>
-                  {isEdit && sessionIdsB[index] ? (
+                  {isEdit ? (
                     <Pressable
                       onPress={() =>
-                        router.push({
-                          pathname: "/planner/session-exercises",
-                          params: {
-                            sessionTemplateId: sessionIdsB[index],
-                            sessionName: name,
-                          },
-                        } as never)
+                        void handleEditSession(
+                          "B",
+                          index,
+                          name,
+                          sessionIdsB[index]
+                        )
                       }
+                      disabled={isSubmitting}
                       accessibilityLabel={`Edit exercises for ${name}`}
                     >
-                      <Pencil size={20} color={colors.foreground} />
+                      <Pencil
+                        size={20}
+                        color={
+                          sessionIdsB[index]
+                            ? colors.foreground
+                            : colors.mutedForeground
+                        }
+                      />
                     </Pressable>
                   ) : null}
                   <Pressable
@@ -325,22 +459,36 @@ export default function SplitBuilderScreen() {
         )}
 
         {variantC === null && variantB !== null ? (
-          <Button
-            label="Add variant C"
-            variant="ghost"
-            size="sm"
-            onPress={() => setVariantC(["Session 1"])}
-            disabled={isSubmitting}
-            className="mb-4"
-          />
+          <View className="mb-4 flex-row items-center gap-2">
+            <Button
+              label="Add variant C"
+              variant="ghost"
+              size="sm"
+              onPress={() => setVariantC(["Session 1"])}
+              disabled={isSubmitting}
+            />
+            <Button
+              label="Copy A → C"
+              variant="ghost"
+              size="sm"
+              onPress={() => void handleCopyVariant("A", "C")}
+              disabled={isSubmitting || variantA.length === 0}
+            />
+          </View>
         ) : variantC !== null ? (
           <>
-            <P
-              className="mb-2"
-              style={{ fontWeight: tokens.typography.weights.semibold }}
-            >
-              Variant C
-            </P>
+            <View className="mb-2 flex-row items-center justify-between">
+              <P style={{ fontWeight: tokens.typography.weights.semibold }}>
+                Variant C
+              </P>
+              <Button
+                label="Copy A → C"
+                variant="ghost"
+                size="sm"
+                onPress={() => void handleCopyVariant("A", "C")}
+                disabled={isSubmitting || variantA.length === 0}
+              />
+            </View>
             {variantC.map((name, index) => (
               <View key={`c-${index}`} className="mb-2 w-full">
                 <View className="flex-row items-center gap-2">
@@ -354,20 +502,27 @@ export default function SplitBuilderScreen() {
                       editable={!isSubmitting}
                     />
                   </View>
-                  {isEdit && sessionIdsC[index] ? (
+                  {isEdit ? (
                     <Pressable
                       onPress={() =>
-                        router.push({
-                          pathname: "/planner/session-exercises",
-                          params: {
-                            sessionTemplateId: sessionIdsC[index],
-                            sessionName: name,
-                          },
-                        } as never)
+                        void handleEditSession(
+                          "C",
+                          index,
+                          name,
+                          sessionIdsC[index]
+                        )
                       }
+                      disabled={isSubmitting}
                       accessibilityLabel={`Edit exercises for ${name}`}
                     >
-                      <Pencil size={20} color={colors.foreground} />
+                      <Pencil
+                        size={20}
+                        color={
+                          sessionIdsC[index]
+                            ? colors.foreground
+                            : colors.mutedForeground
+                        }
+                      />
                     </Pressable>
                   ) : null}
                   <Pressable

@@ -4,6 +4,7 @@ import { showMessage } from "react-native-flash-message";
 import { useAuth } from "@/lib/auth/context";
 import { resolveErrorMessage } from "@/lib/auth/auth-errors";
 import { isAppleAuthCanceled, signInWithApple } from "@/lib/auth/apple-auth";
+import { getErrorDetails, logError } from "@/lib/app-logger";
 
 type UseAppleSignInResult = {
   isSubmitting: boolean;
@@ -19,10 +20,20 @@ export function useAppleSignIn(): UseAppleSignInResult {
     setIsSubmitting(true);
     try {
       const session = await signInWithApple();
+      if (!session.token || !session.user) {
+        throw new Error("Invalid session data received from Apple Sign-In.");
+      }
       await signIn({ user: session.user, token: session.token });
       router.replace("/(app)");
     } catch (error) {
-      if (isAppleAuthCanceled(error)) return;
+      if (isAppleAuthCanceled(error)) {
+        return;
+      }
+      logError({
+        scope: "auth.apple",
+        message: "sign-in failed",
+        data: getErrorDetails(error),
+      });
       showMessage({
         message: resolveErrorMessage(
           error,

@@ -6,6 +6,7 @@ import {
   getActiveCycleWithSplit,
   getUpNextSession,
   completeWorkoutAndAdvance,
+  createWorkoutSession,
 } from "@/features/planner/planner-repository";
 import { Screen } from "@/components/screen";
 import { Button, P, Text } from "@/components/ui";
@@ -57,6 +58,22 @@ export default function WorkoutStart() {
   const handleCompleteWorkout = async (): Promise<void> => {
     if (!planWithState) return;
     try {
+      const completedAt = Date.now();
+      const sessionTitle = nextWorkout?.sessionName ?? "Workout";
+      const plannedSessionTemplateId = nextWorkout?.sessionId ?? null;
+
+      await createWorkoutSession({
+        cycleId: planWithState.cycle.id,
+        plannedSessionTemplateId,
+        sessionTitle,
+        startedAt: completedAt,
+        completedAt,
+        durationMins: 0,
+        totalVolumeKg: null,
+        totalSets: 0,
+        totalReps: 0,
+        sets: [],
+      });
       await completeWorkoutAndAdvance(planWithState.cycle.id, planWithState);
       router.replace("/planner" as never);
     } catch (e) {

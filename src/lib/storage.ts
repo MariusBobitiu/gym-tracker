@@ -25,11 +25,21 @@ export type NotificationPrefs = {
   marketing: boolean;
 };
 
+export type AppLogEntry = {
+  id: string;
+  level: "debug" | "info" | "warn" | "error";
+  scope: string;
+  message: string;
+  data?: Record<string, unknown>;
+  createdAt: number;
+};
+
 export type BugReport = {
   id: string;
   subject: string;
   description: string;
   stepsToReproduce?: string;
+  logs?: AppLogEntry[];
   createdAt: number;
 };
 
@@ -46,6 +56,7 @@ export const STORAGE_KEYS = {
   weightUnit: "weight_unit",
   notificationPrefs: "notification_prefs",
   bugReports: "bug_reports",
+  appLogs: "app_logs",
 } as const;
 
 export const SECURE_STORAGE_KEYS = {
@@ -72,6 +83,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.weightUnit]: WeightUnit;
   [STORAGE_KEYS.notificationPrefs]: NotificationPrefs | null;
   [STORAGE_KEYS.bugReports]: BugReport[] | null;
+  [STORAGE_KEYS.appLogs]: AppLogEntry[] | null;
 };
 
 export type SecureStorageSchema = {

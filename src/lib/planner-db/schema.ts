@@ -48,6 +48,7 @@ export const sessionTemplateExercises = sqliteTable(
     reps: integer("reps").notNull(),
     weight: real("weight").notNull(),
     position: integer("position").notNull(),
+    superset_group: text("superset_group"),
   }
 );
 
