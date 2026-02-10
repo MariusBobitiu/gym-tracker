@@ -8,6 +8,7 @@ import {
   isNotNull,
   isNull,
   lte,
+  sql,
 } from "drizzle-orm";
 import uuid from "react-native-uuid";
 import { db } from "@/lib/planner-db/database";
@@ -1169,10 +1170,13 @@ export async function resetPlan(): Promise<void> {
   await db.delete(splits).where(eq(splits.id, splitId));
 }
 
-/** Clears all planner tables (cycle_state, cycles, session_templates, split_variants, splits). For dev reset. */
+/** Clears all planner and workout history tables. For dev reset. Order respects FKs. */
 export async function resetPlannerDatabase(): Promise<void> {
+  await db.delete(workoutSets).where(sql`1 = 1`);
+  await db.delete(workoutSessions).where(sql`1 = 1`);
   await db.delete(cycleState);
   await db.delete(cycles);
+  await db.delete(sessionTemplateExercises);
   await db.delete(sessionTemplates);
   await db.delete(splitVariants);
   await db.delete(splits);

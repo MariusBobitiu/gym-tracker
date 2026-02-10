@@ -176,14 +176,26 @@ export function useWorkoutSession(
   const [elapsedMs, setElapsedMs] = useState(() =>
     uiState ? Date.now() - uiState.startedAt : 0
   );
+  const [frozenElapsedMs, setFrozenElapsedMs] = useState<number | null>(null);
+
   useEffect(() => {
     if (!uiState) return;
+    if (uiState.phase === SESSION_PHASES.completed) {
+      setFrozenElapsedMs(Date.now() - uiState.startedAt);
+      return;
+    }
+    setFrozenElapsedMs(null);
     setElapsedMs(Date.now() - uiState.startedAt);
     const interval = setInterval(() => {
       setElapsedMs(Date.now() - uiState.startedAt);
     }, 1000);
     return () => clearInterval(interval);
   }, [uiState]);
+
+  const displayElapsedMs =
+    session?.phase === SESSION_PHASES.completed
+      ? (frozenElapsedMs ?? (uiState ? Date.now() - uiState.startedAt : 0))
+      : elapsedMs;
 
   const currentExercise = session
     ? getExerciseById(exercises, session.currentExerciseId)
@@ -374,7 +386,7 @@ export function useWorkoutSession(
     loading,
     session,
     activeSessionId: uiState?.activeSessionId ?? null,
-    elapsedMs,
+    elapsedMs: displayElapsedMs,
     currentExercise,
     exerciseName,
     setsTotal,

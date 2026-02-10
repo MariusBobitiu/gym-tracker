@@ -62,6 +62,62 @@ function toDurationMins(startedAt: number, completedAt: number): number {
   return Math.round(durationMs / 60000);
 }
 
+function DoneForTodayContent({
+  sessionTitle,
+  elapsedMs,
+  completedSetsCount,
+  totalSetsInWorkout,
+}: {
+  sessionTitle: string;
+  elapsedMs: number;
+  completedSetsCount: number;
+  totalSetsInWorkout: number;
+}): React.ReactElement {
+  const { colors } = useTheme();
+  const total = Math.max(1, totalSetsInWorkout);
+  const completed = Math.min(completedSetsCount, total);
+
+  return (
+    <View className="flex-1 items-center">
+      <View className="mt-16 flex-col items-center">
+        <H2>Done for Today</H2>
+        <P
+          className="mt-2"
+          style={{
+            color: colors.mutedForeground,
+            textAlign: "center",
+          }}
+        >
+          {sessionTitle} • {formatElapsedMs(elapsedMs)}
+        </P>
+      </View>
+      <View className="mt-16 items-center">
+        <P
+          style={{
+            color: colors.mutedForeground,
+            textAlign: "center",
+          }}
+        >
+          {completed} set{completed !== 1 ? "s" : ""} completed
+        </P>
+        <View className="items-center">
+          <SetsProgressIndicator completed={completed} total={total} />
+        </View>
+      </View>
+      <View className="flex-1" />
+      <P
+        className="mb-4"
+        style={{
+          color: colors.mutedForeground,
+          textAlign: "center",
+        }}
+      >
+        See you next session.
+      </P>
+    </View>
+  );
+}
+
 export default function Workout(): React.ReactElement {
   const router = useRouter();
   const { colors } = useTheme();
@@ -90,9 +146,12 @@ export default function Workout(): React.ReactElement {
   const [sessionExercises, setSessionExercises] = useState<
     PlanExercise[] | null
   >(null);
+  const [sessionTitle, setSessionTitle] = useState<string>("Workout");
+
   useEffect(() => {
     if (!activePlannedSessionId) {
       setSessionExercises(null);
+      setSessionTitle("Workout");
       return;
     }
     let cancelled = false;
@@ -102,6 +161,16 @@ export default function Workout(): React.ReactElement {
       })
       .catch(() => {
         if (!cancelled) setSessionExercises([]);
+      });
+    getActiveCycleWithSplit()
+      .then((plan) => {
+        if (!cancelled)
+          setSessionTitle(
+            findPlannedSessionTitle(plan, activePlannedSessionId)
+          );
+      })
+      .catch(() => {
+        if (!cancelled) setSessionTitle("Workout");
       });
     return () => {
       cancelled = true;
@@ -336,23 +405,15 @@ export default function Workout(): React.ReactElement {
             style={{ flex: 1 }}
           >
             {isCompleted ? (
-              <View className="flex-1 items-center justify-center">
-                <View className="mt-16 flex-col">
-                  <H2>Done for Today</H2>
-                  <P className="mt-2" style={{ color: colors.mutedForeground }}>
-                    {exerciseName} • {formatElapsedMs(elapsedMs)}
-                  </P>
-                </View>
-                <View className="mt-24 flex-1 items-center">
-                  <P style={{ color: colors.mutedForeground }}>
-                    {setsTotal} sets completed
-                  </P>
-                  <SetsProgressIndicator completed={3} total={4} />
-                </View>
-                <P className="mb-4" style={{ color: colors.mutedForeground }}>
-                  See you next session.
-                </P>
-              </View>
+              <DoneForTodayContent
+                sessionTitle={sessionTitle}
+                elapsedMs={elapsedMs}
+                completedSetsCount={session?.completedSets?.length ?? 0}
+                totalSetsInWorkout={exercises.reduce(
+                  (sum, ex) => sum + ex.sets,
+                  0
+                )}
+              />
             ) : (
               <>
                 <WorkoutHeader elapsedMs={elapsedMs} />

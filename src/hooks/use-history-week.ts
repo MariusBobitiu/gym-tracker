@@ -46,9 +46,11 @@ function buildSessionMap(
   return map;
 }
 
+/** Current week's planned session template IDs (so we only count completions that match this plan). */
 function computeWeekStats(
   sessions: WorkoutSessionSummary[],
-  totalPlanned: number
+  totalPlanned: number,
+  currentWeekSessionTemplateIds: Set<string>
 ): HistoryWeekStats {
   const totalVolumeKg = sessions.reduce(
     (sum, session) => sum + (session.totalVolumeKg ?? 0),
@@ -64,7 +66,10 @@ function computeWeekStats(
   const completedIds = new Set(
     sessions
       .map((session) => session.plannedSessionTemplateId)
-      .filter((id): id is string => Boolean(id))
+      .filter(
+        (id): id is string =>
+          Boolean(id) && currentWeekSessionTemplateIds.has(id)
+      )
   );
   const completedCount = completedIds.size;
 
@@ -173,6 +178,9 @@ export function useHistoryWeek(
   const data = useMemo<HistoryWeekData | null>(() => {
     if (!plan) return null;
     const weekData = getWeekSessionsFromPlan(plan, weekStartDate);
+    const currentWeekSessionTemplateIds = new Set(
+      (weekData?.sessions ?? []).map((s) => s.id)
+    );
     const plannedSessionMap = buildSessionMap(sessions);
     const historySessions = buildHistorySessions({
       weekData,
@@ -183,7 +191,8 @@ export function useHistoryWeek(
     });
     const weekStats = computeWeekStats(
       sessions,
-      weekData?.sessions.length ?? 0
+      weekData?.sessions.length ?? 0,
+      currentWeekSessionTemplateIds
     );
 
     return {

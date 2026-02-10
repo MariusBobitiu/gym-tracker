@@ -15,8 +15,9 @@ function formatVolumeKg(value: number | null | undefined): string {
 }
 
 function formatDuration(value: number | null | undefined): string {
-  if (!value || value <= 0) return "—";
-  return `${value} mins`;
+  if (value == null) return "—";
+  if (value <= 0) return "0 mins";
+  return `${value} min${value !== 1 ? "s" : ""}`;
 }
 
 type HistorySessionSummaryProps = {
