@@ -157,8 +157,15 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
       try {
         // 1) If request requires auth, ensure we have a valid access token first (refresh if needed).
         //    Throws OfflineAuthError (network) or SignedOutError (invalid refresh); we rethrow so callers can handle.
+        //    Skip if already signed out (e.g., during logout flow).
         if (auth && ensureValidAccessTokenGlobal) {
-          await ensureValidAccessTokenGlobal();
+          const currentStatus = getStatusGlobal?.();
+          if (currentStatus === "signedOut") {
+            // Already signed out, skip auth check to avoid SignedOutError
+            auth = false;
+          } else {
+            await ensureValidAccessTokenGlobal();
+          }
         }
 
         if (auth) {

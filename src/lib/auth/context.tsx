@@ -236,8 +236,26 @@ export function SessionProvider({
   const signOut = useCallback(async () => {
     useAuthStore.getState().setStatus("loading");
     if (onSignOut) await onSignOut();
+
+    // Call logout API before clearing local state
+    // Wrap in try-catch to handle any errors (including SignedOutError) gracefully
+    try {
+      const logoutResult = await logout();
+      if (!logoutResult.ok) {
+        // Log but don't block logout - we're clearing local state anyway
+        console.warn("[auth] Logout API call failed:", logoutResult.error);
+      }
+    } catch (error) {
+      // Catch SignedOutError or other errors during logout - we're signing out anyway
+      if (error instanceof Error && error.name === "SignedOutError") {
+        // Expected during logout flow, ignore
+      } else {
+        console.warn("[auth] Logout API call threw error:", error);
+      }
+    }
+
+    // Clear local state after API call (or if API call failed)
     useAuthStore.getState().logout();
-    await logout();
     router.replace("/(auth)");
   }, [onSignOut]);
 
