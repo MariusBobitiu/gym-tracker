@@ -18,13 +18,24 @@ import {
   getExerciseById,
 } from "@/lib/default-workout";
 import { formatElapsedMs } from "@/lib/format-elapsed";
-import { getStorageItem, STORAGE_KEYS, useStorageState } from "@/lib/storage";
-import type { WorkoutSession } from "@/types/workout-session";
+import {
+  getStorageItem,
+  setStorageItem,
+  STORAGE_KEYS,
+  useStorageState,
+} from "@/lib/storage";
+import type {
+  WorkoutSession,
+  WorkoutSessionUIState,
+} from "@/types/workout-session";
 import { SESSION_PHASES } from "@/types/workout-session";
+import {
+  deleteActiveWorkoutSession,
+  getUpNextSession,
+} from "@/features/planner/planner-repository";
+import { startOfWeekMonday } from "@/features/planner/date-utils";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import { useHistoryWeek } from "@/hooks/use-history-week";
-import { startOfWeekMonday } from "@/features/planner/date-utils";
-import { getUpNextSession } from "@/features/planner/planner-repository";
 import type { HistorySessionView } from "@/types/history";
 
 type WeekDot = {
@@ -419,11 +430,33 @@ function renderMainCard(
   return <ReadyToTrainCard nextSession={nextSession} hasPlan={hasPlan} />;
 }
 
+/** Build a minimal WorkoutSession for the home card from MMKV UI state (session data lives in SQLite). */
+function sessionFromUIState(
+  uiState: WorkoutSessionUIState | null
+): WorkoutSession | null {
+  if (!uiState) return null;
+  return {
+    phase: uiState.phase,
+    startedAt: uiState.startedAt,
+    currentExerciseId: uiState.currentExerciseId,
+    currentSetNumber: uiState.currentSetNumber,
+  };
+}
+
 export default function Home(): React.ReactElement {
   const { user } = useAuth();
-  const [[, session], setSession] = useStorageState(
-    STORAGE_KEYS.workoutSession
+  const [[, uiState], setUIState] = useStorageState(
+    STORAGE_KEYS.workoutSessionUI
   );
+  const session = useMemo(() => sessionFromUIState(uiState), [uiState]);
+  const clearSession = useCallback(() => {
+    if (uiState?.activeSessionId) {
+      void deleteActiveWorkoutSession(uiState.activeSessionId);
+    }
+    setStorageItem(STORAGE_KEYS.workoutSessionUI, null);
+    setUIState(null);
+  }, [uiState?.activeSessionId, setUIState]);
+
   const { state: planState, refetch: refetchPlan } = useActivePlan();
   const [currentWeekStart, setCurrentWeekStart] = useState(() =>
     startOfWeekMonday(new Date())
@@ -437,11 +470,11 @@ export default function Home(): React.ReactElement {
 
   useFocusEffect(
     useCallback(() => {
-      const value = getStorageItem(STORAGE_KEYS.workoutSession);
-      setSession(value ?? null);
+      const value = getStorageItem(STORAGE_KEYS.workoutSessionUI);
+      setUIState(value ?? null);
       setCurrentWeekStart(startOfWeekMonday(new Date()));
       refetchPlan();
-    }, [setSession, refetchPlan])
+    }, [setUIState, refetchPlan])
   );
 
   useFocusEffect(
@@ -518,7 +551,9 @@ export default function Home(): React.ReactElement {
           >
             {renderMainCard(
               session,
-              setSession,
+              (value) => {
+                if (value === null) clearSession();
+              },
               isLoadingCard ? null : nextSession,
               hasPlan
             )}

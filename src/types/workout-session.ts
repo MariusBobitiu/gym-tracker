@@ -8,6 +8,15 @@ export const SESSION_PHASES = {
 
 export type SessionPhase = (typeof SESSION_PHASES)[keyof typeof SESSION_PHASES];
 
+/** Ephemeral UI state for active workout (MMKV only). Session data lives in SQLite. */
+export type WorkoutSessionUIState = {
+  activeSessionId: string;
+  startedAt: number;
+  phase: SessionPhase;
+  currentExerciseId: string;
+  currentSetNumber: number;
+};
+
 export type CompletedSet = {
   exerciseId: string;
   setNumber: number;

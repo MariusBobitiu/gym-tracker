@@ -88,7 +88,7 @@ export const workoutSessions = sqliteTable("workout_sessions", {
   ),
   session_title: text("session_title").notNull(),
   started_at: integer("started_at").notNull(),
-  completed_at: integer("completed_at").notNull(),
+  completed_at: integer("completed_at"),
   duration_mins: integer("duration_mins"),
   total_volume_kg: real("total_volume_kg"),
   total_sets: integer("total_sets").notNull().default(0),

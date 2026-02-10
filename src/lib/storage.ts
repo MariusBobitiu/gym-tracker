@@ -1,7 +1,10 @@
 import { useEffect, useCallback, useReducer } from "react";
 import { createMMKV } from "react-native-mmkv";
 import type { User } from "@/types";
-import type { WorkoutSession } from "@/types/workout-session";
+import type {
+  WorkoutSessionUIState,
+  WorkoutSession,
+} from "@/types/workout-session";
 /** Optional UI-only planner flags (e.g. viewed week). Plan data lives in SQLite. */
 export type PlannerUIState = { viewedWeekStart?: number } | null;
 
@@ -50,7 +53,10 @@ export const STORAGE_KEYS = {
   token: "token",
   user: "user",
   userFirstSeenAt: "user_first_seen_at",
+  /** @deprecated Use workoutSessionUI + SQLite; cleared by migration */
   workoutSession: "workout_session",
+  /** Ephemeral UI state only; full session data in SQLite */
+  workoutSessionUI: "workout_session_ui",
   planner: "planner_v1",
   plannerNextWorkout: "planner_next_workout",
   weightUnit: "weight_unit",
@@ -78,6 +84,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.user]: User;
   [STORAGE_KEYS.userFirstSeenAt]: number | null;
   [STORAGE_KEYS.workoutSession]: WorkoutSession | null;
+  [STORAGE_KEYS.workoutSessionUI]: WorkoutSessionUIState | null;
   [STORAGE_KEYS.planner]: PlannerUIState;
   [STORAGE_KEYS.plannerNextWorkout]: PlannerNextWorkoutState;
   [STORAGE_KEYS.weightUnit]: WeightUnit;
@@ -96,7 +103,7 @@ export type SecureStorageKey =
 
 type UseStateHook<T> = [[boolean, T | null], (value: T | null) => void];
 
-const STORAGE_VERSION = 1;
+const STORAGE_VERSION = 2;
 
 function useAsyncState<T>(
   initialValue: [boolean, T | null] = [true, null]
@@ -273,6 +280,10 @@ type StorageMigrationHelpers = {
 
 const migrations: Record<number, (helpers: StorageMigrationHelpers) => void> = {
   1: () => null,
+  2: (helpers) => {
+    // Move to SQLite + workoutSessionUI; clear old full session from MMKV
+    helpers.removeItem(STORAGE_KEYS.workoutSession);
+  },
 };
 
 function readStorageVersion(): number {

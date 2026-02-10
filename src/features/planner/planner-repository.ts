@@ -1,5 +1,14 @@
 import { differenceInCalendarWeeks, startOfWeek } from "date-fns";
-import { and, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+} from "drizzle-orm";
 import uuid from "react-native-uuid";
 import { db } from "@/lib/planner-db/database";
 import {
@@ -47,7 +56,7 @@ export type WorkoutSessionSummary = {
   plannedSessionTemplateId: string | null;
   sessionTitle: string;
   startedAt: number;
-  completedAt: number;
+  completedAt: number | null;
   durationMins: number | null;
   totalVolumeKg: number | null;
   totalSets: number;
@@ -381,6 +390,7 @@ export async function getWorkoutSessionsInRange(
     )
     .where(
       and(
+        isNotNull(workoutSessions.completed_at),
         gte(workoutSessions.completed_at, startMs),
         lte(workoutSessions.completed_at, endMs)
       )
@@ -484,25 +494,131 @@ export async function createWorkoutSession(
   return sessionId;
 }
 
+export type StartActiveWorkoutSessionInput = {
+  cycleId: string | null;
+  plannedSessionTemplateId: string | null;
+  sessionTitle: string;
+  startedAt: number;
+};
+
+/** Create an in-progress workout session (completed_at = null). Single active session at a time. */
+export async function startActiveWorkoutSession(
+  input: StartActiveWorkoutSessionInput
+): Promise<string> {
+  const sessionId = String(uuid.v4());
+  await db.insert(workoutSessions).values({
+    id: sessionId,
+    cycle_id: input.cycleId,
+    planned_session_template_id: input.plannedSessionTemplateId,
+    session_title: input.sessionTitle,
+    started_at: input.startedAt,
+    completed_at: null,
+    duration_mins: null,
+    total_volume_kg: null,
+    total_sets: 0,
+    total_reps: 0,
+  });
+  return sessionId;
+}
+
+/** Get the single in-progress workout session, if any. */
+export async function getActiveWorkoutSession(): Promise<WorkoutSessionRow | null> {
+  const rows = await db
+    .select()
+    .from(workoutSessions)
+    .where(isNull(workoutSessions.completed_at))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+/** Get all sets for a workout session (for active session, completed sets). */
+export async function getSetsForWorkoutSession(
+  sessionId: string
+): Promise<WorkoutSetRow[]> {
+  return db
+    .select()
+    .from(workoutSets)
+    .where(eq(workoutSets.session_id, sessionId))
+    .orderBy(workoutSets.set_number);
+}
+
+export type AddSetInput = {
+  exerciseId: string;
+  exerciseName: string;
+  setNumber: number;
+  weight: number;
+  reps: number;
+};
+
+/** Append a completed set to an active workout session. */
+export async function addSetToWorkoutSession(
+  sessionId: string,
+  setInput: AddSetInput
+): Promise<void> {
+  await db.insert(workoutSets).values({
+    id: String(uuid.v4()),
+    session_id: sessionId,
+    exercise_id: setInput.exerciseId,
+    exercise_name: setInput.exerciseName,
+    set_number: setInput.setNumber,
+    weight: setInput.weight,
+    reps: setInput.reps,
+  });
+}
+
+/** Mark session as completed and set totals. Totals can be computed from sets. */
+export async function completeWorkoutSession(
+  sessionId: string,
+  completedAt: number,
+  totals: {
+    durationMins: number;
+    totalVolumeKg: number;
+    totalSets: number;
+    totalReps: number;
+  }
+): Promise<void> {
+  await db
+    .update(workoutSessions)
+    .set({
+      completed_at: completedAt,
+      duration_mins: totals.durationMins,
+      total_volume_kg: totals.totalVolumeKg,
+      total_sets: totals.totalSets,
+      total_reps: totals.totalReps,
+    })
+    .where(eq(workoutSessions.id, sessionId));
+}
+
+/** Remove in-progress session and its sets (e.g. user backed out). */
+export async function deleteActiveWorkoutSession(
+  sessionId: string
+): Promise<void> {
+  await db.delete(workoutSets).where(eq(workoutSets.session_id, sessionId));
+  await db.delete(workoutSessions).where(eq(workoutSessions.id, sessionId));
+}
+
 export type ProfileStats = {
   totalSessions: number;
   totalVolumeKg: number;
   weeksTrained: number;
 };
 
-/** Aggregate stats for profile: total sessions, total volume, distinct weeks with at least one completed session. */
+/** Aggregate stats for profile: total sessions, total volume, distinct weeks with at least one completed session. Excludes in-progress sessions. */
 export async function getProfileStats(): Promise<ProfileStats> {
   const rows = await db
     .select({
       completedAt: workoutSessions.completed_at,
       totalVolumeKg: workoutSessions.total_volume_kg,
     })
-    .from(workoutSessions);
+    .from(workoutSessions)
+    .where(isNotNull(workoutSessions.completed_at));
   let totalVolumeKg = 0;
   const weekStarts = new Set<number>();
   for (const row of rows) {
     totalVolumeKg += row.totalVolumeKg ?? 0;
-    const d = new Date(row.completedAt);
+    const completedAt = row.completedAt;
+    if (completedAt == null) continue;
+    const d = new Date(completedAt);
     d.setHours(0, 0, 0, 0);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
@@ -553,7 +669,12 @@ export async function getLastWeightForExercise(
     .select({ weight: workoutSets.weight })
     .from(workoutSets)
     .innerJoin(workoutSessions, eq(workoutSets.session_id, workoutSessions.id))
-    .where(eq(workoutSets.exercise_id, exerciseId))
+    .where(
+      and(
+        eq(workoutSets.exercise_id, exerciseId),
+        isNotNull(workoutSessions.completed_at)
+      )
+    )
     .orderBy(desc(workoutSessions.completed_at))
     .limit(1);
   const row = rows[0];
@@ -581,6 +702,7 @@ export async function getLastWeekWeightForExercise(
     .where(
       and(
         eq(workoutSets.exercise_id, exerciseId),
+        isNotNull(workoutSessions.completed_at),
         gte(workoutSessions.completed_at, startMs),
         lte(workoutSessions.completed_at, endMs)
       )

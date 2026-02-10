@@ -33,14 +33,14 @@ import { useTheme } from "@/lib/theme-context";
 import { formatElapsedMs } from "@/lib/format-elapsed";
 import {
   completePlannedSession,
-  createWorkoutSession,
+  completeWorkoutSession,
   getActiveCycleWithSplit,
   getExercisesForSessionTemplate,
   getLastWeightForExercise,
   getLastWeekWeightForExercise,
 } from "@/features/planner/planner-repository";
 import { usePlannerStore } from "@/features/planner/planner-store";
-import type { PlanExercise } from "@/types/workout-session";
+import type { PlanExercise, WorkoutSession } from "@/types/workout-session";
 import { LoadingState } from "@/components/feedback-states";
 
 type WorkoutView = "list" | "log-set" | "rest";
@@ -117,8 +117,26 @@ export default function Workout(): React.ReactElement {
   const isLoadingSessionExercises =
     Boolean(activePlannedSessionId) && sessionExercises === null;
 
+  const finishEarlyHandlerRef =
+    useRef<
+      (
+        completedSession: WorkoutSession,
+        activeSessionId: string
+      ) => void | Promise<void>
+    >(null);
+
+  const startActiveSessionInput = useMemo(
+    () => ({
+      cycleId: null as string | null,
+      plannedSessionTemplateId: activePlannedSessionId ?? null,
+      sessionTitle: "Workout",
+    }),
+    [activePlannedSessionId]
+  );
+
   const {
     session,
+    activeSessionId,
     elapsedMs,
     exerciseName,
     setsTotal,
@@ -131,6 +149,9 @@ export default function Workout(): React.ReactElement {
     onComplete: advancePlannerState,
     exercises: isLoadingSessionExercises ? undefined : exercises,
     skipInitialization: isLoadingSessionExercises,
+    onFinishEarly: (completedSession, activeSessionId) =>
+      void finishEarlyHandlerRef.current?.(completedSession, activeSessionId),
+    startActiveSessionInput,
   });
 
   const [view, setView] = useState<WorkoutView>("list");
@@ -182,60 +203,63 @@ export default function Workout(): React.ReactElement {
 
   const handleFinishWithConfetti = useCallback(() => setShowConfetti(true), []);
 
-  const logWorkoutSession = useCallback(async (): Promise<void> => {
-    if (!session?.completedSets?.length) return;
-    const planWithState = await getActiveCycleWithSplit();
-    const completedAt = Date.now();
-    const startedAt = session.startedAt ?? completedAt;
-    const sessionTitle = findPlannedSessionTitle(
-      planWithState,
-      activePlannedSessionId
-    );
-
-    const totalVolumeKg = session.completedSets.reduce(
+  function totalsFromCompletedSets(
+    completedSets: { weight: number; reps: number }[]
+  ) {
+    const totalVolumeKg = completedSets.reduce(
       (sum, set) => sum + set.weight * set.reps,
       0
     );
-    const totalReps = session.completedSets.reduce(
-      (sum, set) => sum + set.reps,
-      0
-    );
-    const totalSets = session.completedSets.length;
+    const totalReps = completedSets.reduce((sum, set) => sum + set.reps, 0);
+    return { totalVolumeKg, totalReps, totalSets: completedSets.length };
+  }
 
-    const sets = session.completedSets.map((set) => {
-      const exercise = getExerciseById(exercises, set.exerciseId);
-      return {
-        exerciseId: set.exerciseId,
-        exerciseName: exercise?.name ?? "Exercise",
-        setNumber: set.setNumber,
-        weight: set.weight,
-        reps: set.reps,
-      };
-    });
+  const handleFinishEarly = useCallback(
+    async (
+      completedSession: WorkoutSession,
+      activeSessionId: string
+    ): Promise<void> => {
+      const completedAt = Date.now();
+      const startedAt = completedSession.startedAt ?? completedAt;
+      const { totalVolumeKg, totalReps, totalSets } = totalsFromCompletedSets(
+        completedSession.completedSets ?? []
+      );
+      await completeWorkoutSession(activeSessionId, completedAt, {
+        durationMins: toDurationMins(startedAt, completedAt),
+        totalVolumeKg,
+        totalSets,
+        totalReps,
+      });
+      await advancePlannerState();
+      setStorageItem(STORAGE_KEYS.workoutSessionUI, null);
+      router.dismissAll();
+    },
+    [advancePlannerState, router]
+  );
 
-    await createWorkoutSession({
-      cycleId: planWithState?.cycle.id ?? null,
-      plannedSessionTemplateId: activePlannedSessionId ?? null,
-      sessionTitle,
-      startedAt,
-      completedAt,
-      durationMins: toDurationMins(startedAt, completedAt),
-      totalVolumeKg,
-      totalSets,
-      totalReps,
-      sets,
-    });
-  }, [activePlannedSessionId, session, exercises]);
+  useEffect(() => {
+    finishEarlyHandlerRef.current = handleFinishEarly;
+  }, [handleFinishEarly]);
 
   const handleWorkoutComplete = useCallback(() => {
+    if (!activeSessionId || !session) return;
     void (async () => {
-      // Log to DB first, then advance planner state so today, planner, and history stay in sync
-      await logWorkoutSession();
+      const completedAt = Date.now();
+      const startedAt = session.startedAt ?? completedAt;
+      const { totalVolumeKg, totalReps, totalSets } = totalsFromCompletedSets(
+        session.completedSets ?? []
+      );
+      await completeWorkoutSession(activeSessionId, completedAt, {
+        durationMins: toDurationMins(startedAt, completedAt),
+        totalVolumeKg,
+        totalSets,
+        totalReps,
+      });
       await advancePlannerState();
-      setStorageItem(STORAGE_KEYS.workoutSession, null);
+      setStorageItem(STORAGE_KEYS.workoutSessionUI, null);
       router.dismissAll();
     })();
-  }, [advancePlannerState, logWorkoutSession, router]);
+  }, [activeSessionId, session, advancePlannerState, router]);
 
   const handleSkipRest = useCallback(() => setView("log-set"), []);
 

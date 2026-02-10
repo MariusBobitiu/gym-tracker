@@ -36,6 +36,13 @@
       "when": 1770587206000,
       "tag": "0004_supersets",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1770700000000,
+      "tag": "0005_active_workout_sessions",
+      "breakpoints": true
     }
   ]
 }
