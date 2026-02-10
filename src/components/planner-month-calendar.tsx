@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import { Pressable, View } from "react-native";
 import { Text } from "@/components/ui";
-import { resolveAccessibilityLabel } from "@/lib/accessibility";
+import { getHitSlop, resolveAccessibilityLabel } from "@/lib/accessibility";
 import { useTheme } from "@/lib/theme-context";
 
 type MonthCalendarProps = {
@@ -91,10 +91,12 @@ function DayCell({ day, onPress }: DayCellProps): React.JSX.Element {
       ? `${colors.foreground}30`
       : "transparent";
 
+  const hitSlop = getHitSlop();
   return (
     <Pressable
       style={{ width: `${100 / 7}%` }}
       onPress={() => onPress?.(day.date)}
+      hitSlop={hitSlop}
       className="items-center justify-center"
       accessibilityRole="button"
       accessibilityLabel={resolveAccessibilityLabel({

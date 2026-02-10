@@ -196,7 +196,9 @@ export default function History() {
     );
   }
 
-  if (isHistoryLoading) {
+  // Only show full-screen loading when we have no data yet (initial load).
+  // When changing week, keep showing the screen and update in place to avoid flash.
+  if (isHistoryLoading && !historyData) {
     return (
       <Screen className="pb-24">
         <Stack.Screen options={headerOptions({ title: "History" })} />
@@ -213,10 +215,7 @@ export default function History() {
       <Stack.Screen options={headerOptions({ title: "History" })} />
       <AppHeader showBackButton={false} title="History" isMainScreen />
       <View className="flex-1">
-        <View
-          className="min-h-14 flex-row items-center justify-between px-4"
-          key={`week-nav-${viewedWeekStart.getTime()}`}
-        >
+        <View className="min-h-14 flex-row items-center justify-between px-4">
           <Pressable
             onPress={handlePrevMonth}
             className="flex-row items-center"
@@ -282,9 +281,21 @@ export default function History() {
             ) : (
               <H3>{state.plan.split.name}</H3>
             )}
-            <P style={{ color: colors.mutedForeground }}>
-              {formatWeekRange(weekStartDate, weekEndDate)}
-            </P>
+            <View className="flex-row items-center gap-2">
+              <P style={{ color: colors.mutedForeground }}>
+                {formatWeekRange(weekStartDate, weekEndDate)}
+              </P>
+              {isHistoryLoading ? (
+                <P
+                  style={{
+                    color: colors.primary,
+                    fontSize: tokens.typography.sizes.sm,
+                  }}
+                >
+                  Loading…
+                </P>
+              ) : null}
+            </View>
             <View
               className="h-0.5"
               style={{ backgroundColor: `${colors.border}60` }}
