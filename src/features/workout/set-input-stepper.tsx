@@ -8,7 +8,7 @@ import { getHitSlop } from "@/lib/accessibility";
 import { cn } from "@/lib/cn";
 import { WheelPickerModal } from "./wheel-picker-modal";
 
-const HOLD_DELAY_MS = 420;
+const HOLD_DELAY_MS = 1400; // 1.4 seconds before hold starts
 const INITIAL_INTERVAL_MS = 220;
 const MIN_INTERVAL_MS = 55;
 const INTERVAL_DECAY = 0.92;
@@ -44,6 +44,8 @@ export function SetInputStepper({
   const tickCountRef = useRef(0);
   const currentIntervalRef = useRef(INITIAL_INTERVAL_MS);
   const valueRef = useRef(value);
+  const isHoldingRef = useRef(false); // Track if we're in hold mode (after 2s)
+  const pressStartTimeRef = useRef<number | null>(null); // Track when press started
   valueRef.current = value;
 
   const clearHold = useCallback(() => {
@@ -57,6 +59,8 @@ export function SetInputStepper({
     }
     tickCountRef.current = 0;
     currentIntervalRef.current = INITIAL_INTERVAL_MS;
+    isHoldingRef.current = false;
+    pressStartTimeRef.current = null;
   }, []);
 
   const runDecrement = useCallback(() => {
@@ -81,8 +85,11 @@ export function SetInputStepper({
 
   const startHoldDecrement = useCallback(() => {
     if (value <= min) return;
+    clearHold(); // Clear any existing hold first
+    pressStartTimeRef.current = Date.now();
     holdTimeoutRef.current = setTimeout(() => {
       holdTimeoutRef.current = null;
+      isHoldingRef.current = true; // Mark as holding - prevents onPress from firing
       tickCountRef.current = 0;
       currentIntervalRef.current = INITIAL_INTERVAL_MS;
       runDecrement();
@@ -100,12 +107,15 @@ export function SetInputStepper({
       };
       holdIntervalRef.current = setTimeout(run, currentIntervalRef.current);
     }, HOLD_DELAY_MS);
-  }, [min, value, runDecrement]);
+  }, [min, value, runDecrement, clearHold]);
 
   const startHoldIncrement = useCallback(() => {
     if (value >= max) return;
+    clearHold(); // Clear any existing hold first
+    pressStartTimeRef.current = Date.now();
     holdTimeoutRef.current = setTimeout(() => {
       holdTimeoutRef.current = null;
+      isHoldingRef.current = true; // Mark as holding - prevents onPress from firing
       tickCountRef.current = 0;
       currentIntervalRef.current = INITIAL_INTERVAL_MS;
       runIncrement();
@@ -123,25 +133,49 @@ export function SetInputStepper({
       };
       holdIntervalRef.current = setTimeout(run, currentIntervalRef.current);
     }, HOLD_DELAY_MS);
-  }, [max, value, runIncrement]);
+  }, [max, value, runIncrement, clearHold]);
 
   const handleDecrementPressIn = useCallback(() => {
+    clearHold(); // Clear any existing hold/timeout first
     startHoldDecrement();
-  }, [startHoldDecrement]);
+  }, [startHoldDecrement, clearHold]);
 
   const handleDecrementPressOut = useCallback(() => {
+    const pressDuration = pressStartTimeRef.current
+      ? Date.now() - pressStartTimeRef.current
+      : 0;
+    const wasHolding = isHoldingRef.current || pressDuration >= HOLD_DELAY_MS;
     clearHold();
+    // If we were holding, mark it so onPress doesn't fire
+    if (wasHolding) {
+      isHoldingRef.current = true;
+    }
   }, [clearHold]);
 
   const handleIncrementPressIn = useCallback(() => {
+    clearHold(); // Clear any existing hold/timeout first
     startHoldIncrement();
-  }, [startHoldIncrement]);
+  }, [startHoldIncrement, clearHold]);
 
   const handleIncrementPressOut = useCallback(() => {
+    const pressDuration = pressStartTimeRef.current
+      ? Date.now() - pressStartTimeRef.current
+      : 0;
+    const wasHolding = isHoldingRef.current || pressDuration >= HOLD_DELAY_MS;
     clearHold();
+    // If we were holding, mark it so onPress doesn't fire
+    if (wasHolding) {
+      isHoldingRef.current = true;
+    }
   }, [clearHold]);
 
   const handleDecrementPress = useCallback(() => {
+    // Don't fire if we were holding (after 2s) - the interval already handled increments
+    if (isHoldingRef.current) {
+      isHoldingRef.current = false; // Reset for next press
+      return;
+    }
+    // This was a quick tap (< 2s) - fire the increment
     const next = Math.max(min, value - step);
     if (next !== value) {
       triggerHaptic("light");
@@ -150,6 +184,12 @@ export function SetInputStepper({
   }, [min, value, step, onChange]);
 
   const handleIncrementPress = useCallback(() => {
+    // Don't fire if we were holding (after 2s) - the interval already handled increments
+    if (isHoldingRef.current) {
+      isHoldingRef.current = false; // Reset for next press
+      return;
+    }
+    // This was a quick tap (< 2s) - fire the increment
     const next = Math.min(max, value + step);
     if (next !== value) {
       triggerHaptic("light");

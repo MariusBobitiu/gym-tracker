@@ -152,6 +152,8 @@ export function useWorkoutSession(
           phase: SESSION_PHASES.inWorkout,
           currentExerciseId: first.id,
           currentSetNumber: 1,
+          currentExerciseName: first.name,
+          currentExerciseSets: first.sets,
         };
         setStorageItem(STORAGE_KEYS.workoutSessionUI, newUI);
         setUIState(newUI);
@@ -240,6 +242,8 @@ export function useWorkoutSession(
           ...uiState,
           phase: SESSION_PHASES.inExercise,
           currentSetNumber: nextSetNumber,
+          currentExerciseName: currentExercise.name,
+          currentExerciseSets: currentExercise.sets,
         };
         setStorageItem(STORAGE_KEYS.workoutSessionUI, next);
         setUIState(next);
@@ -248,13 +252,15 @@ export function useWorkoutSession(
       const currentIndex = exercises.findIndex(
         (e) => e.id === session.currentExerciseId
       );
-      const next = exercises[currentIndex + 1];
-      if (next) {
+      const nextEx = exercises[currentIndex + 1];
+      if (nextEx) {
         const nextUI: WorkoutSessionUIState = {
           ...uiState,
           phase: SESSION_PHASES.inExercise,
-          currentExerciseId: next.id,
+          currentExerciseId: nextEx.id,
           currentSetNumber: 1,
+          currentExerciseName: nextEx.name,
+          currentExerciseSets: nextEx.sets,
         };
         setStorageItem(STORAGE_KEYS.workoutSessionUI, nextUI);
         setUIState(nextUI);
@@ -281,6 +287,8 @@ export function useWorkoutSession(
           ...uiState,
           currentExerciseId: first.id,
           currentSetNumber: 1,
+          currentExerciseName: first.name,
+          currentExerciseSets: first.sets,
         };
         setStorageItem(STORAGE_KEYS.workoutSessionUI, next);
         setUIState(next);
@@ -292,6 +300,8 @@ export function useWorkoutSession(
         ...uiState,
         phase: SESSION_PHASES.inExercise,
         currentSetNumber: session.currentSetNumber + 1,
+        currentExerciseName: exercise.name,
+        currentExerciseSets: exercise.sets,
       };
       setStorageItem(STORAGE_KEYS.workoutSessionUI, next);
       setUIState(next);
@@ -307,6 +317,8 @@ export function useWorkoutSession(
         phase: SESSION_PHASES.inExercise,
         currentExerciseId: nextEx.id,
         currentSetNumber: 1,
+        currentExerciseName: nextEx.name,
+        currentExerciseSets: nextEx.sets,
       };
       setStorageItem(STORAGE_KEYS.workoutSessionUI, next);
       setUIState(next);

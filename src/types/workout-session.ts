@@ -15,6 +15,10 @@ export type WorkoutSessionUIState = {
   phase: SessionPhase;
   currentExerciseId: string;
   currentSetNumber: number;
+  /** Current exercise name for display (e.g. on home "workout in progress" card). */
+  currentExerciseName?: string;
+  /** Total sets for current exercise (for display). */
+  currentExerciseSets?: number;
 };
 
 export type CompletedSet = {

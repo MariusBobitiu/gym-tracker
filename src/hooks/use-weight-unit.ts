@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { getStorageItem, STORAGE_KEYS, type WeightUnit } from "@/lib/storage";
 import {
   formatVolume as formatVolumeWithUnit,
@@ -16,13 +17,17 @@ export function useWeightUnit(): {
   weightUnitLabel: string;
 } {
   const weightUnit = getStorageItem(STORAGE_KEYS.weightUnit) ?? "kg";
-  return {
-    weightUnit,
-    formatWeight: (kg: number) => formatWeight(kg, weightUnit),
-    formatVolume: (totalKg: number | null | undefined) =>
-      formatVolumeWithUnit(totalKg, weightUnit),
-    fromKg: (kg: number) => fromKgWithUnit(kg, weightUnit),
-    toKg: (value: number) => toKgWithUnit(value, weightUnit),
-    weightUnitLabel: weightUnitLabel(weightUnit),
-  };
+
+  return useMemo(
+    () => ({
+      weightUnit,
+      formatWeight: (kg: number) => formatWeight(kg, weightUnit),
+      formatVolume: (totalKg: number | null | undefined) =>
+        formatVolumeWithUnit(totalKg, weightUnit),
+      fromKg: (kg: number) => fromKgWithUnit(kg, weightUnit),
+      toKg: (value: number) => toKgWithUnit(value, weightUnit),
+      weightUnitLabel: weightUnitLabel(weightUnit),
+    }),
+    [weightUnit]
+  );
 }

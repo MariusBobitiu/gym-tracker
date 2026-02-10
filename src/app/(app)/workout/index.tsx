@@ -37,6 +37,7 @@ import {
   getActiveCycleWithSplit,
   getExercisesForSessionTemplate,
   getLastSessionSameWorkoutWeightAndReps,
+  getPlannedSessionTemplateId,
   getLastWeightAndRepsForExercise,
 } from "@/features/planner/planner-repository";
 import { usePlannerStore } from "@/features/planner/planner-store";
@@ -221,6 +222,18 @@ export default function Workout(): React.ReactElement {
       void finishEarlyHandlerRef.current?.(completedSession, activeSessionId),
     startActiveSessionInput,
   });
+
+  // When resuming (we have active session but store lost activePlannedSessionId), restore it so we load the correct exercises
+  useEffect(() => {
+    if (!activeSessionId || activePlannedSessionId != null) return;
+    let cancelled = false;
+    getPlannedSessionTemplateId(activeSessionId).then((templateId) => {
+      if (!cancelled && templateId) setActivePlannedSessionId(templateId);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSessionId, activePlannedSessionId, setActivePlannedSessionId]);
 
   const [view, setView] = useState<WorkoutView>("list");
   const [showConfetti, setShowConfetti] = useState(false);
@@ -416,7 +429,7 @@ export default function Workout(): React.ReactElement {
         contentContainerClassName="flex-1 px-4 pt-8"
       >
         <BackgroundGradient />
-        {view === "list" && (
+        {(view === "list" || (view === "log-set" && !currentExercise)) && (
           <Animated.View
             entering={FadeIn.duration(TRANSITION_MS).easing(transitionEasing)}
             style={{ flex: 1 }}
@@ -456,7 +469,7 @@ export default function Workout(): React.ReactElement {
           </Animated.View>
         )}
 
-        {view === "log-set" && currentExercise && (
+        {view === "log-set" && currentExercise ? (
           <Animated.View
             entering={FadeInDown.duration(TRANSITION_MS).easing(
               transitionEasing
@@ -474,7 +487,7 @@ export default function Workout(): React.ReactElement {
               initialReps={suggestedByExerciseId[currentExercise.id]?.reps}
             />
           </Animated.View>
-        )}
+        ) : null}
 
         {view === "rest" && (
           <Animated.View

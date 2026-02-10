@@ -532,6 +532,20 @@ export async function getActiveWorkoutSession(): Promise<WorkoutSessionRow | nul
   return rows[0] ?? null;
 }
 
+/** Get planned session template id for a session (e.g. to restore when resuming workout). */
+export async function getPlannedSessionTemplateId(
+  sessionId: string
+): Promise<string | null> {
+  const rows = await db
+    .select({
+      plannedSessionTemplateId: workoutSessions.planned_session_template_id,
+    })
+    .from(workoutSessions)
+    .where(eq(workoutSessions.id, sessionId))
+    .limit(1);
+  return rows[0]?.plannedSessionTemplateId ?? null;
+}
+
 /** Get all sets for a workout session (for active session, completed sets). */
 export async function getSetsForWorkoutSession(
   sessionId: string

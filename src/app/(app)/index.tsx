@@ -276,8 +276,10 @@ function ReadyToTrainCard({
 
 function ActiveSessionCard({
   session,
+  uiState,
 }: {
   session: WorkoutSession;
+  uiState: WorkoutSessionUIState | null;
 }): React.ReactElement {
   const { colors } = useTheme();
   const [elapsedMs, setElapsedMs] = React.useState(
@@ -291,12 +293,16 @@ function ActiveSessionCard({
     return () => clearInterval(interval);
   }, [session.startedAt]);
 
-  const exercise = getExerciseById(
-    DEFAULT_WORKOUT_EXERCISES,
-    session.currentExerciseId
-  );
-  const exerciseName = exercise?.name ?? "Unknown exercise";
-  const setsTotal = exercise?.sets ?? 0;
+  const exerciseName =
+    uiState?.currentExerciseName ??
+    getExerciseById(DEFAULT_WORKOUT_EXERCISES, session.currentExerciseId)
+      ?.name ??
+    "Unknown exercise";
+  const setsTotal =
+    uiState?.currentExerciseSets ??
+    getExerciseById(DEFAULT_WORKOUT_EXERCISES, session.currentExerciseId)
+      ?.sets ??
+    0;
   const setLabel =
     setsTotal > 0
       ? `Set ${session.currentSetNumber} of ${setsTotal}`
@@ -406,7 +412,8 @@ function renderMainCard(
   session: WorkoutSession | null,
   setSession: (value: WorkoutSession | null) => void,
   nextSession: NextSessionInfo,
-  hasPlan: boolean
+  hasPlan: boolean,
+  uiState: WorkoutSessionUIState | null
 ): React.ReactElement {
   if (!session || session.phase === SESSION_PHASES.idle) {
     return <ReadyToTrainCard nextSession={nextSession} hasPlan={hasPlan} />;
@@ -416,7 +423,7 @@ function renderMainCard(
     session.phase === SESSION_PHASES.inExercise ||
     session.phase === SESSION_PHASES.resting
   ) {
-    return <ActiveSessionCard session={session} />;
+    return <ActiveSessionCard session={session} uiState={uiState} />;
   }
   if (session.phase === SESSION_PHASES.completed) {
     return (
@@ -551,7 +558,8 @@ export default function Home(): React.ReactElement {
                 if (value === null) clearSession();
               },
               isLoadingCard ? null : nextSession,
-              hasPlan
+              hasPlan,
+              uiState
             )}
           </Animated.View>
         </Screen>
