@@ -33,11 +33,7 @@ import { ScrollView } from "moti";
 import { useHistoryWeek } from "@/hooks/use-history-week";
 import { useSession } from "@/lib/auth/context";
 import { getRegistrationDate } from "@/lib/storage";
-
-function formatVolumeKg(value: number | null | undefined): string {
-  if (!value || value <= 0) return "—";
-  return `${value.toLocaleString("en-GB", { maximumFractionDigits: 1 })} kg`;
-}
+import { useWeightUnit } from "@/hooks/use-weight-unit";
 
 function formatDuration(value: number | null | undefined): string {
   if (!value || value <= 0) return "—";
@@ -54,6 +50,7 @@ export default function History() {
   const { state, error, refetch } = useActivePlan();
   const { user } = useSession();
   const { colors, tokens } = useTheme();
+  const { formatVolume } = useWeightUnit();
 
   const registrationDate = useMemo(
     () => getRegistrationDate(user ?? null),
@@ -310,7 +307,7 @@ export default function History() {
                   fontWeight: tokens.typography.weights.medium,
                 }}
               >
-                {formatVolumeKg(weekStats?.totalVolumeKg)}
+                {formatVolume(weekStats?.totalVolumeKg)}
               </P>
             </View>
             <View
@@ -431,7 +428,7 @@ export default function History() {
                       style={{ gap: tokens.spacing.xs }}
                     >
                       <P style={{ color: colors.mutedForeground }}>
-                        {formatVolumeKg(session.totalVolumeKg)}
+                        {formatVolume(session.totalVolumeKg)}
                       </P>
                       <ChevronRight size={16} color={colors.primary} />
                     </View>

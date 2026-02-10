@@ -24,6 +24,7 @@ import DraggableFlatList, {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Modal, useModal } from "@/components/ui/modal";
 import uuid from "react-native-uuid";
+import { useWeightUnit } from "@/hooks/use-weight-unit";
 
 function ExerciseListItem({
   exercise,
@@ -43,6 +44,7 @@ function ExerciseListItem({
   onDelete: () => void;
 }): React.ReactElement {
   const { colors, tokens } = useTheme();
+  const { formatWeight } = useWeightUnit();
   return (
     <View
       className="mb-2 flex-row items-center justify-between rounded-lg border p-3"
@@ -79,7 +81,8 @@ function ExerciseListItem({
               fontSize: tokens.typography.sizes.sm,
             }}
           >
-            {exercise.sets} × {exercise.reps} reps · {exercise.weight} kg
+            {exercise.sets} × {exercise.reps} reps ·{" "}
+            {formatWeight(exercise.weight)}
           </P>
           {exercise.supersetGroupId ? (
             <View
@@ -127,6 +130,8 @@ function ExerciseListItem({
   );
 }
 
+const DEFAULT_WEIGHT_KG = 20;
+
 export default function SessionExercisesScreen(): React.ReactElement {
   const router = useRouter();
   const { sessionTemplateId, sessionName } = useLocalSearchParams<{
@@ -134,12 +139,18 @@ export default function SessionExercisesScreen(): React.ReactElement {
     sessionName?: string;
   }>();
   const { colors, tokens } = useTheme();
+  const { formatWeight, fromKg, toKg, weightUnitLabel } = useWeightUnit();
   const [exercises, setExercises] = useState<PlanExercise[]>([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [sets, setSets] = useState("3");
   const [reps, setReps] = useState("10");
-  const [weight, setWeight] = useState("20");
+  const defaultWeightDisplay = fromKg(DEFAULT_WEIGHT_KG);
+  const [weight, setWeight] = useState(() =>
+    defaultWeightDisplay % 1 === 0
+      ? String(defaultWeightDisplay)
+      : defaultWeightDisplay.toFixed(1)
+  );
   const [submitting, setSubmitting] = useState(false);
   const [editingExerciseId, setEditingExerciseId] = useState<string | null>(
     null
@@ -171,19 +182,24 @@ export default function SessionExercisesScreen(): React.ReactElement {
     setName("");
     setSets("3");
     setReps("10");
-    setWeight("20");
+    setWeight(
+      defaultWeightDisplay % 1 === 0
+        ? String(defaultWeightDisplay)
+        : defaultWeightDisplay.toFixed(1)
+    );
     setEditingExerciseId(null);
-  }, []);
+  }, [defaultWeightDisplay]);
 
   const handleSubmit = useCallback(async (): Promise<void> => {
     if (!sessionTemplateId || !name.trim()) return;
     setSubmitting(true);
     try {
+      const weightKg = toKg(parseFloat(weight) || defaultWeightDisplay);
       const payload = {
         name: name.trim(),
         sets: Math.max(1, parseInt(sets, 10) || 3),
         reps: Math.max(1, parseInt(reps, 10) || 10),
-        weight: Math.max(0, parseFloat(weight) || 20),
+        weight: Math.max(0, weightKg),
       };
       if (editingExerciseId) {
         await updateSessionTemplateExercise(editingExerciseId, payload);
@@ -201,6 +217,8 @@ export default function SessionExercisesScreen(): React.ReactElement {
     sets,
     reps,
     weight,
+    defaultWeightDisplay,
+    toKg,
     editingExerciseId,
     load,
     resetForm,
@@ -215,13 +233,21 @@ export default function SessionExercisesScreen(): React.ReactElement {
     [editingExerciseId, load, resetForm]
   );
 
-  const handleEdit = useCallback((exercise: PlanExercise): void => {
-    setEditingExerciseId(exercise.id);
-    setName(exercise.name);
-    setSets(String(exercise.sets));
-    setReps(String(exercise.reps));
-    setWeight(String(exercise.weight));
-  }, []);
+  const handleEdit = useCallback(
+    (exercise: PlanExercise): void => {
+      setEditingExerciseId(exercise.id);
+      setName(exercise.name);
+      setSets(String(exercise.sets));
+      setReps(String(exercise.reps));
+      const displayWeight = fromKg(exercise.weight);
+      setWeight(
+        displayWeight % 1 === 0
+          ? String(displayWeight)
+          : displayWeight.toFixed(1)
+      );
+    },
+    [fromKg]
+  );
 
   const handleCancelEdit = useCallback((): void => {
     resetForm();
@@ -422,11 +448,15 @@ export default function SessionExercisesScreen(): React.ReactElement {
             </FormField>
           </View>
           <View style={{ flex: 1 }}>
-            <FormField label="Weight (kg)">
+            <FormField label={`Weight (${weightUnitLabel})`}>
               <Input
                 value={weight}
                 onChangeText={setWeight}
-                placeholder="20"
+                placeholder={
+                  defaultWeightDisplay % 1 === 0
+                    ? String(defaultWeightDisplay)
+                    : defaultWeightDisplay.toFixed(1)
+                }
                 keyboardType="decimal-pad"
                 editable={!submitting}
               />
@@ -570,7 +600,7 @@ export default function SessionExercisesScreen(): React.ReactElement {
                       fontSize: tokens.typography.sizes.sm,
                     }}
                   >
-                    {item.sets} × {item.reps} reps · {item.weight} kg
+                    {item.sets} × {item.reps} reps · {formatWeight(item.weight)}
                   </P>
                   {item.supersetGroupId ? (
                     <P

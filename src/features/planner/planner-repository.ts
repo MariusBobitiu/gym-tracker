@@ -682,6 +682,26 @@ export async function getLastWeightForExercise(
   return row?.weight ?? null;
 }
 
+/** Last weight and reps used for an exercise (any time). From most recent completed set. */
+export async function getLastWeightAndRepsForExercise(
+  exerciseId: string
+): Promise<{ weight: number; reps: number } | null> {
+  const rows = await db
+    .select({ weight: workoutSets.weight, reps: workoutSets.reps })
+    .from(workoutSets)
+    .innerJoin(workoutSessions, eq(workoutSets.session_id, workoutSessions.id))
+    .where(
+      and(
+        eq(workoutSets.exercise_id, exerciseId),
+        isNotNull(workoutSessions.completed_at)
+      )
+    )
+    .orderBy(desc(workoutSessions.completed_at))
+    .limit(1);
+  const row = rows[0];
+  return row ? { weight: row.weight, reps: row.reps } : null;
+}
+
 /** Last weight used for an exercise in the previous calendar week (Monday–Sunday). */
 export async function getLastWeekWeightForExercise(
   exerciseId: string
@@ -712,6 +732,56 @@ export async function getLastWeekWeightForExercise(
     .limit(1);
   const row = rows[0];
   return row?.weight ?? null;
+}
+
+/**
+ * Weight and reps per exercise from the most recent completed session that used
+ * the same planned session template. Used to suggest weight/reps when starting a workout.
+ * Returns a map exerciseId -> { weight, reps } (first set per exercise from that session).
+ */
+export async function getLastSessionSameWorkoutWeightAndReps(
+  plannedSessionTemplateId: string | null,
+  exerciseIds: string[]
+): Promise<Record<string, { weight: number; reps: number }>> {
+  if (!plannedSessionTemplateId || exerciseIds.length === 0) return {};
+  const sessionRows = await db
+    .select({ id: workoutSessions.id })
+    .from(workoutSessions)
+    .where(
+      and(
+        eq(
+          workoutSessions.planned_session_template_id,
+          plannedSessionTemplateId
+        ),
+        isNotNull(workoutSessions.completed_at)
+      )
+    )
+    .orderBy(desc(workoutSessions.completed_at))
+    .limit(1);
+  const sessionId = sessionRows[0]?.id;
+  if (!sessionId) return {};
+  const sets = await db
+    .select({
+      exerciseId: workoutSets.exercise_id,
+      setNumber: workoutSets.set_number,
+      weight: workoutSets.weight,
+      reps: workoutSets.reps,
+    })
+    .from(workoutSets)
+    .where(
+      and(
+        eq(workoutSets.session_id, sessionId),
+        inArray(workoutSets.exercise_id, exerciseIds)
+      )
+    )
+    .orderBy(workoutSets.set_number);
+  const byExercise: Record<string, { weight: number; reps: number }> = {};
+  for (const row of sets) {
+    if (byExercise[row.exerciseId] == null) {
+      byExercise[row.exerciseId] = { weight: row.weight, reps: row.reps };
+    }
+  }
+  return byExercise;
 }
 
 export async function getExercisesForSessionTemplate(

@@ -206,6 +206,9 @@ export function SetInputStepper({
               color: colors.foreground,
               fontSize: tokens.typography.sizes["2xl"],
               fontWeight: tokens.typography.weights.bold,
+              letterSpacing: 1,
+              minWidth: 40,
+              textAlign: "center",
             }}
           >
             {value}

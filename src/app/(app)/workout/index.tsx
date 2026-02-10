@@ -36,8 +36,8 @@ import {
   completeWorkoutSession,
   getActiveCycleWithSplit,
   getExercisesForSessionTemplate,
-  getLastWeightForExercise,
-  getLastWeekWeightForExercise,
+  getLastSessionSameWorkoutWeightAndReps,
+  getLastWeightAndRepsForExercise,
 } from "@/features/planner/planner-repository";
 import { usePlannerStore } from "@/features/planner/planner-store";
 import type { PlanExercise, WorkoutSession } from "@/types/workout-session";
@@ -120,7 +120,6 @@ function DoneForTodayContent({
 
 export default function Workout(): React.ReactElement {
   const router = useRouter();
-  const { colors } = useTheme();
   const { activePlannedSessionId, setActivePlannedSessionId } =
     usePlannerStore();
   const hasAdvancedPlannerRef = useRef(false);
@@ -225,35 +224,53 @@ export default function Workout(): React.ReactElement {
 
   const [view, setView] = useState<WorkoutView>("list");
   const [showConfetti, setShowConfetti] = useState(false);
-  const [defaultWeightByExerciseId, setDefaultWeightByExerciseId] = useState<
-    Record<string, number>
+  const [suggestedByExerciseId, setSuggestedByExerciseId] = useState<
+    Record<string, { weight: number; reps: number }>
   >({});
 
   useEffect(() => {
     let cancelled = false;
     const load = async (): Promise<void> => {
-      const next: Record<string, number> = {};
+      const exerciseIds = exercises.map((e) => e.id);
+      const lastSessionMap = await getLastSessionSameWorkoutWeightAndReps(
+        activePlannedSessionId,
+        exerciseIds
+      );
+      const next: Record<string, { weight: number; reps: number }> = {};
       for (const ex of exercises) {
         if (cancelled) return;
-        const lastWeek = await getLastWeekWeightForExercise(ex.id);
-        const weight =
-          lastWeek ??
-          (await getLastWeightForExercise(ex.id)) ??
-          DEFAULT_WEIGHT_KG;
-        next[ex.id] = weight;
+        const last = await getLastWeightAndRepsForExercise(ex.id);
+        const fromLastSession = lastSessionMap[ex.id];
+        next[ex.id] =
+          last ??
+          (fromLastSession
+            ? {
+                weight: fromLastSession.weight,
+                reps: fromLastSession.reps,
+              }
+            : {
+                weight: ex.weight ?? DEFAULT_WEIGHT_KG,
+                reps: ex.reps ?? 10,
+              });
       }
-      if (!cancelled) setDefaultWeightByExerciseId(next);
+      if (!cancelled) setSuggestedByExerciseId(next);
     };
     void load();
     return () => {
       cancelled = true;
     };
-  }, [exercises]);
+  }, [exercises, activePlannedSessionId]);
 
   const handleContinue = useCallback(() => setView("log-set"), []);
 
   const handleCompleteSet = useCallback(
     (weight: number, reps: number) => {
+      if (currentExercise) {
+        setSuggestedByExerciseId((prev) => ({
+          ...prev,
+          [currentExercise.id]: { weight, reps },
+        }));
+      }
       const result = completeSetAndAdvance(weight, reps);
       if (result === "done") {
         setView("list");
@@ -267,7 +284,7 @@ export default function Workout(): React.ReactElement {
         setView("rest");
       }
     },
-    [completeSetAndAdvance]
+    [completeSetAndAdvance, currentExercise]
   );
 
   const handleFinishWithConfetti = useCallback(() => setShowConfetti(true), []);
@@ -426,6 +443,7 @@ export default function Workout(): React.ReactElement {
                   exercises={exercises}
                   currentExerciseId={session?.currentExerciseId}
                   completedExerciseIds={completedExerciseIds}
+                  suggestedByExerciseId={suggestedByExerciseId}
                 />
               </>
             )}
@@ -452,7 +470,8 @@ export default function Workout(): React.ReactElement {
               currentExercise={currentExercise}
               onComplete={handleCompleteSet}
               clearAndBack={() => setView("list")}
-              initialWeight={defaultWeightByExerciseId[currentExercise.id]}
+              initialWeight={suggestedByExerciseId[currentExercise.id]?.weight}
+              initialReps={suggestedByExerciseId[currentExercise.id]?.reps}
             />
           </Animated.View>
         )}

@@ -4,4 +4,5 @@ export * from "./use-connectivity-recovery";
 export * from "./use-is-first-time";
 export * from "./use-refresh-token";
 export * from "./use-selected-theme";
+export * from "./use-weight-unit";
 export * from "./use-workout-session";

@@ -19,6 +19,7 @@ import type { ActivePlanWithState } from "@/features/planner/planner-repository"
 import { getWeekRange, startOfWeekMonday } from "@/features/planner/date-utils";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import { useHistoryWeek } from "@/hooks/use-history-week";
+import { useWeightUnit } from "@/hooks/use-weight-unit";
 import { LoadingState } from "@/components/feedback-states";
 
 type StatItem = {
@@ -30,12 +31,6 @@ type LiftItem = {
   name: string;
   detail: string;
 };
-
-function formatVolumeKg(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M kg`;
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}k kg`;
-  return `${value.toLocaleString("en-GB", { maximumFractionDigits: 0 })} kg`;
-}
 
 function formatDurationMins(mins: number): string {
   if (mins < 60) return `${mins}m`;
@@ -361,6 +356,7 @@ export function ProfileScreen(): React.ReactElement {
     loading: thisWeekLoading,
     refetch: refetchThisWeek,
   } = useHistoryWeek(plan, thisWeekStart);
+  const { formatVolume, formatWeight } = useWeightUnit();
 
   const [profileStats, setProfileStats] = useState<{
     totalSessions: number;
@@ -397,7 +393,7 @@ export function ProfileScreen(): React.ReactElement {
       setBestLiftsList(
         lifts.map((l) => ({
           name: l.exerciseName,
-          detail: `${l.weight} kg × ${l.reps}`,
+          detail: `${formatWeight(l.weight)} × ${l.reps}`,
         }))
       );
 
@@ -435,7 +431,7 @@ export function ProfileScreen(): React.ReactElement {
     } finally {
       setLoading(false);
     }
-  }, [plan, thisWeekStart]);
+  }, [plan, thisWeekStart, formatWeight]);
 
   useFocusEffect(
     useCallback(() => {
@@ -467,10 +463,10 @@ export function ProfileScreen(): React.ReactElement {
       { label: "Sessions", value: String(profileStats.totalSessions) },
       {
         label: "Total weight lifted",
-        value: formatVolumeKg(profileStats.totalVolumeKg),
+        value: formatVolume(profileStats.totalVolumeKg),
       },
     ];
-  }, [profileStats]);
+  }, [profileStats, formatVolume]);
 
   const thisWeekCompleted = thisWeekData?.weekStats?.completedCount ?? 0;
   const thisWeekTotal = thisWeekData?.weekData?.totalPlanned ?? 0;

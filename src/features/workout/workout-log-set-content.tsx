@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Button, Card, H1, P, View } from "@/components/ui";
 import { SetInputStepper } from "@/features/workout";
+import { useWeightUnit } from "@/hooks/use-weight-unit";
 import { DEFAULT_WEIGHT_KG } from "@/lib/default-workout";
 import { useTheme } from "@/lib/theme-context";
 import type { PlanExercise } from "@/types/workout-session";
@@ -19,8 +20,10 @@ type WorkoutLogSetContentProps = {
   currentExercise: PlanExercise;
   onComplete: (weight: number, reps: number) => void;
   clearAndBack: () => void;
-  /** Override default weight (e.g. last week / last exercise); falls back to currentExercise.weight ?? 20 */
+  /** Suggested weight (last exercise > last same workout > default). */
   initialWeight?: number;
+  /** Suggested reps (last exercise > last same workout > default). */
+  initialReps?: number;
 };
 
 export function WorkoutLogSetContent({
@@ -31,23 +34,31 @@ export function WorkoutLogSetContent({
   onComplete,
   clearAndBack,
   initialWeight,
+  initialReps,
 }: WorkoutLogSetContentProps): React.ReactElement {
   const { colors } = useTheme();
-  const defaultWeight =
+  const { fromKg, toKg, weightUnitLabel } = useWeightUnit();
+  const defaultWeightKg =
     initialWeight ?? currentExercise?.weight ?? DEFAULT_WEIGHT_KG;
-  const defaultReps = currentExercise?.reps ?? 10;
-  const [weight, setWeight] = useState(defaultWeight);
+  const defaultWeightDisplay = fromKg(defaultWeightKg);
+  const defaultReps = initialReps ?? currentExercise?.reps ?? 10;
+  const [weight, setWeight] = useState(defaultWeightDisplay);
   const [reps, setReps] = useState(defaultReps);
 
   useEffect(() => {
-    setWeight(defaultWeight);
+    setWeight(defaultWeightDisplay);
     setReps(defaultReps);
-  }, [defaultWeight, defaultReps, currentSetNumber, currentExercise?.id]);
+  }, [
+    defaultWeightDisplay,
+    defaultReps,
+    currentSetNumber,
+    currentExercise?.id,
+  ]);
 
   return (
     <>
       <View>
-        <H1 style={{ color: colors.primary }}>{exerciseName}</H1>
+        <H1 style={{ color: colors.foreground }}>{exerciseName}</H1>
         <P style={{ color: colors.mutedForeground, marginTop: 4 }}>
           Set {currentSetNumber} of {setsTotal || 1}
         </P>
@@ -55,19 +66,27 @@ export function WorkoutLogSetContent({
           Target: {currentExercise.reps} reps
         </P>
       </View>
-      <View className="mt-8 flex-1">
+      <View className="mt-6 flex-1">
         <Card className="p-5" style={{ backgroundColor: colors.muted }}>
           <View className="mb-2 flex-row items-center justify-between">
             <P
               style={{
-                color: colors.primary,
+                color: colors.foreground,
                 fontWeight: "600",
                 letterSpacing: 1,
               }}
             >
               WEIGHT
             </P>
-            <P style={{ color: colors.primary, fontSize: 16 }}>kg</P>
+            <P
+              style={{
+                color: colors.mutedForeground,
+                fontSize: 14,
+                marginBottom: 2,
+              }}
+            >
+              {weightUnitLabel}
+            </P>
           </View>
           <View className="mb-6 items-center py-6">
             <SetInputStepper
@@ -76,8 +95,8 @@ export function WorkoutLogSetContent({
               min={WEIGHT_MIN}
               max={WEIGHT_MAX}
               step={WEIGHT_STEP}
-              // unit="kg"
-              pickerTitle="Weight (kg)"
+              // unit={weightUnitLabel}
+              pickerTitle={`Weight (${weightUnitLabel})`}
             />
           </View>
         </Card>
@@ -86,7 +105,7 @@ export function WorkoutLogSetContent({
           <P
             className="mb-2"
             style={{
-              color: colors.primary,
+              color: colors.foreground,
               fontWeight: "600",
               letterSpacing: 1,
             }}
@@ -119,7 +138,7 @@ export function WorkoutLogSetContent({
             />
           }
           iconPlacement="left"
-          onPress={() => onComplete(weight, reps)}
+          onPress={() => onComplete(toKg(weight), reps)}
           accessibilityLabel="Complete set"
         />
         <Button label="Go back" variant="link" onPress={() => clearAndBack()} />

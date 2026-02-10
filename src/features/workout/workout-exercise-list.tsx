@@ -4,25 +4,33 @@ import { useTheme } from "@/lib/theme-context";
 import { cn } from "@/lib/cn";
 import { CheckCircle, ChevronRight } from "lucide-react-native";
 import type { PlanExercise } from "@/types/workout-session";
+import { useWeightUnit } from "@/hooks/use-weight-unit";
 
 type WorkoutExerciseListProps = {
   exercises: PlanExercise[];
   currentExerciseId: string | undefined;
   completedExerciseIds?: string[];
+  /** Suggested weight & reps (last exercise > last same workout > default); shown in list */
+  suggestedByExerciseId?: Record<string, { weight: number; reps: number }>;
 };
 
 export function WorkoutExerciseList({
   exercises,
   currentExerciseId,
   completedExerciseIds = [],
+  suggestedByExerciseId = {},
 }: WorkoutExerciseListProps): React.ReactElement {
   const { colors, tokens } = useTheme();
+  const { formatWeight } = useWeightUnit();
   return (
     <View className="flex-1">
       <Card className="mt-16" style={{ padding: 0 }}>
         {exercises.map((item, index) => {
           const isActive = currentExerciseId === item.id;
           const isCompleted = completedExerciseIds.includes(item.id);
+          const suggested = suggestedByExerciseId[item.id];
+          const displayWeight = suggested?.weight ?? item.weight;
+          const displayReps = suggested?.reps ?? item.reps;
           return (
             <View
               key={item.id}
@@ -78,7 +86,7 @@ export function WorkoutExerciseList({
                     fontSize: tokens.typography.sizes.sm,
                   }}
                 >
-                  {item.reps} reps
+                  {displayReps} reps
                 </Text>
                 <Text
                   style={{
@@ -87,7 +95,7 @@ export function WorkoutExerciseList({
                     fontSize: tokens.typography.sizes.sm,
                   }}
                 >
-                  {item.weight} lbs
+                  {formatWeight(displayWeight)}
                 </Text>
                 <ChevronRight size={16} color={colors.mutedForeground} />
               </View>

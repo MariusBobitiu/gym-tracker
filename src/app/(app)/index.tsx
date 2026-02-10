@@ -36,6 +36,7 @@ import {
 import { startOfWeekMonday } from "@/features/planner/date-utils";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import { useHistoryWeek } from "@/hooks/use-history-week";
+import { useWeightUnit } from "@/hooks/use-weight-unit";
 import type { HistorySessionView } from "@/types/history";
 
 type WeekDot = {
@@ -56,12 +57,6 @@ const WEEK_DOTS: WeekDot[] = [
   { id: "sun", label: "S", dayOfWeek: 0 },
 ];
 
-function formatVolumeKg(value: number | null | undefined): string {
-  if (!value || value <= 0) return "—";
-  if (value >= 1000) return `${(value / 1000).toFixed(1)}k kg`;
-  return `${value.toLocaleString("en-GB", { maximumFractionDigits: 1 })} kg`;
-}
-
 function WeekSummary({
   historySessions,
   weekStats,
@@ -76,6 +71,7 @@ function WeekSummary({
   totalPlanned: number;
 }): React.ReactElement {
   const { colors, tokens, isDark } = useTheme();
+  const { formatVolume } = useWeightUnit();
   const completedDays = useMemo(() => {
     const set = new Set<number>();
     for (const s of historySessions) {
@@ -199,7 +195,7 @@ function WeekSummary({
           className="text-xs font-medium"
           style={{ color: colors.mutedForeground, opacity: 0.8 }}
         >
-          {formatVolumeKg(weekStats?.totalVolumeKg)}
+          {formatVolume(weekStats?.totalVolumeKg)}
         </Text>
       </View>
     </View>

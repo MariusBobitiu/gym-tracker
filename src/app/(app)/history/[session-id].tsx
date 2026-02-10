@@ -7,12 +7,8 @@ import { ErrorState, LoadingState } from "@/components/feedback-states";
 import { H3, P } from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
 import { useHistorySessionDetail } from "@/hooks/use-history-session-detail";
+import { useWeightUnit } from "@/hooks/use-weight-unit";
 import type { WorkoutSessionDetail } from "@/features/planner/planner-repository";
-
-function formatVolumeKg(value: number | null | undefined): string {
-  if (!value || value <= 0) return "—";
-  return `${value.toLocaleString("en-GB", { maximumFractionDigits: 1 })} kg`;
-}
 
 function formatDuration(value: number | null | undefined): string {
   if (value == null) return "—";
@@ -28,6 +24,7 @@ function HistorySessionSummary({
   session,
 }: HistorySessionSummaryProps): React.ReactElement {
   const { colors, tokens } = useTheme();
+  const { formatVolume } = useWeightUnit();
 
   return (
     <View className="px-4 pt-4">
@@ -49,7 +46,7 @@ function HistorySessionSummary({
               fontWeight: tokens.typography.weights.medium,
             }}
           >
-            {formatVolumeKg(session.totalVolumeKg)}
+            {formatVolume(session.totalVolumeKg)}
           </P>
         </View>
         <View className="flex-row items-center justify-between">
@@ -98,6 +95,7 @@ function HistorySessionSets({
   sets,
 }: HistorySessionSetsProps): React.ReactElement {
   const { colors, tokens } = useTheme();
+  const { formatWeight } = useWeightUnit();
 
   return (
     <View className="mt-6 px-4" style={{ gap: tokens.spacing.sm }}>
@@ -129,7 +127,7 @@ function HistorySessionSets({
                 fontWeight: tokens.typography.weights.medium,
               }}
             >
-              {set.weight} kg • {set.reps} reps
+              {formatWeight(set.weight)} • {set.reps} reps
             </P>
           </View>
         ))
