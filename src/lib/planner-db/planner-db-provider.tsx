@@ -65,67 +65,51 @@ export function PlannerDbProvider({
   );
 }
 
-function PlannerDbProviderInner({
+type MigrationRunnerProps = {
+  dbName: string;
+  children: React.ReactNode;
+  onRecoveryRetry: () => void;
+  hasRetried: boolean;
+};
+
+/**
+ * Runs useMigrations. When migration fails with "table already exists",
+ * recovers and triggers remount (via onRecoveryRetry) so migrations run again.
+ */
+function MigrationRunner({
   dbName,
   children,
-}: PlannerDbProviderInnerProps): React.ReactElement {
-  const [recoveryCompleted, setRecoveryCompleted] = useState(false);
-  const [recoveryError, setRecoveryError] = useState<Error | null>(null);
+  onRecoveryRetry,
+  hasRetried,
+}: MigrationRunnerProps): React.ReactElement {
   const activeDb = useMemo(() => setActivePlannerDbName(dbName), [dbName]);
   const { success, error } = useMigrations(activeDb, migrationsConfig);
+  const [recoveryFailed, setRecoveryFailed] = useState(false);
   const { colors } = useTheme();
-
-  // Check for corrupted migration state and recover BEFORE migrations run
-  useEffect(() => {
-    async function checkAndRecover(): Promise<void> {
-      if (recoveryCompleted) return;
-
-      try {
-        const needsRecovery = await needsMigrationRecovery();
-        if (needsRecovery) {
-          console.log(
-            "[Migration Recovery] Detected corrupted state, attempting recovery..."
-          );
-          await recoverMigrationState();
-        }
-        setRecoveryCompleted(true);
-      } catch (e) {
-        console.error("[Migration Recovery] Recovery check failed:", e);
-        setRecoveryError(e as Error);
-        setRecoveryCompleted(true);
-      }
-    }
-
-    checkAndRecover();
-  }, [recoveryCompleted]);
 
   // Handle migration errors that indicate table already exists (fallback recovery)
   useEffect(() => {
     async function handleMigrationError(): Promise<void> {
       if (!error || !isTableExistsError(error)) return;
+      if (hasRetried || recoveryFailed) return;
 
       console.log(
         "[Migration Recovery] Migration failed with table exists error, attempting recovery..."
       );
       try {
         await recoverMigrationState();
-        // Recovery completed, but migrations hook won't retry automatically
-        // User needs to restart app, or we could show a "Retry" button
-        setRecoveryError(
-          new Error(
-            "Database was recovered. Please close and reopen the app to continue."
-          )
+        console.log(
+          "[Migration Recovery] Recovery complete, retrying migrations..."
         );
+        onRecoveryRetry();
       } catch (e) {
         console.error("[Migration Recovery] Recovery failed:", e);
-        setRecoveryError(e as Error);
+        setRecoveryFailed(true);
       }
     }
 
-    if (error && recoveryCompleted) {
-      handleMigrationError();
-    }
-  }, [error, recoveryCompleted]);
+    handleMigrationError();
+  }, [error, hasRetried, recoveryFailed, onRecoveryRetry]);
 
   useEffect(() => {
     if (typeof __DEV__ !== "undefined" && __DEV__ && success) {
@@ -133,35 +117,9 @@ function PlannerDbProviderInner({
     }
   }, [success]);
 
-  // Block rendering until recovery check completes
-  if (!recoveryCompleted) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: colors.mutedForeground }}>
-          Preparing database...
-        </Text>
-      </View>
-    );
-  }
-
-  if (recoveryError) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          padding: 24,
-        }}
-      >
-        <Text style={{ color: colors.destructive, textAlign: "center" }}>
-          Database recovery failed: {recoveryError.message}
-        </Text>
-      </View>
-    );
-  }
-
-  if (error) {
+  const showError =
+    error && (hasRetried || recoveryFailed || !isTableExistsError(error));
+  if (showError) {
     return (
       <View
         style={{
@@ -187,4 +145,81 @@ function PlannerDbProviderInner({
   }
 
   return <>{children}</>;
+}
+
+function PlannerDbProviderInner({
+  dbName,
+  children,
+}: PlannerDbProviderInnerProps): React.ReactElement {
+  const [recoveryCompleted, setRecoveryCompleted] = useState(false);
+  const [recoveryError, setRecoveryError] = useState<Error | null>(null);
+  const [migrationRetryKey, setMigrationRetryKey] = useState(0);
+  const { colors } = useTheme();
+
+  const handleRecoveryRetry = React.useCallback(() => {
+    setMigrationRetryKey((k) => k + 1);
+  }, []);
+
+  // Check for corrupted migration state and recover BEFORE migrations run
+  useEffect(() => {
+    async function checkAndRecover(): Promise<void> {
+      if (recoveryCompleted) return;
+
+      try {
+        const needsRecovery = await needsMigrationRecovery();
+        if (needsRecovery) {
+          console.log(
+            "[Migration Recovery] Detected corrupted state, attempting recovery..."
+          );
+          await recoverMigrationState();
+        }
+        setRecoveryCompleted(true);
+      } catch (e) {
+        console.error("[Migration Recovery] Recovery check failed:", e);
+        setRecoveryError(e as Error);
+        setRecoveryCompleted(true);
+      }
+    }
+
+    checkAndRecover();
+  }, [recoveryCompleted]);
+
+  // Block rendering until recovery check completes
+  if (!recoveryCompleted) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: colors.mutedForeground }}>
+          Preparing database...
+        </Text>
+      </View>
+    );
+  }
+
+  if (recoveryError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: 24,
+        }}
+      >
+        <Text style={{ color: colors.destructive, textAlign: "center" }}>
+          Database setup failed: {recoveryError.message}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <MigrationRunner
+      key={migrationRetryKey}
+      dbName={dbName}
+      onRecoveryRetry={handleRecoveryRetry}
+      hasRetried={migrationRetryKey > 0}
+    >
+      {children}
+    </MigrationRunner>
+  );
 }
