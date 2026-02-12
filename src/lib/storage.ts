@@ -14,11 +14,11 @@ export type PlannerNextWorkoutState = {
   sessionIndex: number;
 } | null;
 
-export const storage = createMMKV({ id: "gym-tracker" });
+export const storage = createMMKV({ id: "vixe" });
 
 const ENCRYPTION_KEY = process.env.EXPO_PUBLIC_MMKV_ENCRYPTION_KEY;
 export const secureStorage = ENCRYPTION_KEY
-  ? createMMKV({ id: "gym-tracker-secure", encryptionKey: ENCRYPTION_KEY })
+  ? createMMKV({ id: "vixe-secure", encryptionKey: ENCRYPTION_KEY })
   : null;
 
 export type WeightUnit = "kg" | "lb";
