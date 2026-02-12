@@ -16,8 +16,8 @@ import {
 import { triggerHaptic } from "@/lib/haptics";
 import { getAppLogs } from "@/lib/app-logger";
 
-const SUPPORT_EMAIL = "support@example.com";
-const BUG_SUBJECT = "Gym Tracker – Bug report";
+const SUPPORT_EMAIL = "support@vixe.app";
+const BUG_SUBJECT = "Vixe App - Bug report";
 
 export default function ReportBugSettings(): React.ReactElement {
   const { colors, tokens } = useTheme();

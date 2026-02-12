@@ -213,13 +213,13 @@ export default function Settings(): React.ReactElement {
       >
         <UIView className="gap-4 px-4 pb-8">
           <Text style={{ color: colors.mutedForeground }}>
-            Email us at support@example.com or open our help center.
+            Email us at support@vixe.app or open our help center.
           </Text>
           <Button
             label="Open support email"
             variant="outline"
             onPress={() => {
-              Linking.openURL("mailto:support@example.com");
+              Linking.openURL("mailto:support@vixe.app");
               contactSupportModal.dismiss();
             }}
           />

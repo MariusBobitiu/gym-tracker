@@ -1,6 +1,6 @@
-# Gym Tracker RN Starter
+# Vixe App
 
-Starter template for a React Native app powered by Expo Router, NativeWind, and theme-aware UI primitives.
+Vixe App is a mobile app for tracking your workouts and progress.
 
 ## Setup
 
