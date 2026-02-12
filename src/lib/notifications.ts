@@ -79,3 +79,45 @@ export async function getScheduledWorkoutReminder(): Promise<Notifications.Notif
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   return scheduled.find((n) => n.identifier === WORKOUT_REMINDER_ID) ?? null;
 }
+
+export async function setAppBadgeCount(count: number): Promise<void> {
+  await Notifications.setBadgeCountAsync(count);
+}
+
+export async function clearAppBadge(): Promise<void> {
+  await Notifications.setBadgeCountAsync(0);
+}
+
+export async function updateBadgeFromPresentedNotifications(): Promise<void> {
+  const presented = await Notifications.getPresentedNotificationsAsync();
+  await Notifications.setBadgeCountAsync(presented.length);
+}
+
+export async function getPresentedNotifications(): Promise<
+  Notifications.Notification[]
+> {
+  return Notifications.getPresentedNotificationsAsync();
+}
+
+export async function dismissNotification(identifier: string): Promise<void> {
+  await Notifications.dismissNotificationAsync(identifier);
+}
+
+export async function sendTestNotification(): Promise<void> {
+  const granted = await requestNotificationPermissions();
+  if (!granted) return;
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("workout-reminders", {
+      name: "Workout reminders",
+      importance: Notifications.AndroidImportance.HIGH,
+    });
+  }
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Test notification",
+      body: "Time to train — don't skip your workout today!",
+      channelId: "workout-reminders",
+    },
+    trigger: null,
+  });
+}
