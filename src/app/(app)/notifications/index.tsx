@@ -8,6 +8,7 @@ import { Button, P, View as UIView } from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
 import type { Notification } from "expo-notifications";
 import {
+  cancelWorkoutReminder,
   dismissNotification,
   getPresentedNotifications,
   getScheduledWorkoutReminder,
@@ -63,10 +64,10 @@ export default function NotificationsScreen(): React.ReactElement {
     setWorkoutReminders(prefs.workoutReminders);
     const reminder = await getScheduledWorkoutReminder();
     setScheduledReminder(reminder != null);
-    const { status } = await import("expo-notifications").then((n) =>
-      n.getPermissionsAsync()
-    );
+
+    const { status } = await Notifications.getPermissionsAsync();
     setPermissionGranted(status === "granted");
+
     const presented = await getPresentedNotifications();
     setPresentedNotifications(presented);
   }, []);
@@ -99,7 +100,6 @@ export default function NotificationsScreen(): React.ReactElement {
           await scheduleWorkoutReminder();
         }
       } else {
-        const { cancelWorkoutReminder } = await import("@/lib/notifications");
         await cancelWorkoutReminder();
       }
       await refreshStatus();
@@ -160,7 +160,13 @@ export default function NotificationsScreen(): React.ReactElement {
       safeAreaEdges={["bottom", "top"]}
       contentContainerClassName="pb-24 px-4"
     >
-      <Stack.Screen options={headerOptions({ title: "Notifications" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Notifications",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Notifications" />
 
       <UIView className="gap-6 pt-4">

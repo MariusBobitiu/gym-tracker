@@ -142,6 +142,19 @@ export default function Settings(): React.ReactElement {
           />
         </SettingsSection>
 
+        <SettingsSection title="LEGAL">
+          <SettingsRow
+            label="Privacy Policy"
+            href="/settings/privacy"
+            showDivider
+          />
+          <SettingsRow
+            label="Terms & Conditions"
+            href="/settings/terms"
+            showDivider={false}
+          />
+        </SettingsSection>
+
         {typeof __DEV__ !== "undefined" && __DEV__ && (
           <UIView className="gap-2">
             <P
