@@ -1,11 +1,12 @@
 import { View } from "react-native";
 
-import { Dumbbell } from "lucide-react-native";
+// import { Dumbbell } from "lucide-react-native";
 import { useTheme } from "@/lib/theme-context";
 import { AppleSignInButton } from "@/components/auth/apple-sign-in-button";
 import { Button, H1, P } from "@/components/ui";
 import { router } from "expo-router";
 import { Screen } from "@/components/screen";
+import { Image } from "expo-image";
 
 export default function SignIn() {
   const { colors } = useTheme();
@@ -16,12 +17,18 @@ export default function SignIn() {
       className="flex items-center justify-center pb-16"
     >
       <View className="flex-1 items-center justify-center">
-        <Dumbbell
+        <Image
+          source={require("../../../assets/icon.png")}
+          style={{ width: 128, height: 128 }}
+          contentFit="contain"
+          contentPosition="center"
+        />
+        {/* <Dumbbell
           size={96}
           color={colors.primary}
           style={{ marginBottom: 12 }}
           className="rotate-45"
-        />
+        /> */}
         <H1 style={{ fontSize: 48, lineHeight: 56 }}>Welcome</H1>
         <P
           className="px-4 text-center"

@@ -9,7 +9,10 @@ import { useTheme } from "@/lib/theme-context";
 import {
   copyVariantSessionsAndExercises,
   createCustomSplit,
+  getActivePlan,
   getSplitBySplitId,
+  getRotationType,
+  updateSessionTemplateName,
   updateSplitWithVariantsAndSessions,
   type CustomVariantInput,
 } from "@/features/planner/planner-repository";
@@ -48,15 +51,22 @@ export default function SplitBuilderScreen() {
       }
       if (showSpinner) setLoading(true);
       try {
-        const data = await getSplitBySplitId(splitId);
+        const [data, plan] = await Promise.all([
+          getSplitBySplitId(splitId),
+          getActivePlan(),
+        ]);
         if (!data) return;
+        const isSameEveryWeek =
+          plan?.split.id === splitId &&
+          getRotationType(plan.cycle.rotation) === "SAME_EVERY_WEEK";
         setSplitName(data.split.name);
         const sessionsA = data.sessionsByVariant["A"] ?? [];
         setVariantA(
           sessionsA.length > 0 ? sessionsA.map((s) => s.name) : ["Session 1"]
         );
         setSessionIdsA(sessionsA.length > 0 ? sessionsA.map((s) => s.id) : []);
-        const hasB = data.variants.some((v) => v.key === "B");
+        const hasB =
+          !isSameEveryWeek && data.variants.some((v) => v.key === "B");
         const sessionsB = data.sessionsByVariant["B"] ?? [];
         setVariantB(
           hasB
@@ -68,7 +78,8 @@ export default function SplitBuilderScreen() {
         setSessionIdsB(
           hasB && sessionsB.length > 0 ? sessionsB.map((s) => s.id) : []
         );
-        const hasC = data.variants.some((v) => v.key === "C");
+        const hasC =
+          !isSameEveryWeek && data.variants.some((v) => v.key === "C");
         const sessionsC = data.sessionsByVariant["C"] ?? [];
         setVariantC(
           hasC
@@ -264,6 +275,21 @@ export default function SplitBuilderScreen() {
       }
       setIsSubmitting(true);
       try {
+        const sourceNames = (
+          from === "A"
+            ? variantA
+            : from === "B"
+              ? (variantB ?? [])
+              : (variantC ?? [])
+        ) as string[];
+        const sourceIds =
+          from === "A" ? sessionIdsA : from === "B" ? sessionIdsB : sessionIdsC;
+        for (let i = 0; i < sourceIds.length; i += 1) {
+          const id = sourceIds[i];
+          if (id) {
+            await updateSessionTemplateName(id, sourceNames[i] ?? "");
+          }
+        }
         const copied = await copyVariantSessionsAndExercises(splitId, from, to);
         if (!copied) {
           copyVariantNames(from, to);
@@ -274,7 +300,19 @@ export default function SplitBuilderScreen() {
         setIsSubmitting(false);
       }
     },
-    [copyVariantNames, hasUnsavedSessions, isEdit, loadSplit, splitId]
+    [
+      copyVariantNames,
+      hasUnsavedSessions,
+      isEdit,
+      loadSplit,
+      sessionIdsA,
+      sessionIdsB,
+      sessionIdsC,
+      splitId,
+      variantA,
+      variantB,
+      variantC,
+    ]
   );
 
   if (loading) {

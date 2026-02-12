@@ -22,7 +22,7 @@
             "image": "./assets/splash-icon.png",
             "backgroundColor": "#0B0D10"
           },
-          "imageWidth": 200
+          "imageWidth": 400
         }
       ]
     ],
@@ -31,7 +31,11 @@
       "tsconfigPaths": true
     },
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": {
+      "light": "./assets/icon-light.png",
+      "dark": "./assets/icon-dark.png",
+      "tinted": "./assets/icon-tinted.png"
+    },
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
@@ -60,7 +64,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "f0ea3ba6-6ef0-478b-9132-3ebf2319efe5"
+        "projectId": "56a6329c-de49-42c7-b31d-6a59f3078edd"
       }
     }
   }

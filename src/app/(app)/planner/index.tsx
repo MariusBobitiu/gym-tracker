@@ -44,14 +44,16 @@ import { LoadingState } from "@/components/feedback-states";
 import { PlannerMonthCalendar } from "@/components/planner-month-calendar";
 import { getHitSlop, resolveAccessibilityLabel } from "@/lib/accessibility";
 import { useReducedMotion } from "@/lib/motion";
+import { cn } from "@/lib/cn";
 
-function PlanPill() {
+function PlanPill({ className = "" }: { className?: string }) {
   const router = useRouter();
   const { colors } = useTheme();
   return (
     <Pressable
       onPress={() => router.push({ pathname: "/planner/plan" } as never)}
       hitSlop={getHitSlop()}
+      className={cn("rounded-full p-2", className)}
     >
       <Settings2 size={28} color={colors.foreground} />
     </Pressable>
@@ -238,14 +240,10 @@ export default function Planner() {
     setIsCalendarOpen((prev) => !prev);
   }, []);
 
-  const handleCalendarDayPress = useCallback(
-    (date: Date): void => {
-      const weekStart = startOfWeekMonday(date);
-      if (weekStart.getTime() < thisWeekStart.getTime()) return;
-      setViewedWeekStart(weekStart);
-    },
-    [thisWeekStart]
-  );
+  const handleCalendarDayPress = useCallback((date: Date): void => {
+    const weekStart = startOfWeekMonday(date);
+    setViewedWeekStart(weekStart);
+  }, []);
 
   const handleSessionPress = (session: PlannedSessionView) => {
     setSelectedSession(session);

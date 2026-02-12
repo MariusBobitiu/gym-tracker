@@ -111,10 +111,9 @@ export default function History() {
   }, [viewedMonthStart, canGoToNextMonth]);
 
   const handleCalendarDayPress = useCallback((date: Date): void => {
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    if (date.getTime() > today.getTime()) return;
     const weekStart = startOfWeekMonday(date);
+    const thisWeekStart = startOfWeekMonday(new Date());
+    if (weekStart.getTime() > thisWeekStart.getTime()) return;
     setViewedWeekStart(weekStart);
     setViewedMonthStart(startOfMonth(weekStart));
   }, []);

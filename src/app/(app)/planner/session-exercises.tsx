@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Stack, useRouter, useLocalSearchParams } from "expo-router";
 import { Pressable, View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
@@ -26,8 +32,25 @@ import { Modal, useModal } from "@/components/ui/modal";
 import uuid from "react-native-uuid";
 import { useWeightUnit } from "@/hooks/use-weight-unit";
 
+function supersetGroupLabels(
+  exercises: PlanExercise[]
+): Record<string, string> {
+  const order: string[] = [];
+  for (const ex of exercises) {
+    if (ex.supersetGroupId && !order.includes(ex.supersetGroupId)) {
+      order.push(ex.supersetGroupId);
+    }
+  }
+  const labels: Record<string, string> = {};
+  order.forEach((id, i) => {
+    labels[id] = `Superset ${i + 1}`;
+  });
+  return labels;
+}
+
 function ExerciseListItem({
   exercise,
+  supersetLabel,
   isEditing,
   isActive,
   isBusy,
@@ -36,6 +59,7 @@ function ExerciseListItem({
   onDelete,
 }: {
   exercise: PlanExercise;
+  supersetLabel?: string;
   isEditing: boolean;
   isActive: boolean;
   isBusy: boolean;
@@ -51,6 +75,8 @@ function ExerciseListItem({
       style={{
         borderColor: isActive ? `${colors.foreground}40` : colors.muted,
         backgroundColor: colors.card,
+        borderLeftWidth: supersetLabel ? 4 : undefined,
+        borderLeftColor: supersetLabel ? colors.primary : undefined,
       }}
     >
       <View
@@ -84,7 +110,7 @@ function ExerciseListItem({
             {exercise.sets} × {exercise.reps} reps ·{" "}
             {formatWeight(exercise.weight)}
           </P>
-          {exercise.supersetGroupId ? (
+          {supersetLabel ? (
             <View
               className="mt-1 self-start rounded-full px-2 py-0.5"
               style={{ backgroundColor: colors.muted }}
@@ -95,7 +121,7 @@ function ExerciseListItem({
                   fontSize: tokens.typography.sizes.xs,
                 }}
               >
-                Superset
+                {supersetLabel}
               </P>
             </View>
           ) : null}
@@ -159,6 +185,7 @@ export default function SessionExercisesScreen(): React.ReactElement {
     Record<string, boolean>
   >({});
   const supersetModal = useModal();
+  const nameInputRef = useRef<React.ComponentRef<typeof Input>>(null);
 
   const load = useCallback(
     async (showSpinner = true): Promise<void> => {
@@ -208,6 +235,7 @@ export default function SessionExercisesScreen(): React.ReactElement {
       }
       await load(false);
       resetForm();
+      setTimeout(() => nameInputRef.current?.focus(), 100);
     } finally {
       setSubmitting(false);
     }
@@ -245,6 +273,7 @@ export default function SessionExercisesScreen(): React.ReactElement {
           ? String(displayWeight)
           : displayWeight.toFixed(1)
       );
+      setTimeout(() => nameInputRef.current?.focus(), 100);
     },
     [fromKg]
   );
@@ -345,10 +374,20 @@ export default function SessionExercisesScreen(): React.ReactElement {
     [load, persistOrder]
   );
 
+  const supersetLabels = useMemo(
+    () => supersetGroupLabels(exercises),
+    [exercises]
+  );
+
   const renderItem = useCallback(
     ({ item, drag, isActive }: RenderItemParams<PlanExercise>) => (
       <ExerciseListItem
         exercise={item}
+        supersetLabel={
+          item.supersetGroupId
+            ? supersetLabels[item.supersetGroupId]
+            : undefined
+        }
         isEditing={editingExerciseId === item.id}
         isActive={isActive}
         isBusy={submitting}
@@ -357,22 +396,16 @@ export default function SessionExercisesScreen(): React.ReactElement {
         onDelete={() => void handleDelete(item.id)}
       />
     ),
-    [editingExerciseId, handleEdit, handleDelete, submitting]
+    [editingExerciseId, handleEdit, handleDelete, submitting, supersetLabels]
   );
 
   const title = sessionName ?? "Session exercises";
-  const header = useMemo(
+  const footer = useMemo(
     () => (
-      <View
-        className="mb-3 rounded-lg border p-3"
-        style={{ borderColor: colors.border, backgroundColor: colors.card }}
-      >
-        <View className="flex-row items-center justify-between">
-          <P style={{ fontWeight: tokens.typography.weights.semibold }}>
-            Supersets
-          </P>
+      <View className="mt-4 border-t" style={{ borderColor: colors.border }}>
+        <View className="mb-3 flex-row items-center justify-between">
           <Button
-            label="Manage"
+            label="Manage supersets"
             variant="ghost"
             size="sm"
             onPress={() => {
@@ -383,34 +416,6 @@ export default function SessionExercisesScreen(): React.ReactElement {
           />
         </View>
         <P
-          style={{
-            color: colors.mutedForeground,
-            fontSize: tokens.typography.sizes.sm,
-          }}
-        >
-          Group exercises to perform back-to-back.
-        </P>
-      </View>
-    ),
-    [
-      clearSupersetSelection,
-      colors.border,
-      colors.card,
-      colors.mutedForeground,
-      exercises.length,
-      submitting,
-      supersetModal,
-      tokens.typography.sizes.sm,
-      tokens.typography.weights.semibold,
-    ]
-  );
-  const footer = useMemo(
-    () => (
-      <View
-        className="mt-4 border-t pb-12 pt-4"
-        style={{ borderColor: colors.border }}
-      >
-        <P
           className="mb-2"
           style={{ fontWeight: tokens.typography.weights.semibold }}
         >
@@ -418,6 +423,7 @@ export default function SessionExercisesScreen(): React.ReactElement {
         </P>
         <FormField label="Name">
           <Input
+            ref={nameInputRef}
             value={name}
             onChangeText={setName}
             placeholder="e.g. Bench Press"
@@ -492,17 +498,22 @@ export default function SessionExercisesScreen(): React.ReactElement {
       </View>
     ),
     [
+      clearSupersetSelection,
       colors.border,
       colors.foreground,
       editingExerciseId,
+      exercises.length,
       handleCancelEdit,
       handleSubmit,
       name,
       reps,
       sets,
       submitting,
+      supersetModal,
       tokens.typography.weights.semibold,
       weight,
+      defaultWeightDisplay,
+      weightUnitLabel,
     ]
   );
 
@@ -560,10 +571,10 @@ export default function SessionExercisesScreen(): React.ReactElement {
           paddingVertical: tokens.spacing.md,
           paddingBottom: tokens.spacing.lg,
         }}
-        ListHeaderComponent={header}
+        ListHeaderComponent={null}
         ListFooterComponent={footer}
         style={{
-          marginBottom: 48,
+          marginBottom: 96,
         }}
       />
       <Modal ref={supersetModal.ref} title="Supersets" snapPoints={["60%"]}>
@@ -590,26 +601,35 @@ export default function SessionExercisesScreen(): React.ReactElement {
                 }}
               >
                 <Checkbox.Icon checked={isSelected} />
-                <View className="min-w-0 flex-1">
-                  <P style={{ fontWeight: tokens.typography.weights.semibold }}>
+                <View className="ml-4 min-w-0 flex-1">
+                  <P
+                    style={{
+                      fontWeight: tokens.typography.weights.semibold,
+                      margin: 0,
+                      lineHeight: 20,
+                    }}
+                  >
                     {item.name}
                   </P>
                   <P
                     style={{
                       color: colors.mutedForeground,
                       fontSize: tokens.typography.sizes.sm,
+                      margin: 0,
+                      lineHeight: 20,
                     }}
                   >
                     {item.sets} × {item.reps} reps · {formatWeight(item.weight)}
                   </P>
-                  {item.supersetGroupId ? (
+                  {item.supersetGroupId &&
+                  supersetLabels[item.supersetGroupId] ? (
                     <P
                       style={{
                         color: colors.mutedForeground,
                         fontSize: tokens.typography.sizes.xs,
                       }}
                     >
-                      In superset
+                      {supersetLabels[item.supersetGroupId]}
                     </P>
                   ) : null}
                 </View>

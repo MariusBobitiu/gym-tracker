@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Dimensions, StyleSheet } from "react-native";
+import { Alert, Dimensions, StyleSheet } from "react-native";
 import Animated, { Easing, FadeIn, FadeInDown } from "react-native-reanimated";
 import { Stack, useRouter } from "expo-router";
 import ConfettiCannon from "react-native-confetti-cannon";
@@ -214,6 +214,7 @@ export default function Workout(): React.ReactElement {
     currentExercise,
     completeSetAndAdvance,
     handleFinish,
+    clearAndBack,
   } = useWorkoutSession({
     onComplete: advancePlannerState,
     exercises: isLoadingSessionExercises ? undefined : exercises,
@@ -362,6 +363,21 @@ export default function Workout(): React.ReactElement {
 
   const handleSkipRest = useCallback(() => setView("log-set"), []);
 
+  const handleCancelWorkout = useCallback(() => {
+    Alert.alert(
+      "Cancel workout?",
+      "This will discard your workout. No progress will be saved.",
+      [
+        { text: "Keep going", style: "cancel" },
+        {
+          text: "Cancel workout",
+          style: "destructive",
+          onPress: clearAndBack,
+        },
+      ]
+    );
+  }, [clearAndBack]);
+
   const sessionPhase = session?.phase;
   useEffect(() => {
     if (!sessionPhase) return;
@@ -465,6 +481,7 @@ export default function Workout(): React.ReactElement {
               onDone={handleFinishWithConfetti}
               onContinue={handleContinue}
               onFinish={handleFinish}
+              onCancel={handleCancelWorkout}
             />
           </Animated.View>
         )}

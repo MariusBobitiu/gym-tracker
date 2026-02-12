@@ -1,10 +1,26 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, Text, View } from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
 import { cn } from "@/lib/cn";
 import { CheckCircle, ChevronRight } from "lucide-react-native";
 import type { PlanExercise } from "@/types/workout-session";
 import { useWeightUnit } from "@/hooks/use-weight-unit";
+
+function supersetGroupLabels(
+  exercises: PlanExercise[]
+): Record<string, string> {
+  const order: string[] = [];
+  for (const ex of exercises) {
+    if (ex.supersetGroupId && !order.includes(ex.supersetGroupId)) {
+      order.push(ex.supersetGroupId);
+    }
+  }
+  const labels: Record<string, string> = {};
+  order.forEach((id, i) => {
+    labels[id] = `Superset ${i + 1}`;
+  });
+  return labels;
+}
 
 type WorkoutExerciseListProps = {
   exercises: PlanExercise[];
@@ -22,6 +38,10 @@ export function WorkoutExerciseList({
 }: WorkoutExerciseListProps): React.ReactElement {
   const { colors, tokens } = useTheme();
   const { formatWeight } = useWeightUnit();
+  const supersetLabels = useMemo(
+    () => supersetGroupLabels(exercises),
+    [exercises]
+  );
   return (
     <View className="flex-1">
       <Card className="mt-16" style={{ padding: 0 }}>
@@ -31,6 +51,9 @@ export function WorkoutExerciseList({
           const suggested = suggestedByExerciseId[item.id];
           const displayWeight = suggested?.weight ?? item.weight;
           const displayReps = suggested?.reps ?? item.reps;
+          const supersetLabel = item.supersetGroupId
+            ? supersetLabels[item.supersetGroupId]
+            : undefined;
           return (
             <View
               key={item.id}
@@ -43,6 +66,8 @@ export function WorkoutExerciseList({
               style={{
                 backgroundColor: isCompleted ? colors.muted : colors.card,
                 borderColor: colors.border,
+                borderLeftWidth: supersetLabel ? 4 : undefined,
+                borderLeftColor: supersetLabel ? colors.primary : undefined,
               }}
             >
               {isCompleted ? (
@@ -61,14 +86,27 @@ export function WorkoutExerciseList({
                   }}
                 />
               )}
-              <Text
-                style={{
-                  color: colors.foreground,
-                  fontWeight: tokens.typography.weights.bold,
-                }}
-              >
-                {item.name}
-              </Text>
+              <View className="min-w-0 flex-1">
+                <Text
+                  style={{
+                    color: colors.foreground,
+                    fontWeight: tokens.typography.weights.bold,
+                  }}
+                >
+                  {item.name}
+                </Text>
+                {supersetLabel ? (
+                  <Text
+                    style={{
+                      color: colors.mutedForeground,
+                      fontSize: tokens.typography.sizes.xs,
+                      marginTop: 2,
+                    }}
+                  >
+                    {supersetLabel}
+                  </Text>
+                ) : null}
+              </View>
               <View className="flex-1 flex-row items-center justify-end gap-2">
                 <Text
                   style={{

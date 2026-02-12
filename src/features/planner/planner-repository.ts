@@ -122,6 +122,17 @@ function parseRotation(rotationJson: string): string[] {
   }
 }
 
+/** Updates a session template's name. Used to persist unsaved name changes before copy. */
+export async function updateSessionTemplateName(
+  sessionTemplateId: string,
+  name: string
+): Promise<void> {
+  await db
+    .update(sessionTemplates)
+    .set({ name })
+    .where(eq(sessionTemplates.id, sessionTemplateId));
+}
+
 /** Returns a split by id with its variants and sessions (no cycle). For edit flow. */
 export async function getSplitBySplitId(
   splitId: string
@@ -912,6 +923,7 @@ export async function copyVariantSessionsAndExercises(
           reps: row.reps,
           weight: row.weight,
           position: index,
+          superset_group: row.superset_group,
         }));
         await db.insert(sessionTemplateExercises).values(insertRows);
       }
@@ -935,6 +947,7 @@ export async function copyVariantSessionsAndExercises(
         reps: row.reps,
         weight: row.weight,
         position: index,
+        superset_group: row.superset_group,
       }));
       await db.insert(sessionTemplateExercises).values(insertRows);
     }
