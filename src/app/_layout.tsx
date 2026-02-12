@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/lib/theme-context";
 import { useEffect } from "react";
 import { loadSelectedTheme } from "@/hooks";
 import { runStorageMigrations } from "@/lib/storage";
+import { useOnboardingStore } from "@/store/onboarding-store";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/query/query-client";
 import { Screen } from "@/components/screen";
@@ -39,6 +40,9 @@ export default function Root() {
 // Create a new component that can access the SessionProvider context later.
 function RootNavigator() {
   const { status } = useSession();
+  const hydrateOnboarding = useOnboardingStore((s) => s.hydrate);
+  const hasCompletedOnboarding = useOnboardingStore((s) => s.hasCompleted);
+
   const isAuthed = status === "authed";
   const isGuest = status === "guest";
   const isLoading = status === "loading";
@@ -46,9 +50,10 @@ function RootNavigator() {
   useEffect(() => {
     runStorageMigrations();
     loadSelectedTheme();
-  }, []);
+    hydrateOnboarding();
+  }, [hydrateOnboarding]);
 
-  if (isLoading) {
+  if (isLoading || hasCompletedOnboarding === null) {
     return (
       <Screen className="pb-24">
         <View className="flex-1 items-center justify-center">
@@ -66,12 +71,16 @@ function RootNavigator() {
         animationDuration: 150,
       }}
     >
-      <Stack.Protected guard={isAuthed}>
-        <Stack.Screen name="(app)" />
-      </Stack.Protected>
-
       <Stack.Protected guard={isGuest}>
         <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={isAuthed && !hasCompletedOnboarding}>
+        <Stack.Screen name="(onboarding)" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={isAuthed && hasCompletedOnboarding}>
+        <Stack.Screen name="(app)" />
       </Stack.Protected>
     </Stack>
   );

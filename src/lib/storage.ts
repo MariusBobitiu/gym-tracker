@@ -63,6 +63,7 @@ export const STORAGE_KEYS = {
   plannerNextWorkout: "planner_next_workout",
   weightUnit: "weight_unit",
   notificationPrefs: "notification_prefs",
+  onboardingComplete: "onboarding_complete",
   bugReports: "bug_reports",
   appLogs: "app_logs",
 } as const;
@@ -91,6 +92,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.plannerNextWorkout]: PlannerNextWorkoutState;
   [STORAGE_KEYS.weightUnit]: WeightUnit;
   [STORAGE_KEYS.notificationPrefs]: NotificationPrefs | null;
+  [STORAGE_KEYS.onboardingComplete]: boolean | null;
   [STORAGE_KEYS.bugReports]: BugReport[] | null;
   [STORAGE_KEYS.appLogs]: AppLogEntry[] | null;
 };
