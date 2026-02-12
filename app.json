@@ -13,6 +13,7 @@
     "plugins": [
       "expo-router",
       "expo-apple-authentication",
+      ["expo-notifications", { "defaultChannel": "workout-reminders" }],
       [
         "expo-splash-screen",
         {

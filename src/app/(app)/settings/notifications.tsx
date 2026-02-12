@@ -14,6 +14,8 @@ import {
 const DEFAULT_PREFS: NotificationPrefs = {
   workoutReminders: true,
   marketing: false,
+  reminderHour: 9,
+  reminderMinute: 0,
 };
 
 export default function NotificationsSettings(): React.ReactElement {
@@ -24,7 +26,7 @@ export default function NotificationsSettings(): React.ReactElement {
   );
   const [marketing, setMarketing] = useState(initialPrefs.marketing);
 
-  const handleWorkoutReminders = useCallback((checked: boolean) => {
+  const handleWorkoutReminders = useCallback(async (checked: boolean) => {
     setWorkoutReminders(checked);
     const current =
       getStorageItem(STORAGE_KEYS.notificationPrefs) ?? DEFAULT_PREFS;
@@ -32,6 +34,17 @@ export default function NotificationsSettings(): React.ReactElement {
       ...current,
       workoutReminders: checked,
     });
+    const {
+      requestNotificationPermissions,
+      scheduleWorkoutReminder,
+      cancelWorkoutReminder,
+    } = await import("@/lib/notifications");
+    if (checked) {
+      const granted = await requestNotificationPermissions();
+      if (granted) void scheduleWorkoutReminder();
+    } else {
+      await cancelWorkoutReminder();
+    }
   }, []);
 
   const handleMarketing = useCallback((checked: boolean) => {

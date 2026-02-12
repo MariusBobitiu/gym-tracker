@@ -68,6 +68,7 @@ const AppHeader = ({
         icon={<Bell color={colors.foreground} />}
         className="p-0"
         size="icon"
+        onPress={() => router.push("/notifications")}
       />
       <Button
         variant="link"

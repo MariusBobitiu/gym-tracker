@@ -26,6 +26,8 @@ export type WeightUnit = "kg" | "lb";
 export type NotificationPrefs = {
   workoutReminders: boolean;
   marketing: boolean;
+  reminderHour?: number;
+  reminderMinute?: number;
 };
 
 export type AppLogEntry = {

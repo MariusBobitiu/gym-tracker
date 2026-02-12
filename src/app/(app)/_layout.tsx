@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { View } from "@/components/ui";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { BackgroundGradient } from "@/components/background-gradient";
+import { NotificationScheduler } from "@/components/notification-scheduler";
 import { OfflineBanner } from "@/components/offline-banner";
 import { useTheme } from "@/lib/theme-context";
 import { PlannerDbProvider } from "@/lib/planner-db/planner-db-provider";
@@ -16,6 +17,7 @@ export default function Layout() {
       <BackgroundGradient />
       <OfflineBanner />
       <PlannerDbProvider>
+        <NotificationScheduler />
         <Stack
           screenOptions={{
             headerShown: false,
