@@ -1,16 +1,31 @@
 {
   "expo": {
-    "name": "gym-tracker",
-    "slug": "gym-tracker",
+    "name": "vixe",
+    "slug": "vixe",
     "version": "1.0.0",
-    "scheme": "gym-tracker",
+    "scheme": "vixe",
     "platforms": ["ios", "android"],
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.ico"
     },
-    "plugins": ["expo-router", "expo-apple-authentication"],
+    "plugins": [
+      "expo-router",
+      "expo-apple-authentication",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F5F7FA",
+          "image": "./assets/splash-icon.png",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#0B0D10"
+          },
+          "imageWidth": 200
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true,
       "tsconfigPaths": true
@@ -21,13 +36,13 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F5F7FA"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "usesAppleSignIn": true,
       "supportsTablet": true,
-      "bundleIdentifier": "dev.mariusbobitiu.gym-tracker",
+      "bundleIdentifier": "dev.mariusbobitiu.vixe",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
@@ -38,10 +53,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#F5F7FA"
       },
-      "package": "dev.mariusbobitiu.gymtracker",
-      "usesCleartextTraffic": true
+      "package": "dev.mariusbobitiu.vixe"
     },
     "extra": {
       "router": {},
