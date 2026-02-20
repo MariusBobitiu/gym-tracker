@@ -7,15 +7,13 @@ type WorkoutActionsProps = {
   isCompleted: boolean;
   onDone: () => void;
   onContinue: () => void;
-  onFinish: () => void;
-  onCancel?: () => void;
+  onCancel: () => void;
 };
 
 export function WorkoutActions({
   isCompleted,
   onDone,
   onContinue,
-  onFinish,
   onCancel,
 }: WorkoutActionsProps): React.ReactElement {
   const { colors } = useTheme();
@@ -47,22 +45,13 @@ export function WorkoutActions({
         />
       )}
       {!isCompleted && (
-        <View className="mt-2 flex-row flex-wrap gap-4">
-          <Button
-            label="Finish workout"
-            variant="link"
-            onPress={onFinish}
-            accessibilityLabel="Finish workout"
-          />
-          {onCancel ? (
-            <Button
-              label="Cancel workout"
-              variant="link"
-              onPress={onCancel}
-              accessibilityLabel="Cancel workout, discard progress"
-            />
-          ) : null}
-        </View>
+        <Button
+          label="Cancel workout"
+          variant="link"
+          onPress={onCancel}
+          accessibilityLabel="Cancel workout, discard progress"
+          className="mt-2"
+        />
       )}
     </View>
   );

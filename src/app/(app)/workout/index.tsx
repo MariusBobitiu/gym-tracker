@@ -462,7 +462,7 @@ export default function Workout(): React.ReactElement {
               />
             ) : (
               <>
-                <WorkoutHeader elapsedMs={elapsedMs} />
+                <WorkoutHeader elapsedMs={elapsedMs} onFinish={handleFinish} />
                 <WorkoutCurrentExercise
                   exerciseName={exerciseName}
                   currentSetNumber={session?.currentSetNumber ?? 1}
@@ -480,7 +480,6 @@ export default function Workout(): React.ReactElement {
               isCompleted={isCompleted}
               onDone={handleFinishWithConfetti}
               onContinue={handleContinue}
-              onFinish={handleFinish}
               onCancel={handleCancelWorkout}
             />
           </Animated.View>
