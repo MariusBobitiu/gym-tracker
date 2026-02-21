@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Stack, useRouter } from "expo-router";
-import { Pressable, View } from "react-native";
+import { Pressable, ScrollView, View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import {
@@ -26,17 +26,27 @@ const TEMPLATE_OPTIONS: {
   {
     id: "ppl-ab",
     title: "Push / Pull / Legs (A/B)",
-    description: "3 sessions per week, alternating A and B",
+    description: "3 sessions per week with A/B variations",
   },
   {
     id: "upper-lower-ab",
     title: "Upper / Lower (A/B)",
-    description: "4 sessions per week, upper/lower split",
+    description: "4 sessions per week with distinct A/B weeks",
   },
   {
     id: "full-body-abc",
     title: "Full Body (A/B/C)",
     description: "3 variants, full body each day",
+  },
+  {
+    id: "phul-4d",
+    title: "PHUL (4-day)",
+    description: "4 sessions per week, power + hypertrophy",
+  },
+  {
+    id: "beginner-full-body-3d",
+    title: "Beginner Full Body (3-day)",
+    description: "3 sessions per week, beginner friendly",
   },
 ];
 
@@ -63,12 +73,54 @@ export default function SplitTemplateScreen() {
   };
 
   return (
-    <Screen contentContainerClassName="pb-12" safeAreaEdges={["top", "bottom"]}>
+    <Screen safeAreaEdges={["top", "bottom"]}>
       <Stack.Screen options={headerOptions({ title: "Choose a template" })} />
       <AppHeader title="Choose a template" showBackButton />
-      <View className="px-4 py-4">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        className="flex-1 px-4 pb-4"
+        contentContainerStyle={{ paddingBottom: tokens.spacing.xl }}
+      >
+        <Card
+          className="mb-3"
+          style={{
+            borderStyle: "dashed",
+            borderWidth: 1,
+            padding: tokens.spacing.xs,
+          }}
+        >
+          <View className="gap-1">
+            <Text
+              style={{
+                fontSize: tokens.typography.sizes.md,
+                color: colors.foreground,
+                fontWeight: tokens.typography.weights.semibold,
+              }}
+            >
+              Custom
+            </Text>
+            <Text
+              style={{
+                fontSize: tokens.typography.sizes.sm,
+                color: colors.mutedForeground,
+              }}
+            >
+              Name your split and add sessions per variant (A, B, C).
+            </Text>
+            <View className="pt-1">
+              <Button
+                label="Build custom split"
+                variant="outline"
+                size="sm"
+                className="my-0"
+                onPress={handleCustom}
+                disabled={isSubmitting}
+              />
+            </View>
+          </View>
+        </Card>
         <P className="mb-4" style={{ color: colors.mutedForeground }}>
-          Start with a preset or build your own.
+          Or you can start with one of our presets.
         </P>
         {TEMPLATE_OPTIONS.map((opt) => (
           <Pressable
@@ -93,33 +145,7 @@ export default function SplitTemplateScreen() {
             </Card>
           </Pressable>
         ))}
-        <Card
-          className="mb-3"
-          style={{ borderStyle: "dashed", borderWidth: 2 }}
-        >
-          <CardHeader>
-            <CardTitle>Custom</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Text
-              style={{
-                fontSize: tokens.typography.sizes.sm,
-                color: colors.mutedForeground,
-              }}
-            >
-              Name your split and add sessions per variant (A, B, C).
-            </Text>
-          </CardContent>
-          <View className="pb-2">
-            <Button
-              label="Build custom split"
-              variant="outline"
-              onPress={handleCustom}
-              disabled={isSubmitting}
-            />
-          </View>
-        </Card>
-      </View>
+      </ScrollView>
     </Screen>
   );
 }

@@ -1033,8 +1033,8 @@ const TEMPLATES = {
   "ppl-ab": {
     name: "Push / Pull / Legs (A/B)",
     variants: [
-      { key: "A", sessions: ["Push", "Pull", "Legs"] },
-      { key: "B", sessions: ["Push", "Pull", "Legs"] },
+      { key: "A", sessions: ["Push A", "Pull A", "Legs A"] },
+      { key: "B", sessions: ["Push B", "Pull B", "Legs B"] },
     ],
   },
   "upper-lower-ab": {
@@ -1042,11 +1042,11 @@ const TEMPLATES = {
     variants: [
       {
         key: "A",
-        sessions: ["Upper Body", "Lower Body", "Upper Body", "Lower Body"],
+        sessions: ["Upper A", "Lower A", "Upper A", "Lower A"],
       },
       {
         key: "B",
-        sessions: ["Upper Body", "Lower Body", "Upper Body", "Lower Body"],
+        sessions: ["Upper B", "Lower B", "Upper B", "Lower B"],
       },
     ],
   },
@@ -1056,6 +1056,29 @@ const TEMPLATES = {
       { key: "A", sessions: ["Full Body A", "Full Body A", "Full Body A"] },
       { key: "B", sessions: ["Full Body B", "Full Body B", "Full Body B"] },
       { key: "C", sessions: ["Full Body C", "Full Body C", "Full Body C"] },
+    ],
+  },
+  "phul-4d": {
+    name: "PHUL (4-day)",
+    variants: [
+      {
+        key: "A",
+        sessions: [
+          "Upper Power",
+          "Lower Power",
+          "Upper Hypertrophy",
+          "Lower Hypertrophy",
+        ],
+      },
+    ],
+  },
+  "beginner-full-body-3d": {
+    name: "Beginner Full Body (3-day)",
+    variants: [
+      {
+        key: "A",
+        sessions: ["Full Body 1", "Full Body 2", "Full Body 3"],
+      },
     ],
   },
 } as const;
@@ -1068,49 +1091,181 @@ const TEMPLATE_EXERCISES: Record<
   Partial<Record<string, SessionTemplateExerciseInput[]>>
 > = {
   "ppl-ab": {
-    Push: [
-      { name: "Bench Press", sets: 3, reps: 10, weight: 20 },
-      { name: "Overhead Press", sets: 3, reps: 10, weight: 20 },
-      { name: "Tricep Pushdown", sets: 3, reps: 12, weight: 20 },
+    "Push A": [
+      { name: "Bench Press", sets: 4, reps: 8, weight: 20 },
+      { name: "Incline DB Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Seated OHP", sets: 3, reps: 10, weight: 20 },
+      { name: "Cable Fly", sets: 3, reps: 12, weight: 20 },
+      { name: "Lateral Raise", sets: 3, reps: 12, weight: 20 },
+      { name: "Triceps Pushdown", sets: 3, reps: 12, weight: 20 },
     ],
-    Pull: [
-      { name: "Barbell Row", sets: 3, reps: 10, weight: 20 },
+    "Pull A": [
+      { name: "Barbell Row", sets: 4, reps: 8, weight: 20 },
       { name: "Lat Pulldown", sets: 3, reps: 10, weight: 20 },
-      { name: "Barbell Curl", sets: 3, reps: 10, weight: 20 },
+      { name: "Chest-Supported Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Face Pull", sets: 3, reps: 12, weight: 20 },
+      { name: "EZ-Bar Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Hammer Curl", sets: 3, reps: 12, weight: 20 },
     ],
-    Legs: [
-      { name: "Squat", sets: 3, reps: 10, weight: 20 },
+    "Legs A": [
+      { name: "Back Squat", sets: 4, reps: 8, weight: 20 },
       { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Press", sets: 3, reps: 12, weight: 20 },
       { name: "Leg Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Leg Extension", sets: 3, reps: 12, weight: 20 },
+      { name: "Calf Raise", sets: 4, reps: 12, weight: 20 },
+    ],
+    "Push B": [
+      { name: "Incline Barbell Press", sets: 4, reps: 8, weight: 20 },
+      { name: "Flat DB Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Arnold Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Dips", sets: 3, reps: 10, weight: 20 },
+      { name: "Cable Lateral Raise", sets: 3, reps: 12, weight: 20 },
+      { name: "Skull Crushers", sets: 3, reps: 12, weight: 20 },
+    ],
+    "Pull B": [
+      { name: "Pull-Ups/Assisted", sets: 4, reps: 8, weight: 20 },
+      { name: "Single-Arm DB Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Seated Cable Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Rear Delt Fly", sets: 3, reps: 12, weight: 20 },
+      { name: "Preacher Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Reverse Curl", sets: 3, reps: 12, weight: 20 },
+    ],
+    "Legs B": [
+      { name: "Hack Squat", sets: 4, reps: 8, weight: 20 },
+      { name: "Bulgarian Split Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Hip Thrust", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Extension", sets: 3, reps: 12, weight: 20 },
+      { name: "Seated Leg Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Calf Raise", sets: 4, reps: 12, weight: 20 },
     ],
   },
   "upper-lower-ab": {
-    "Upper Body": [
-      { name: "Bench Press", sets: 3, reps: 10, weight: 20 },
+    "Upper A": [
+      { name: "Bench Press", sets: 4, reps: 8, weight: 20 },
+      { name: "Barbell Row", sets: 4, reps: 8, weight: 20 },
       { name: "Overhead Press", sets: 3, reps: 10, weight: 20 },
-      { name: "Barbell Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Lat Pulldown", sets: 3, reps: 10, weight: 20 },
+      { name: "Incline DB Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Lateral Raise", sets: 3, reps: 12, weight: 20 },
+      { name: "Triceps Pushdown", sets: 3, reps: 12, weight: 20 },
+      { name: "DB Curl", sets: 3, reps: 12, weight: 20 },
     ],
-    "Lower Body": [
-      { name: "Squat", sets: 3, reps: 10, weight: 20 },
+    "Lower A": [
+      { name: "Back Squat", sets: 4, reps: 8, weight: 20 },
       { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
       { name: "Leg Press", sets: 3, reps: 12, weight: 20 },
+      { name: "Leg Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Calf Raise", sets: 4, reps: 12, weight: 20 },
+      { name: "Cable Crunch", sets: 3, reps: 12, weight: 20 },
+    ],
+    "Upper B": [
+      { name: "Incline Bench Press", sets: 4, reps: 8, weight: 20 },
+      { name: "Pull-Ups/Lat Pulldown", sets: 3, reps: 10, weight: 20 },
+      { name: "Seated Cable Row", sets: 3, reps: 10, weight: 20 },
+      { name: "DB Shoulder Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Chest Fly", sets: 3, reps: 12, weight: 20 },
+      { name: "Face Pull", sets: 3, reps: 12, weight: 20 },
+      { name: "EZ-Bar Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Overhead Triceps Extension", sets: 3, reps: 12, weight: 20 },
+    ],
+    "Lower B": [
+      { name: "Front Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Trap Bar Deadlift", sets: 3, reps: 8, weight: 20 },
+      { name: "Hip Thrust", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Extension", sets: 3, reps: 12, weight: 20 },
+      { name: "Seated Leg Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Calf Raise", sets: 4, reps: 12, weight: 20 },
+      { name: "Cable Crunch", sets: 3, reps: 12, weight: 20 },
     ],
   },
   "full-body-abc": {
     "Full Body A": [
-      { name: "Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Back Squat", sets: 3, reps: 10, weight: 20 },
       { name: "Bench Press", sets: 3, reps: 10, weight: 20 },
       { name: "Barbell Row", sets: 3, reps: 10, weight: 20 },
+      { name: "DB Lunge", sets: 3, reps: 12, weight: 20 },
+      { name: "Lateral Raise", sets: 3, reps: 12, weight: 20 },
+      { name: "Triceps Pushdown", sets: 3, reps: 12, weight: 20 },
     ],
     "Full Body B": [
       { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
       { name: "Overhead Press", sets: 3, reps: 10, weight: 20 },
       { name: "Lat Pulldown", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Press", sets: 3, reps: 12, weight: 20 },
+      { name: "Incline DB Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Hammer Curl", sets: 3, reps: 12, weight: 20 },
     ],
     "Full Body C": [
+      { name: "Hack Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Seated Cable Row", sets: 3, reps: 10, weight: 20 },
+      { name: "DB Bench Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Hip Thrust", sets: 3, reps: 12, weight: 20 },
+      { name: "Face Pull", sets: 3, reps: 12, weight: 20 },
+      { name: "Calf Raise", sets: 3, reps: 12, weight: 20 },
+    ],
+  },
+  "phul-4d": {
+    "Upper Power": [
+      { name: "Bench Press", sets: 4, reps: 5, weight: 20 },
+      { name: "Barbell Row", sets: 4, reps: 5, weight: 20 },
+      { name: "Overhead Press", sets: 3, reps: 6, weight: 20 },
+      { name: "Pull-Ups/Lat Pulldown", sets: 3, reps: 6, weight: 20 },
+      { name: "Incline DB Press", sets: 3, reps: 8, weight: 20 },
+      { name: "EZ-Bar Curl", sets: 3, reps: 8, weight: 20 },
+      { name: "Triceps Pushdown", sets: 3, reps: 8, weight: 20 },
+    ],
+    "Lower Power": [
+      { name: "Back Squat", sets: 4, reps: 5, weight: 20 },
+      { name: "Deadlift", sets: 3, reps: 5, weight: 20 },
+      { name: "Leg Press", sets: 3, reps: 8, weight: 20 },
+      { name: "Hamstring Curl", sets: 3, reps: 8, weight: 20 },
+      { name: "Calf Raise", sets: 4, reps: 10, weight: 20 },
+      { name: "Cable Crunch", sets: 3, reps: 10, weight: 20 },
+    ],
+    "Upper Hypertrophy": [
+      { name: "Incline DB Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Seated Cable Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Lat Pulldown", sets: 3, reps: 12, weight: 20 },
+      { name: "DB Shoulder Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Lateral Raise", sets: 3, reps: 12, weight: 20 },
+      { name: "Triceps Rope Pushdown", sets: 3, reps: 12, weight: 20 },
+      { name: "DB Curl", sets: 3, reps: 12, weight: 20 },
+    ],
+    "Lower Hypertrophy": [
+      { name: "Front Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
       { name: "Leg Press", sets: 3, reps: 12, weight: 20 },
-      { name: "Incline Press", sets: 3, reps: 10, weight: 20 },
-      { name: "Cable Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Curl", sets: 3, reps: 12, weight: 20 },
+      { name: "Leg Extension", sets: 3, reps: 12, weight: 20 },
+      { name: "Seated Calf Raise", sets: 4, reps: 12, weight: 20 },
+      { name: "Cable Crunch", sets: 3, reps: 12, weight: 20 },
+    ],
+  },
+  "beginner-full-body-3d": {
+    "Full Body 1": [
+      { name: "Goblet Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Bench Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Lat Pulldown", sets: 3, reps: 10, weight: 20 },
+      { name: "DB Row", sets: 3, reps: 10, weight: 20 },
+      { name: "Plank", sets: 3, reps: 30, weight: 20 },
+      { name: "Lateral Raise", sets: 2, reps: 12, weight: 20 },
+    ],
+    "Full Body 2": [
+      { name: "Romanian Deadlift", sets: 3, reps: 10, weight: 20 },
+      { name: "DB Shoulder Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Leg Press", sets: 3, reps: 12, weight: 20 },
+      { name: "Seated Cable Row", sets: 3, reps: 10, weight: 20 },
+      { name: "DB Curl", sets: 2, reps: 12, weight: 20 },
+      { name: "Triceps Pushdown", sets: 2, reps: 12, weight: 20 },
+    ],
+    "Full Body 3": [
+      { name: "Front Squat", sets: 3, reps: 10, weight: 20 },
+      { name: "Incline DB Press", sets: 3, reps: 10, weight: 20 },
+      { name: "Assisted Pull-Ups/Lat Pulldown", sets: 3, reps: 10, weight: 20 },
+      { name: "Hip Thrust", sets: 3, reps: 12, weight: 20 },
+      { name: "Calf Raise", sets: 3, reps: 12, weight: 20 },
+      { name: "Cable Crunch", sets: 3, reps: 12, weight: 20 },
     ],
   },
 };
