@@ -1,12 +1,20 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "react-native";
 import { Stack, useRouter } from "expo-router";
 import { Pencil, Trash2 } from "lucide-react-native";
+import { showMessage } from "react-native-flash-message";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
-import { FormField } from "@/components/forms";
-import { Button, Card, Input, P, Text, View as UIView } from "@/components/ui";
+import { ControlledTextField } from "@/components/forms";
+import { Button, Card, P, Text, View as UIView } from "@/components/ui";
+import { updateMe } from "@/lib/auth/auth-api";
+import { applyFieldErrors } from "@/lib/auth/auth-errors";
+import { useAuthStore } from "@/lib/auth/auth-store";
 import { useTheme } from "@/lib/theme-context";
+import {
+  type UpdateProfileFormData,
+  updateProfileSchema,
+} from "@/lib/form-schemas";
 import { useSession } from "@/lib/auth/context";
 import { triggerHaptic } from "@/lib/haptics";
 import {
@@ -17,26 +25,49 @@ import {
 } from "@/features/planner/planner-repository";
 import { resetRotationPointer } from "@/features/planner/rotation-state";
 import { LoadingState } from "@/components/feedback-states";
+import { showQueryError } from "@/lib/query/query-error";
+import { setStorageItem, STORAGE_KEYS } from "@/lib/storage";
+import { useZodForm } from "@/lib/use-zod-form";
 
 export default function ProfileSettingsScreen(): React.ReactElement {
   const router = useRouter();
   const { colors, tokens } = useTheme();
   const { user } = useSession();
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
+  const setUser = useAuthStore((state) => state.setUser);
   const [splits, setSplits] = useState<SplitRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const displayName = typeof user?.name === "string" ? user.name : "";
   const displayUsername =
     typeof user?.username === "string" ? user.username : "";
 
+  const {
+    control,
+    handleSubmit,
+    setError,
+    reset,
+    watch,
+    formState: { isSubmitting },
+  } = useZodForm<UpdateProfileFormData>(updateProfileSchema, {
+    defaultValues: {
+      name: displayName,
+      username: displayUsername,
+    },
+  });
+
   useEffect(() => {
-    setName(displayName);
-    setUsername(displayUsername);
-  }, [displayName, displayUsername]);
+    reset({ name: displayName, username: displayUsername });
+  }, [displayName, displayUsername, reset]);
+
+  const nameValue = watch("name") ?? "";
+  const usernameValue = watch("username") ?? "";
+  const hasChanges = useMemo(
+    () =>
+      nameValue.trim() !== displayName ||
+      usernameValue.trim() !== displayUsername,
+    [displayName, nameValue, usernameValue, displayUsername]
+  );
 
   const loadSplits = useCallback(async (): Promise<void> => {
     setLoading(true);
@@ -49,16 +80,34 @@ export default function ProfileSettingsScreen(): React.ReactElement {
     loadSplits();
   }, [loadSplits]);
 
-  async function handleSaveProfile(): Promise<void> {
-    setSaving(true);
+  const handleSaveProfile = handleSubmit(async (data) => {
+    if (!hasChanges) return;
     triggerHaptic("light");
-    // No profile update API yet – placeholder
-    setSaving(false);
-    Alert.alert(
-      "Profile",
-      "Profile update is not available yet. It will sync with your account when the feature is ready."
-    );
-  }
+    try {
+      const result = await updateMe({
+        name: data.name.trim(),
+        username: data.username.trim(),
+      });
+      if (!result.ok) {
+        const applied = applyFieldErrors<UpdateProfileFormData>(
+          result.error,
+          ["name", "username"],
+          setError
+        );
+        if (!applied) showQueryError(result.error);
+        return;
+      }
+      setUser(result.data);
+      setStorageItem(STORAGE_KEYS.user, result.data);
+      showMessage({
+        message: "Profile updated",
+        type: "success",
+        duration: 2500,
+      });
+    } catch (error) {
+      showQueryError(error);
+    }
+  });
 
   function handleEditSplit(splitId: string): void {
     router.push(
@@ -124,27 +173,28 @@ export default function ProfileSettingsScreen(): React.ReactElement {
           >
             Profile
           </P>
-          <FormField label="Name">
-            <Input
-              value={name}
-              onChangeText={setName}
-              placeholder="Your name"
-              autoCapitalize="words"
-            />
-          </FormField>
-          <FormField label="Username">
-            <Input
-              value={username}
-              onChangeText={setUsername}
-              placeholder="Username"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </FormField>
+          <ControlledTextField
+            name="name"
+            control={control}
+            label="Name"
+            placeholder="Your name"
+            autoCapitalize="words"
+            autoComplete="name"
+          />
+          <ControlledTextField
+            name="username"
+            control={control}
+            label="Username"
+            placeholder="Username"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="username"
+          />
           <Button
             label="Save"
             onPress={handleSaveProfile}
-            disabled={saving}
+            loading={isSubmitting}
+            disabled={!hasChanges || isSubmitting}
             variant="outline"
           />
         </UIView>

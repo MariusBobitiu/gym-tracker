@@ -3,6 +3,8 @@ import { Link, Stack, router } from "expo-router";
 import * as React from "react";
 import { useState } from "react";
 import { Linking } from "react-native";
+import { showMessage } from "react-native-flash-message";
+import * as WebBrowser from "expo-web-browser";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { SettingsSection, SettingsRow } from "@/components/settings-row";
@@ -15,9 +17,11 @@ import {
   useModal,
   View as UIView,
 } from "@/components/ui";
-import { useAuth } from "@/lib/auth/context";
+import { useAuth, useSession } from "@/lib/auth/context";
+import { getEmailVerificationStatus } from "@/lib/auth/email-verification";
 import { resetPlannerDatabase } from "@/features/planner/planner-repository";
 import { resetRotationPointer } from "@/features/planner/rotation-state";
+import { resolveLegalUrl } from "@/lib/legal-links";
 import { useTheme } from "@/lib/theme-context";
 import { runPlannerDbDiagnostics } from "@/lib/planner-db/diagnostics";
 import {
@@ -37,12 +41,48 @@ function themeLabel(value: ColorSchemeType): string {
 
 export default function Settings(): React.ReactElement {
   const { signOut } = useAuth();
+  const { user } = useSession();
   const { colors, tokens } = useTheme();
   const { selectedTheme, setSelectedTheme } = useSelectedTheme();
   const [resettingDb, setResettingDb] = useState(false);
+  const emailVerificationStatus = getEmailVerificationStatus(user);
+  const shouldShowVerifyEmail =
+    Boolean(user?.email) && emailVerificationStatus === "unverified";
 
   const themeModal = useModal();
   const contactSupportModal = useModal();
+
+  const openLegalModal = React.useCallback(
+    async (path: string, label: string): Promise<void> => {
+      const url = resolveLegalUrl(path);
+      if (!url) {
+        showMessage({
+          message: "Missing legal URL",
+          description: "Set EXPO_PUBLIC_SITE_URL in .env to open legal pages.",
+          type: "danger",
+          duration: 3500,
+        });
+        return;
+      }
+      try {
+        await WebBrowser.openBrowserAsync(url, {
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+          showTitle: true,
+          enableBarCollapsing: true,
+          toolbarColor: colors.background,
+          controlsColor: colors.foreground,
+        });
+      } catch (error) {
+        console.warn("[legal] openBrowserAsync failed", error);
+        showMessage({
+          message: `Unable to open ${label}`,
+          type: "danger",
+          duration: 3000,
+        });
+      }
+    },
+    [colors.background, colors.foreground]
+  );
 
   async function handleSignOut(): Promise<void> {
     await signOut();
@@ -86,6 +126,15 @@ export default function Settings(): React.ReactElement {
 
       <UIView className="gap-6">
         <SettingsSection title="ACCOUNT">
+          {shouldShowVerifyEmail && (
+            <SettingsRow
+              label="Verify email"
+              value="Action required"
+              valueStyle="primary"
+              href="/settings/verify-email"
+              showDivider
+            />
+          )}
           <SettingsRow
             label="Email & password"
             href="/settings/email-password"
@@ -145,12 +194,12 @@ export default function Settings(): React.ReactElement {
         <SettingsSection title="LEGAL">
           <SettingsRow
             label="Privacy Policy"
-            href="/settings/privacy"
+            onPress={() => openLegalModal("/privacy", "Privacy Policy")}
             showDivider
           />
           <SettingsRow
             label="Terms & Conditions"
-            href="/settings/terms"
+            onPress={() => openLegalModal("/terms", "Terms & Conditions")}
             showDivider={false}
           />
         </SettingsSection>

@@ -16,6 +16,7 @@ export default function SettingsLayout(): React.ReactElement {
         name="email-password"
         options={{ title: "Email & password" }}
       />
+      <Stack.Screen name="verify-email" options={{ title: "Verify email" }} />
       <Stack.Screen name="units" options={{ title: "Units" }} />
       <Stack.Screen name="notifications" options={{ title: "Notifications" }} />
       <Stack.Screen name="apple-health" options={{ title: "Apple Health" }} />

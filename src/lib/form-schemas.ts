@@ -49,5 +49,28 @@ export const signUpSchema = z
     message: "Passwords do not match",
   });
 
+export const updateEmailSchema = z.object({
+  newEmail: emailSchema,
+});
+
+export const updatePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: passwordSchema,
+    confirmNewPassword: z.string().min(1, "Confirm your new password"),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: "Passwords do not match",
+    path: ["confirmNewPassword"],
+  });
+
+export const updateProfileSchema = z.object({
+  name: nameSchema,
+  username: usernameSchema,
+});
+
 export type SignInFormData = z.infer<typeof signInSchema>;
 export type SignUpFormData = z.infer<typeof signUpSchema>;
+export type UpdateEmailFormData = z.infer<typeof updateEmailSchema>;
+export type UpdatePasswordFormData = z.infer<typeof updatePasswordSchema>;
+export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;

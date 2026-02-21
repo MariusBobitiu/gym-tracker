@@ -13,8 +13,12 @@ export const AUTH_ENDPOINTS = {
   login: "/v1/auth/login",
   apple: "/v1/auth/apple",
   refresh: "/v1/auth/refresh",
+  requestVerifyEmail: "/v1/auth/verify-email/request",
   me: "/v1/me",
+  updatePassword: "/v1/me/password",
   logout: "/v1/auth/logout",
+  requestEmailChange: "/v1/auth/change-email/request",
+  confirmEmailChange: "/v1/auth/change-email/confirm",
 } as const;
 
 export type LoginCredentials = {
@@ -46,6 +50,20 @@ export type AppleAuthPayload = {
 export type AppleAuthSession = {
   token: TokenType;
   user: User;
+};
+
+export type UpdateMeRequest = {
+  name: string;
+  username: string;
+};
+
+export type UpdatePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export type UpdateEmailRequest = {
+  newEmail: string;
 };
 
 type LoginResponse =
@@ -258,6 +276,39 @@ export async function getMe(
     headers: accessToken
       ? { Authorization: `Bearer ${accessToken}` }
       : undefined,
+  });
+}
+
+export async function updateMe(
+  payload: UpdateMeRequest
+): Promise<ApiResult<User, ApiError>> {
+  return request<User>(AUTH_ENDPOINTS.me, {
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export async function updatePassword(
+  payload: UpdatePasswordRequest
+): Promise<ApiResult<void, ApiError>> {
+  return request<void>(AUTH_ENDPOINTS.updatePassword, {
+    method: "PUT",
+    body: payload,
+  });
+}
+
+export async function requestVerifyEmail(): Promise<ApiResult<void, ApiError>> {
+  return request<void>(AUTH_ENDPOINTS.requestVerifyEmail, {
+    method: "POST",
+  });
+}
+
+export async function requestEmailChange(
+  payload: UpdateEmailRequest
+): Promise<ApiResult<void, ApiError>> {
+  return request<void>(AUTH_ENDPOINTS.requestEmailChange, {
+    method: "POST",
+    body: payload,
   });
 }
 

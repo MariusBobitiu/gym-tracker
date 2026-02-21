@@ -8,11 +8,13 @@ const expoConfig = appJson.expo ?? appJson;
 
 function buildExtra() {
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const siteUrl = process.env.EXPO_PUBLIC_SITE_URL;
   return {
     ...expoConfig.extra,
     EXPO_PUBLIC_API_URL: apiUrl,
     EXPO_PUBLIC_MMKV_ENCRYPTION_KEY:
       process.env.EXPO_PUBLIC_MMKV_ENCRYPTION_KEY,
+    EXPO_PUBLIC_SITE_URL: siteUrl,
   };
 }
 

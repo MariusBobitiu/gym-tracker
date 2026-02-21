@@ -8,7 +8,7 @@ import { SignUpFormData, signUpSchema } from "@/lib/form-schemas";
 import { Stack, router } from "expo-router";
 import { showMessage } from "react-native-flash-message";
 import { applyFieldErrors, resolveErrorMessage } from "@/lib/auth/auth-errors";
-import { register } from "@/lib/auth/auth-api";
+import { register, requestVerifyEmail } from "@/lib/auth/auth-api";
 
 export default function SignUp(): JSX.Element {
   const { signIn } = useAuth();
@@ -34,6 +34,19 @@ export default function SignUp(): JSX.Element {
       }
 
       await signIn({ email: data.email, password: data.password });
+      try {
+        const verifyResult = await requestVerifyEmail();
+        if (verifyResult.ok) {
+          showMessage({
+            message: "Verify your email",
+            description: "We sent a verification email. Check your inbox.",
+            type: "success",
+            duration: 3500,
+          });
+        }
+      } catch (error) {
+        console.warn("[auth] verify-email request failed", error);
+      }
       router.replace("/(app)");
     } catch (error) {
       const hasFieldErrors = applyFieldErrors<SignUpFormData>(
