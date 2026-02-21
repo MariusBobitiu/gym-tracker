@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, View } from "react-native";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
@@ -15,6 +15,7 @@ import {
 import { useTheme } from "@/lib/theme-context";
 import {
   getSplitIfExists,
+  getSplitBySplitId,
   createOrUpdateCycle,
   type RotationType,
 } from "@/features/planner/planner-repository";
@@ -23,6 +24,7 @@ import { LoadingState } from "@/components/feedback-states";
 
 export default function RotationScreen() {
   const router = useRouter();
+  const { splitId } = useLocalSearchParams<{ splitId?: string }>();
   const { colors, tokens } = useTheme();
   const [splitOnly, setSplitOnly] =
     useState<Awaited<ReturnType<typeof getSplitIfExists>>>(null);
@@ -32,16 +34,29 @@ export default function RotationScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    getSplitIfExists().then((s) => {
-      setSplitOnly(s);
-      if (s && s.variants.length > 0) {
+    let isMounted = true;
+    const resolvedSplitId = Array.isArray(splitId) ? splitId[0] : splitId;
+    const loadSplit = async (): Promise<void> => {
+      const split = resolvedSplitId
+        ? await getSplitBySplitId(resolvedSplitId)
+        : await getSplitIfExists();
+      if (!isMounted) return;
+      setSplitOnly(split);
+      if (split && split.variants.length > 0) {
         setSelectedRotationType(
-          s.variants.length === 1 ? "SAME_EVERY_WEEK" : "ALTERNATE_AB"
+          split.variants.length === 1 ? "SAME_EVERY_WEEK" : "ALTERNATE_AB"
         );
       }
       setLoading(false);
+    };
+    loadSplit().catch((error) => {
+      console.error(error);
+      if (isMounted) setLoading(false);
     });
-  }, []);
+    return () => {
+      isMounted = false;
+    };
+  }, [splitId]);
 
   const handleSave = async (): Promise<void> => {
     if (!splitOnly || !selectedRotationType) return;

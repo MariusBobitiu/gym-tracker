@@ -205,7 +205,11 @@ export async function getSplitIfExists(): Promise<Omit<
   ActivePlan,
   "cycle"
 > | null> {
-  const splitRows = await db.select().from(splits).limit(1);
+  const splitRows = await db
+    .select()
+    .from(splits)
+    .orderBy(desc(splits.created_at))
+    .limit(1);
   const split = splitRows[0] ?? null;
   if (!split) return null;
 
@@ -421,6 +425,20 @@ export async function getWorkoutSessionsInRange(
     totalReps: row.totalReps,
     muscleGroups: parseMuscleGroups(row.muscleGroups ?? null),
   }));
+}
+
+export async function getCompletedPlannedSessionIdsInRange(
+  startMs: number,
+  endMs: number
+): Promise<Set<string>> {
+  const sessions = await getWorkoutSessionsInRange(startMs, endMs);
+  const completedIds = new Set<string>();
+  for (const session of sessions) {
+    if (session.plannedSessionTemplateId) {
+      completedIds.add(session.plannedSessionTemplateId);
+    }
+  }
+  return completedIds;
 }
 
 export async function getWorkoutSessionDetail(

@@ -230,21 +230,21 @@ export default function Settings(): React.ReactElement {
           </UIView>
         )}
 
-        <UIView className="mt-4 items-center gap-4">
-          <P
-            style={{
-              color: colors.mutedForeground,
-              fontSize: tokens.typography.sizes.xs,
-            }}
-          >
-            Version {version} ({buildNumber})
-          </P>
+        <UIView className="mt-4 items-center gap-2">
           <Button
             variant="destructive"
             onPress={handleSignOut}
             label="Sign out"
             className="w-full"
           />
+          <P
+            style={{
+              color: colors.mutedForeground,
+              fontSize: tokens.typography.sizes.xs,
+            }}
+          >
+            Version {version}
+          </P>
         </UIView>
       </UIView>
 

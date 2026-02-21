@@ -1,12 +1,14 @@
 import { Stack } from "expo-router";
 import React, { useCallback, useState } from "react";
 import { Alert, Linking } from "react-native";
+import { showMessage } from "react-native-flash-message";
 import uuid from "react-native-uuid";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { FormField } from "@/components/forms";
 import { Button, P, Input, View as UIView } from "@/components/ui";
 import { useTheme } from "@/lib/theme-context";
+import { useSession } from "@/lib/auth/context";
 import {
   getStorageItem,
   setStorageItem,
@@ -15,12 +17,32 @@ import {
 } from "@/lib/storage";
 import { triggerHaptic } from "@/lib/haptics";
 import { getAppLogs } from "@/lib/app-logger";
+import { requestContact } from "@/lib/contact-api";
+import { showQueryError } from "@/lib/query/query-error";
 
 const SUPPORT_EMAIL = "support@vixe.app";
 const BUG_SUBJECT = "Vixe App - Bug report";
 
+function buildBugReportMessage(
+  description: string,
+  stepsToReproduce: string,
+  logs: BugReport["logs"]
+): string {
+  const sections = [`Description:\n${description}`];
+  if (stepsToReproduce) {
+    sections.push(`Steps to reproduce:\n${stepsToReproduce}`);
+  }
+  const logsText =
+    logs && logs.length > 0
+      ? JSON.stringify(logs, null, 2)
+      : "No logs recorded.";
+  sections.push(`--- Logs ---\n${logsText}`);
+  return sections.join("\n\n");
+}
+
 export default function ReportBugSettings(): React.ReactElement {
   const { colors, tokens } = useTheme();
+  const { user } = useSession();
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [stepsToReproduce, setStepsToReproduce] = useState("");
@@ -37,6 +59,7 @@ export default function ReportBugSettings(): React.ReactElement {
   async function handleSubmit(): Promise<void> {
     const trimmedSubject = subject.trim();
     const trimmedDescription = description.trim();
+    const trimmedSteps = stepsToReproduce.trim();
     if (!trimmedSubject || !trimmedDescription) {
       Alert.alert("Missing fields", "Please enter a subject and description.");
       return;
@@ -46,26 +69,41 @@ export default function ReportBugSettings(): React.ReactElement {
     try {
       const reports = getStorageItem(STORAGE_KEYS.bugReports) ?? [];
       const logs = getAppLogs();
+      const message = buildBugReportMessage(
+        trimmedDescription,
+        trimmedSteps,
+        logs.length ? logs : undefined
+      );
       const report: BugReport = {
         id: uuid.v4() as string,
         subject: trimmedSubject,
         description: trimmedDescription,
-        stepsToReproduce: stepsToReproduce.trim() || undefined,
+        stepsToReproduce: trimmedSteps || undefined,
         logs: logs.length ? logs : undefined,
         createdAt: Date.now(),
       };
       setStorageItem(STORAGE_KEYS.bugReports, [...reports, report]);
-      resetForm();
-      Alert.alert(
-        "Report saved",
-        "Your bug report has been recorded. We'll look into it."
-      );
+      const result = await requestContact({
+        name: user?.name ?? undefined,
+        email: user?.email ?? undefined,
+        subject: trimmedSubject,
+        message,
+      });
+      if (result.ok) {
+        resetForm();
+        showMessage({
+          message: "Report sent",
+          description: "Thanks for the report. We'll look into it.",
+          type: "success",
+          duration: 4000,
+          icon: "success",
+        });
+      } else {
+        showQueryError(result.error);
+      }
     } catch (e) {
       console.error(e);
-      Alert.alert(
-        "Error",
-        "Could not save the report. Try again or use email."
-      );
+      showQueryError(e);
     } finally {
       setSubmitting(false);
     }
@@ -93,7 +131,7 @@ export default function ReportBugSettings(): React.ReactElement {
           }}
         >
           Describe the issue and what you were doing when it happened. Reports
-          are saved in the app.
+          are sent to our team and saved on this device.
         </P>
 
         <FormField label="Subject" required helper="Short title for the bug">

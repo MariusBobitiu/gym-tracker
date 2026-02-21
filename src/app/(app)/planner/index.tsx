@@ -36,6 +36,8 @@ import {
   getWeekSessionsFromPlan,
   getRotationType,
   completePlannedSession,
+  createWorkoutSession,
+  getCompletedPlannedSessionIdsInRange,
 } from "@/features/planner/planner-repository";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import type { PlannedSessionView } from "@/features/planner/planner-types";
@@ -70,6 +72,13 @@ export default function Planner() {
   const [calendarHeight, setCalendarHeight] = useState(0);
   const [selectedSession, setSelectedSession] =
     useState<PlannedSessionView | null>(null);
+  const [completedSessionIds, setCompletedSessionIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [currentWeekCompletedSessionIds, setCurrentWeekCompletedSessionIds] =
+    useState<Set<string>>(() => new Set());
+  const [isLoadingCompletedSessions, setIsLoadingCompletedSessions] =
+    useState(false);
   const sessionModal = useModal();
   const reduceMotion = useReducedMotion();
 
@@ -114,46 +123,93 @@ export default function Planner() {
     return format(weekStartDate, "MMMM yyyy");
   }, [isCalendarOpen, weekRangeText, weekStartDate]);
 
-  const weekData =
-    state.kind === "week_view"
-      ? getWeekSessionsFromPlan(state.plan, viewedWeekStart)
-      : null;
+  const weekData = useMemo(
+    () =>
+      state.kind === "week_view"
+        ? getWeekSessionsFromPlan(state.plan, viewedWeekStart)
+        : null,
+    [state.kind, state.plan, viewedWeekStart]
+  );
 
-  const currentWeekData =
-    state.kind === "week_view"
-      ? getWeekSessionsFromPlan(state.plan, thisWeekStart)
-      : null;
+  const currentWeekData = useMemo(
+    () =>
+      state.kind === "week_view"
+        ? getWeekSessionsFromPlan(state.plan, thisWeekStart)
+        : null,
+    [state.kind, state.plan, thisWeekStart]
+  );
 
-  const weekProgress =
-    state.kind === "week_view"
-      ? getWeekProgress({
-          weekData,
-          cycleState: state.plan.cycleState,
-          weekStartDate,
-          weekEndDate,
-        })
-      : null;
+  useEffect(() => {
+    if (state.kind !== "week_view" || !weekData) return;
+    let isMounted = true;
+    setIsLoadingCompletedSessions(true);
+    setCompletedSessionIds(new Set());
+    const startMs = weekStartDate.getTime();
+    const endMs = weekEndDate.getTime();
+    getCompletedPlannedSessionIdsInRange(startMs, endMs)
+      .then((ids) => {
+        if (!isMounted) return;
+        const allowedIds = new Set(
+          weekData.sessions.map((session) => session.id)
+        );
+        const filtered = new Set<string>();
+        for (const id of ids) {
+          if (allowedIds.has(id)) filtered.add(id);
+        }
+        setCompletedSessionIds(filtered);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (isMounted) setCompletedSessionIds(new Set());
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingCompletedSessions(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [state.kind, weekStartDate, weekEndDate, weekData]);
 
-  const currentWeekProgress =
-    state.kind === "week_view"
-      ? getWeekProgress({
-          weekData: currentWeekData,
-          cycleState: state.plan.cycleState,
-          weekStartDate: thisWeekStart,
-          weekEndDate: new Date(
-            thisWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000
-          ),
-        })
-      : null;
+  useEffect(() => {
+    if (state.kind !== "week_view" || !currentWeekData) return;
+    let isMounted = true;
+    setCurrentWeekCompletedSessionIds(new Set());
+    const [currentWeekStart, currentWeekEnd] = getWeekRange(thisWeekStart);
+    const startMs = currentWeekStart.getTime();
+    const endMs = currentWeekEnd.getTime();
+    getCompletedPlannedSessionIdsInRange(startMs, endMs)
+      .then((ids) => {
+        if (!isMounted) return;
+        const allowedIds = new Set(
+          currentWeekData.sessions.map((session) => session.id)
+        );
+        const filtered = new Set<string>();
+        for (const id of ids) {
+          if (allowedIds.has(id)) filtered.add(id);
+        }
+        setCurrentWeekCompletedSessionIds(filtered);
+      })
+      .catch((error) => {
+        console.error(error);
+        if (isMounted) setCurrentWeekCompletedSessionIds(new Set());
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [state.kind, thisWeekStart, currentWeekData]);
 
   const isCurrentWeekComplete =
-    (currentWeekProgress?.totalPlanned ?? 0) > 0 &&
-    (currentWeekProgress?.completedCount ?? 0) >=
-      (currentWeekProgress?.totalPlanned ?? 0);
+    (currentWeekData?.totalPlanned ?? 0) > 0 &&
+    currentWeekCompletedSessionIds.size >= (currentWeekData?.totalPlanned ?? 0);
 
   const upNextSessionId = useMemo(() => {
     if (!weekData) return null;
-    if (isCurrentWeek) return weekProgress?.upNextSessionId ?? null;
+    if (isCurrentWeek) {
+      const nextSession = weekData.sessions.find(
+        (session) => !completedSessionIds.has(session.id)
+      );
+      return nextSession?.id ?? null;
+    }
     if (isNextWeek && isCurrentWeekComplete) {
       return weekData.sessions[0]?.id ?? null;
     }
@@ -163,7 +219,7 @@ export default function Planner() {
     isNextWeek,
     isCurrentWeekComplete,
     weekData,
-    weekProgress,
+    completedSessionIds,
   ]);
 
   const cycleStateForEffect =
@@ -209,19 +265,18 @@ export default function Planner() {
 
   const plannedSessions: PlannedSessionView[] = useMemo(() => {
     if (!weekData) return [];
-    const completedCount = weekProgress?.completedCount ?? 0;
-    return weekData.sessions.map((session, index) => ({
+    return weekData.sessions.map((session) => ({
       plannedSessionTemplateId: session.id,
       title: session.name,
       tags: session.muscleGroups ?? undefined,
       muscleGroups: session.muscleGroups ?? undefined,
       estimatedMins: undefined,
       variantNotes: undefined,
-      status: index < completedCount ? "completed" : "planned",
+      status: completedSessionIds.has(session.id) ? "completed" : "planned",
       completedLog: undefined,
       isUpNext: upNextSessionId === session.id,
     }));
-  }, [weekData, upNextSessionId, weekProgress?.completedCount]);
+  }, [weekData, upNextSessionId, completedSessionIds]);
 
   const handlePrevWeek = () => {
     if (!canGoToPrevWeek) return;
@@ -264,11 +319,34 @@ export default function Planner() {
     sessionModal.dismiss();
     setSelectedSession(null);
     try {
+      const now = Date.now();
+      await createWorkoutSession({
+        cycleId: state.plan.cycle.id,
+        plannedSessionTemplateId: selectedSession.plannedSessionTemplateId,
+        sessionTitle: selectedSession.title,
+        startedAt: now,
+        completedAt: now,
+        durationMins: 0,
+        totalVolumeKg: 0,
+        totalSets: 0,
+        totalReps: 0,
+        sets: [],
+      });
       await completePlannedSession(
         state.plan.cycle.id,
         state.plan,
         selectedSession.plannedSessionTemplateId
       );
+      setCompletedSessionIds((prev) => {
+        const next = new Set(prev);
+        next.add(selectedSession.plannedSessionTemplateId);
+        return next;
+      });
+      setCurrentWeekCompletedSessionIds((prev) => {
+        const next = new Set(prev);
+        next.add(selectedSession.plannedSessionTemplateId);
+        return next;
+      });
       refetch();
     } catch (e) {
       console.error(e);
@@ -427,7 +505,9 @@ export default function Planner() {
 
   const isPastWeek = weekEndDate < new Date();
   const totalPlanned = weekData?.totalPlanned ?? 0;
-  const completedCount = weekProgress?.completedCount ?? 0;
+  const completedCount = isLoadingCompletedSessions
+    ? 0
+    : completedSessionIds.size;
   const missedCount = 0;
 
   return (
@@ -729,58 +809,6 @@ export default function Planner() {
       </Modal>
     </Screen>
   );
-}
-
-type WeekProgressInput = {
-  weekData: ReturnType<typeof getWeekSessionsFromPlan> | null;
-  cycleState: {
-    session_index_a: number;
-    session_index_b: number;
-    session_index_c: number;
-    last_completed_at: string | null;
-  };
-  weekStartDate: Date;
-  weekEndDate: Date;
-};
-
-type WeekProgressResult = {
-  completedCount: number;
-  upNextSessionId: string | null;
-  totalPlanned: number;
-};
-
-function getWeekProgress(input: WeekProgressInput): WeekProgressResult | null {
-  const { weekData, cycleState, weekStartDate, weekEndDate } = input;
-  if (!weekData) return null;
-
-  const sessions = weekData.sessions;
-  const total = sessions.length;
-  const lastCompletedAt = cycleState.last_completed_at
-    ? new Date(cycleState.last_completed_at)
-    : null;
-  const isInWeek =
-    lastCompletedAt !== null &&
-    lastCompletedAt.getTime() >= weekStartDate.getTime() &&
-    lastCompletedAt.getTime() <= weekEndDate.getTime();
-
-  const nextIndex =
-    weekData.variantKey === "B"
-      ? cycleState.session_index_b
-      : weekData.variantKey === "C"
-        ? cycleState.session_index_c
-        : cycleState.session_index_a;
-
-  let completedCount = isInWeek ? Math.min(nextIndex, total) : 0;
-  if (isInWeek && total > 0 && nextIndex === 0) {
-    completedCount = total;
-  }
-
-  // When no completion in this week (e.g. new week), "up next" is the first session of the week.
-  const indexForUpNext = isInWeek ? nextIndex : 0;
-  const upNextSessionId =
-    completedCount >= total ? null : (sessions[indexForUpNext]?.id ?? null);
-
-  return { completedCount, upNextSessionId, totalPlanned: total };
 }
 
 type SessionCardProps = {

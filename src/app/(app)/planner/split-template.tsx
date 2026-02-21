@@ -60,8 +60,11 @@ export default function SplitTemplateScreen() {
   ): Promise<void> => {
     setIsSubmitting(true);
     try {
-      await createTemplateSplit(templateId);
-      router.replace({ pathname: "/planner/rotation" } as never);
+      const splitId = await createTemplateSplit(templateId);
+      router.replace({
+        pathname: "/planner/rotation",
+        params: { splitId },
+      } as never);
     } catch (e) {
       console.error(e);
       setIsSubmitting(false);

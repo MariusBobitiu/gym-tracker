@@ -179,8 +179,14 @@ export default function SplitBuilderScreen() {
         );
         router.replace({ pathname: "/planner/plan/summary" } as never);
       } else {
-        await createCustomSplit(splitName.trim(), variants);
-        router.replace({ pathname: "/planner/rotation" } as never);
+        const createdSplitId = await createCustomSplit(
+          splitName.trim(),
+          variants
+        );
+        router.replace({
+          pathname: "/planner/rotation",
+          params: { splitId: createdSplitId },
+        } as never);
       }
     } catch (e) {
       console.error(e);
