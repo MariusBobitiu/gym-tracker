@@ -160,29 +160,31 @@ function BentoCard({
 type BentoGridProps = {
   /** When false, plan is still loading so this week / up next show "—" instead of 0. */
   planReady: boolean;
-  thisWeekCompleted: number;
-  thisWeekTotal: number;
+  thisWeekCompletedAll: number;
+  thisWeekCompletedPlanned: number;
+  thisWeekTotalPlanned: number;
   upNextSessionName: string | null;
-  lastWeekCompleted: number;
-  lastWeekTotal: number;
+  lastWeekCompletedAll: number;
+  lastWeekTotalPlanned: number;
   last14DaysMins: number;
 };
 
 function BentoGrid({
   planReady,
-  thisWeekCompleted,
-  thisWeekTotal,
+  thisWeekCompletedAll,
+  thisWeekCompletedPlanned,
+  thisWeekTotalPlanned,
   upNextSessionName,
-  lastWeekCompleted,
-  lastWeekTotal,
+  lastWeekCompletedAll,
+  lastWeekTotalPlanned,
   last14DaysMins,
 }: BentoGridProps): React.ReactElement {
   const { colors } = useTheme();
   const progressPct =
-    planReady && thisWeekTotal > 0
-      ? Math.min((thisWeekCompleted / thisWeekTotal) * 100, 100)
+    planReady && thisWeekTotalPlanned > 0
+      ? Math.min((thisWeekCompletedPlanned / thisWeekTotalPlanned) * 100, 100)
       : 0;
-  const upNext = thisWeekTotal - thisWeekCompleted;
+  const upNext = thisWeekTotalPlanned - thisWeekCompletedPlanned;
   const upNextLabel = !planReady
     ? "—"
     : upNext > 0 && upNextSessionName
@@ -208,16 +210,16 @@ function BentoGrid({
                 lineHeight: 32,
               }}
             >
-              {planReady ? thisWeekCompleted : "—"}
+              {planReady ? thisWeekCompletedAll : "—"}
             </Text>
             <P style={{ color: colors.mutedForeground }}>
               of{" "}
-              {planReady && thisWeekTotal > 0
-                ? thisWeekTotal
+              {planReady && thisWeekTotalPlanned > 0
+                ? thisWeekTotalPlanned
                 : planReady
                   ? 0
                   : "—"}{" "}
-              sessions
+              planned sessions
             </P>
           </View>
           <View
@@ -242,8 +244,8 @@ function BentoGrid({
           />
           <BentoCard
             title="Last week"
-            value={String(lastWeekCompleted)}
-            subtitle={`of ${lastWeekTotal} sessions`}
+            value={String(lastWeekCompletedAll)}
+            subtitle={`of ${lastWeekTotalPlanned} planned sessions`}
           />
         </View>
       </View>
@@ -326,7 +328,7 @@ function BestLiftsSection({
         </Card>
       ) : (
         <Card>
-          {lifts.map((lift, index) => (
+          {lifts.slice(0, 3).map((lift, index) => (
             <BestLiftRow
               key={lift.name}
               name={lift.name}
@@ -351,11 +353,10 @@ export function ProfileScreen(): React.ReactElement {
     if (planState.kind === "loading") return cachedPlan;
     return null;
   }, [planState, cachedPlan]);
-  const {
-    data: thisWeekData,
-    loading: thisWeekLoading,
-    refetch: refetchThisWeek,
-  } = useHistoryWeek(plan, thisWeekStart);
+  const { data: thisWeekData, refetch: refetchThisWeek } = useHistoryWeek(
+    plan,
+    thisWeekStart
+  );
   const { formatVolume, formatWeight } = useWeightUnit();
 
   const [profileStats, setProfileStats] = useState<{
@@ -364,8 +365,8 @@ export function ProfileScreen(): React.ReactElement {
     weeksTrained: number;
   } | null>(null);
   const [bestLiftsList, setBestLiftsList] = useState<LiftItem[]>([]);
-  const [lastWeekCompleted, setLastWeekCompleted] = useState(0);
-  const [lastWeekTotal, setLastWeekTotal] = useState(0);
+  const [lastWeekCompletedAll, setLastWeekCompletedAll] = useState(0);
+  const [lastWeekTotalPlanned, setLastWeekTotalPlanned] = useState(0);
   const [last14DaysMins, setLast14DaysMins] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -406,27 +407,19 @@ export function ProfileScreen(): React.ReactElement {
       );
       setLast14DaysMins(totalMins);
 
+      const lastWeekMon = new Date(thisWeekStart);
+      lastWeekMon.setDate(lastWeekMon.getDate() - 7);
+      const [lastWeekStartDate, lastWeekEndDate] = getWeekRange(lastWeekMon);
+      const lastWeekSessions = await getWorkoutSessionsInRange(
+        lastWeekStartDate.getTime(),
+        lastWeekEndDate.getTime()
+      );
+      setLastWeekCompletedAll(lastWeekSessions.length);
       if (plan) {
-        const lastWeekMon = new Date(thisWeekStart);
-        lastWeekMon.setDate(lastWeekMon.getDate() - 7);
-        const [lastWeekStartDate, lastWeekEndDate] = getWeekRange(lastWeekMon);
-        const lastWeekSessions = await getWorkoutSessionsInRange(
-          lastWeekStartDate.getTime(),
-          lastWeekEndDate.getTime()
-        );
         const lastWeekPlan = getWeekSessionsFromPlan(plan, lastWeekStartDate);
-        const lastWeekIds = new Set(
-          lastWeekSessions
-            .map((s) => s.plannedSessionTemplateId)
-            .filter((id): id is string => Boolean(id))
-        );
-        setLastWeekCompleted(
-          Math.min(lastWeekIds.size, lastWeekPlan.totalPlanned)
-        );
-        setLastWeekTotal(lastWeekPlan.totalPlanned);
+        setLastWeekTotalPlanned(lastWeekPlan.totalPlanned);
       } else {
-        setLastWeekCompleted(0);
-        setLastWeekTotal(0);
+        setLastWeekTotalPlanned(0);
       }
     } finally {
       setLoading(false);
@@ -468,8 +461,9 @@ export function ProfileScreen(): React.ReactElement {
     ];
   }, [profileStats, formatVolume]);
 
-  const thisWeekCompleted = thisWeekData?.weekStats?.completedCount ?? 0;
-  const thisWeekTotal = thisWeekData?.weekData?.totalPlanned ?? 0;
+  const thisWeekCompletedPlanned = thisWeekData?.weekStats?.completedCount ?? 0;
+  const thisWeekCompletedAll = thisWeekData?.completedSessions.length ?? 0;
+  const thisWeekTotalPlanned = thisWeekData?.weekData?.totalPlanned ?? 0;
   const upNextSession = useMemo(() => {
     if (!plan) return null;
     return getUpNextSession(plan, plan.cycleState);
@@ -505,11 +499,12 @@ export function ProfileScreen(): React.ReactElement {
           <ProfileHeader stats={stats} />
           <BentoGrid
             planReady={plan !== null}
-            thisWeekCompleted={thisWeekCompleted}
-            thisWeekTotal={thisWeekTotal}
+            thisWeekCompletedAll={thisWeekCompletedAll}
+            thisWeekCompletedPlanned={thisWeekCompletedPlanned}
+            thisWeekTotalPlanned={thisWeekTotalPlanned}
             upNextSessionName={upNextSessionName}
-            lastWeekCompleted={lastWeekCompleted}
-            lastWeekTotal={lastWeekTotal}
+            lastWeekCompletedAll={lastWeekCompletedAll}
+            lastWeekTotalPlanned={lastWeekTotalPlanned}
             last14DaysMins={last14DaysMins}
           />
           <BestLiftsSection lifts={bestLiftsList} />
