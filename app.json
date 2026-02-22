@@ -47,7 +47,7 @@
     "ios": {
       "usesAppleSignIn": true,
       "supportsTablet": true,
-      "bundleIdentifier": "dev.mariusbobitiu.vixe",
+      "bundleIdentifier": "app.vixe",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSAppTransportSecurity": {
@@ -60,7 +60,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F5F7FA"
       },
-      "package": "dev.mariusbobitiu.vixe"
+      "package": "app.vixe"
     },
     "extra": {
       "router": {},
