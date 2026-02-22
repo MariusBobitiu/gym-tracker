@@ -8,7 +8,10 @@ import {
   getWeekRange,
   startOfWeekMonday,
 } from "@/features/planner";
-import type { HistorySessionView } from "@/types/history";
+import type {
+  CompletedHistorySessionView,
+  HistorySessionView,
+} from "@/types/history";
 import { getWorkoutSessionsInRange } from "@/features/planner/planner-repository";
 
 export type HistoryWeekStats = {
@@ -20,6 +23,8 @@ export type HistoryWeekStats = {
 
 export type HistoryWeekData = {
   historySessions: HistorySessionView[];
+  completedSessions: CompletedHistorySessionView[];
+  extraCompletedSessions: CompletedHistorySessionView[];
   weekStats: HistoryWeekStats;
   weekData: ReturnType<typeof getWeekSessionsFromPlan> | null;
 };
@@ -134,6 +139,24 @@ function buildHistorySessions(input: {
   });
 }
 
+function buildCompletedSessions(
+  sessions: WorkoutSessionSummary[]
+): CompletedHistorySessionView[] {
+  return sessions
+    .filter((session) => session.completedAt != null)
+    .map((session) => ({
+      sessionId: session.id,
+      plannedSessionTemplateId: session.plannedSessionTemplateId,
+      title: session.sessionTitle,
+      completedAt: session.completedAt ?? 0,
+      durationMins: session.durationMins ?? null,
+      totalVolumeKg: session.totalVolumeKg ?? null,
+      totalSets: session.totalSets,
+      totalReps: session.totalReps,
+      muscleGroups: session.muscleGroups ?? undefined,
+    }));
+}
+
 export function useHistoryWeek(
   plan: ActivePlanWithState | null,
   viewedWeekStart: Date,
@@ -182,6 +205,11 @@ export function useHistoryWeek(
       (weekData?.sessions ?? []).map((s) => s.id)
     );
     const plannedSessionMap = buildSessionMap(sessions);
+    const plannedCompletedSessionIds = new Set<string>();
+    for (const sessionTemplateId of currentWeekSessionTemplateIds) {
+      const session = plannedSessionMap.get(sessionTemplateId);
+      if (session) plannedCompletedSessionIds.add(session.id);
+    }
     const historySessions = buildHistorySessions({
       weekData,
       plannedSessionMap,
@@ -189,6 +217,10 @@ export function useHistoryWeek(
       weekEndDate,
       registrationDate,
     });
+    const completedSessions = buildCompletedSessions(sessions);
+    const extraCompletedSessions = completedSessions.filter(
+      (session) => !plannedCompletedSessionIds.has(session.sessionId)
+    );
     const weekStats = computeWeekStats(
       sessions,
       weekData?.sessions.length ?? 0,
@@ -197,6 +229,8 @@ export function useHistoryWeek(
 
     return {
       historySessions,
+      completedSessions,
+      extraCompletedSessions,
       weekStats,
       weekData,
     };

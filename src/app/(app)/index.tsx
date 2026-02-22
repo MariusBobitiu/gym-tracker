@@ -37,7 +37,7 @@ import { startOfWeekMonday } from "@/features/planner/date-utils";
 import { useActivePlan } from "@/features/planner/use-active-plan";
 import { useHistoryWeek } from "@/hooks/use-history-week";
 import { useWeightUnit } from "@/hooks/use-weight-unit";
-import type { HistorySessionView } from "@/types/history";
+import type { CompletedHistorySessionView } from "@/types/history";
 
 type WeekDot = {
   id: string;
@@ -58,11 +58,11 @@ const WEEK_DOTS: WeekDot[] = [
 ];
 
 function WeekSummary({
-  historySessions,
+  completedSessions,
   weekStats,
   totalPlanned,
 }: {
-  historySessions: HistorySessionView[];
+  completedSessions: CompletedHistorySessionView[];
   weekStats: {
     completedCount: number;
     totalVolumeKg: number;
@@ -74,13 +74,13 @@ function WeekSummary({
   const { formatVolume } = useWeightUnit();
   const completedDays = useMemo(() => {
     const set = new Set<number>();
-    for (const s of historySessions) {
-      if (s.status === "completed" && s.completedAt != null) {
-        set.add(new Date(s.completedAt).getDay());
+    for (const session of completedSessions) {
+      if (session.completedAt != null) {
+        set.add(new Date(session.completedAt).getDay());
       }
     }
     return set;
-  }, [historySessions]);
+  }, [completedSessions]);
   const todayDay = useMemo(() => new Date().getDay(), []);
   const dotsWithState = useMemo(
     () =>
@@ -497,8 +497,8 @@ export default function Home(): React.ReactElement {
     planState.kind === "needs_rotation" ||
     planState.kind === "loading";
 
-  const historySessions = useMemo(
-    () => historyData?.historySessions ?? [],
+  const completedSessions = useMemo(
+    () => historyData?.completedSessions ?? [],
     [historyData]
   );
   const weekStats = historyData?.weekStats ?? null;
@@ -537,7 +537,7 @@ export default function Home(): React.ReactElement {
           <View className="mt-4 flex-1">
             {showWeekSummary && (
               <WeekSummary
-                historySessions={historySessions}
+                completedSessions={completedSessions}
                 weekStats={weekStats}
                 totalPlanned={totalPlanned}
               />

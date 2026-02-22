@@ -16,3 +16,15 @@ export type HistorySessionView = {
   totalSets?: number;
   totalReps?: number;
 };
+
+export type CompletedHistorySessionView = {
+  sessionId: string;
+  plannedSessionTemplateId: string | null;
+  title: string;
+  completedAt: number;
+  durationMins: number | null;
+  totalVolumeKg: number | null;
+  totalSets: number;
+  totalReps: number;
+  muscleGroups?: string[];
+};

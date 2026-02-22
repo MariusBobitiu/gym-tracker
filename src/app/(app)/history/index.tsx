@@ -40,7 +40,142 @@ function formatDuration(value: number | null | undefined): string {
   return `${value} mins`;
 }
 
-export default function History() {
+type HistoryListItem = {
+  id: string;
+  title: string;
+  status: "planned" | "completed" | "missed";
+  totalVolumeKg?: number | null;
+  totalSets?: number;
+  totalReps?: number;
+  completedSessionId?: string;
+};
+
+type HistorySessionCardProps = {
+  item: HistoryListItem;
+  formatVolume: (value?: number | null) => string;
+  onPress?: () => void;
+};
+
+function HistorySessionCard({
+  item,
+  formatVolume,
+  onPress,
+}: HistorySessionCardProps): JSX.Element {
+  const { colors, tokens } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      className="flex-col"
+      style={{
+        borderWidth: 1,
+        borderColor: colors.border,
+        borderRadius: tokens.radius.md,
+        paddingHorizontal: tokens.spacing.md,
+      }}
+    >
+      <View className="flex-1 flex-row items-center justify-between py-1">
+        <View
+          className="flex-row items-center"
+          style={{ gap: tokens.spacing.md }}
+        >
+          <View
+            className="size-4 rounded-full"
+            style={{
+              backgroundColor:
+                item.status === "completed"
+                  ? colors.primary
+                  : item.status === "missed"
+                    ? colors.destructive
+                    : colors.border,
+            }}
+          />
+          <P
+            style={{
+              color: colors.foreground,
+              fontWeight: tokens.typography.weights.medium,
+              fontSize: tokens.typography.sizes.lg,
+            }}
+          >
+            {item.title}
+          </P>
+          <View
+            className="flex-row items-center"
+            style={{ gap: tokens.spacing.sm }}
+          >
+            <View
+              className="size-4 items-center justify-center rounded-full"
+              style={{
+                backgroundColor:
+                  item.status === "completed"
+                    ? colors.primary
+                    : item.status === "missed"
+                      ? colors.destructive
+                      : colors.border,
+              }}
+            >
+              {item.status === "completed" ? (
+                <Check
+                  size={12}
+                  strokeWidth={4}
+                  color={colors.primaryForeground}
+                />
+              ) : item.status === "missed" ? (
+                <X
+                  size={12}
+                  strokeWidth={4}
+                  color={colors.destructiveForeground}
+                />
+              ) : (
+                <Minus
+                  size={12}
+                  strokeWidth={4}
+                  color={colors.mutedForeground}
+                />
+              )}
+            </View>
+            <P
+              style={{
+                color: colors.mutedForeground,
+                fontSize: tokens.typography.sizes.sm,
+              }}
+            >
+              {item.status === "completed"
+                ? "Completed"
+                : item.status === "missed"
+                  ? "Missed"
+                  : "Planned"}
+            </P>
+          </View>
+        </View>
+        <View
+          className="flex-row items-center"
+          style={{ gap: tokens.spacing.xs }}
+        >
+          <P style={{ color: colors.mutedForeground }}>
+            {formatVolume(item.totalVolumeKg)}
+          </P>
+          <ChevronRight size={16} color={colors.primary} />
+        </View>
+      </View>
+      <View
+        className="flex-1 flex-row items-center border-l-2"
+        style={{
+          borderColor: colors.border,
+          paddingHorizontal: tokens.spacing.md,
+          margin: tokens.spacing.xs,
+          marginBottom: tokens.spacing.md,
+        }}
+      >
+        <P style={{ color: colors.mutedForeground }}>
+          {item.totalSets ?? 0} sets • {item.totalReps ?? 0} reps
+        </P>
+      </View>
+    </Pressable>
+  );
+}
+
+export default function History(): JSX.Element {
   const [viewedWeekStart, setViewedWeekStart] = useState(() =>
     startOfWeekMonday(new Date())
   );
@@ -122,6 +257,11 @@ export default function History() {
     () => historyData?.historySessions ?? [],
     [historyData]
   );
+  const extraCompletedSessions = useMemo(
+    () => historyData?.extraCompletedSessions ?? [],
+    [historyData]
+  );
+  const extraCompletedCount = extraCompletedSessions.length;
 
   if (state.kind === "loading") {
     return (
@@ -303,7 +443,7 @@ export default function History() {
           <View className="flex-col p-3">
             <P style={{ color: colors.mutedForeground }}>
               {weekStats?.completedCount ?? 0} / {weekStats?.totalPlanned ?? 0}{" "}
-              sessions done
+              planned sessions done
             </P>
             <View
               className="flex-row items-center"
@@ -343,123 +483,67 @@ export default function History() {
               }}
             >
               {historySessions.map((session) => (
-                <Pressable
+                <HistorySessionCard
                   key={session.plannedSessionTemplateId}
-                  onPress={() => {
-                    if (!session.completedSessionId) return;
-                    router.push({
-                      pathname: `/history/${session.completedSessionId}`,
-                    } as never);
+                  item={{
+                    id: session.plannedSessionTemplateId,
+                    title: session.title,
+                    status: session.status,
+                    totalVolumeKg: session.totalVolumeKg ?? null,
+                    totalSets: session.totalSets,
+                    totalReps: session.totalReps,
+                    completedSessionId: session.completedSessionId,
                   }}
-                  className="flex-col"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    borderRadius: tokens.radius.md,
-                    paddingHorizontal: tokens.spacing.md,
-                  }}
-                >
-                  <View className="flex-1 flex-row items-center justify-between py-1">
-                    <View
-                      className="flex-row items-center"
-                      style={{ gap: tokens.spacing.md }}
-                    >
-                      <View
-                        className="size-4 rounded-full"
-                        style={{
-                          backgroundColor:
-                            session.status === "completed"
-                              ? colors.primary
-                              : session.status === "missed"
-                                ? colors.destructive
-                                : colors.border,
-                        }}
-                      />
-                      <P
-                        style={{
-                          color: colors.foreground,
-                          fontWeight: tokens.typography.weights.medium,
-                          fontSize: tokens.typography.sizes.lg,
-                        }}
-                      >
-                        {session.title}
-                      </P>
-                      <View
-                        className="flex-row items-center"
-                        style={{ gap: tokens.spacing.sm }}
-                      >
-                        <View
-                          className="size-4 items-center justify-center rounded-full"
-                          style={{
-                            backgroundColor:
-                              session.status === "completed"
-                                ? colors.primary
-                                : session.status === "missed"
-                                  ? colors.destructive
-                                  : colors.border,
-                          }}
-                        >
-                          {session.status === "completed" ? (
-                            <Check
-                              size={12}
-                              strokeWidth={4}
-                              color={colors.primaryForeground}
-                            />
-                          ) : session.status === "missed" ? (
-                            <X
-                              size={12}
-                              strokeWidth={4}
-                              color={colors.destructiveForeground}
-                            />
-                          ) : (
-                            <Minus
-                              size={12}
-                              strokeWidth={4}
-                              color={colors.mutedForeground}
-                            />
-                          )}
-                        </View>
-                        <P
-                          style={{
-                            color: colors.mutedForeground,
-                            fontSize: tokens.typography.sizes.sm,
-                          }}
-                        >
-                          {session.status === "completed"
-                            ? "Completed"
-                            : session.status === "missed"
-                              ? "Missed"
-                              : "Planned"}
-                        </P>
-                      </View>
-                    </View>
-                    <View
-                      className="flex-row items-center"
-                      style={{ gap: tokens.spacing.xs }}
-                    >
-                      <P style={{ color: colors.mutedForeground }}>
-                        {formatVolume(session.totalVolumeKg)}
-                      </P>
-                      <ChevronRight size={16} color={colors.primary} />
-                    </View>
-                  </View>
-                  <View
-                    className="flex-1 flex-row items-center border-l-2"
-                    style={{
-                      borderColor: colors.border,
-                      paddingHorizontal: tokens.spacing.md,
-                      margin: tokens.spacing.xs,
-                      marginBottom: tokens.spacing.md,
-                    }}
-                  >
-                    <P style={{ color: colors.mutedForeground }}>
-                      {session.totalSets ?? 0} sets • {session.totalReps ?? 0}{" "}
-                      reps
-                    </P>
-                  </View>
-                </Pressable>
+                  formatVolume={formatVolume}
+                  onPress={
+                    session.completedSessionId
+                      ? () =>
+                          router.push({
+                            pathname: `/history/${session.completedSessionId}`,
+                          } as never)
+                      : undefined
+                  }
+                />
               ))}
             </View>
+            {extraCompletedCount > 0 ? (
+              <View className="mt-6">
+                <H3>Completed (other plans)</H3>
+                <P style={{ color: colors.mutedForeground }}>
+                  {extraCompletedCount} session
+                  {extraCompletedCount !== 1 ? "s" : ""} completed outside your
+                  current plan.
+                </P>
+                <View
+                  className="flex-1 flex-col"
+                  style={{
+                    gap: tokens.spacing.sm,
+                    paddingVertical: tokens.spacing.sm,
+                  }}
+                >
+                  {extraCompletedSessions.map((session) => (
+                    <HistorySessionCard
+                      key={session.sessionId}
+                      item={{
+                        id: session.sessionId,
+                        title: session.title,
+                        status: "completed",
+                        totalVolumeKg: session.totalVolumeKg ?? null,
+                        totalSets: session.totalSets,
+                        totalReps: session.totalReps,
+                        completedSessionId: session.sessionId,
+                      }}
+                      formatVolume={formatVolume}
+                      onPress={() =>
+                        router.push({
+                          pathname: `/history/${session.sessionId}`,
+                        } as never)
+                      }
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       </View>
