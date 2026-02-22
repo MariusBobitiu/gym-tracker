@@ -351,7 +351,7 @@ function BestLiftsSection({
               key={lift.name}
               name={lift.name}
               detail={lift.detail}
-              showDivider={index < lifts.length - 1}
+              showDivider={index < lifts.slice(0, 3).length - 1}
             />
           ))}
         </Card>
