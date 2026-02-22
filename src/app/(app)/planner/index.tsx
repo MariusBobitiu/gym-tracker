@@ -764,11 +764,21 @@ export default function Planner() {
 
       <Modal
         ref={sessionModal.ref}
-        snapPoints={["50%"]}
+        snapPoints={["34%"]}
         title={selectedSession?.title || "Session Actions"}
       >
         {selectedSession && (
-          <View className="px-4 pb-8">
+          <View className="px-4 pb-6">
+            <Text
+              className="mb-4"
+              style={{
+                fontSize: tokens.typography.sizes.sm,
+                color: colors.mutedForeground,
+                textAlign: "center",
+              }}
+            >
+              Choose what you want to do with this session.
+            </Text>
             {!isCurrentWeek && (
               <View
                 className="mb-4 rounded-lg px-3 py-2"
@@ -788,19 +798,23 @@ export default function Planner() {
                 </Text>
               </View>
             )}
-            <View style={{ marginBottom: tokens.spacing.md }}>
+            <View style={{ marginBottom: tokens.spacing.sm }}>
               <Button
                 label="Start workout"
                 onPress={handleStartWorkout}
                 variant="primary"
+                size="lg"
+                className="my-0"
                 disabled={!isCurrentWeek}
               />
             </View>
-            <View style={{ marginBottom: tokens.spacing.md }}>
+            <View>
               <Button
                 label="Mark as done"
                 onPress={handleMarkAsDone}
                 variant="outline"
+                size="lg"
+                className="my-0"
                 disabled={!isCurrentWeek}
               />
             </View>

@@ -31,7 +31,7 @@ import type {
 import { SESSION_PHASES } from "@/types/workout-session";
 import {
   deleteActiveWorkoutSession,
-  getUpNextSession,
+  getWeekSessionsFromPlan,
 } from "@/features/planner/planner-repository";
 import { startOfWeekMonday } from "@/features/planner/date-utils";
 import { useActivePlan } from "@/features/planner/use-active-plan";
@@ -488,9 +488,19 @@ export default function Home(): React.ReactElement {
 
   const nextSession = useMemo((): NextSessionInfo => {
     if (!plan) return null;
-    const up = getUpNextSession(plan, plan.cycleState);
-    return up ? { sessionName: up.sessionName, sessionId: up.sessionId } : null;
-  }, [plan]);
+    const weekData =
+      historyData?.weekData ?? getWeekSessionsFromPlan(plan, currentWeekStart);
+    const completedTemplateIds = new Set<string>();
+    for (const completedSession of historyData?.completedSessions ?? []) {
+      if (completedSession.plannedSessionTemplateId) {
+        completedTemplateIds.add(completedSession.plannedSessionTemplateId);
+      }
+    }
+    const upNext = weekData.sessions.find(
+      (session) => !completedTemplateIds.has(session.id)
+    );
+    return upNext ? { sessionName: upNext.name, sessionId: upNext.id } : null;
+  }, [plan, historyData, currentWeekStart]);
 
   const hasPlan =
     planState.kind === "week_view" ||
