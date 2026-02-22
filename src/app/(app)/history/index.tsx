@@ -2,7 +2,7 @@ import { Stack, router, useFocusEffect } from "expo-router";
 import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { Button, H3, P, Pressable, View } from "@/components/ui";
-import { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   formatWeekRange,
   getRotationType,
@@ -60,7 +60,7 @@ function HistorySessionCard({
   item,
   formatVolume,
   onPress,
-}: HistorySessionCardProps): JSX.Element {
+}: HistorySessionCardProps): React.JSX.Element {
   const { colors, tokens } = useTheme();
   return (
     <Pressable
@@ -175,7 +175,7 @@ function HistorySessionCard({
   );
 }
 
-export default function History(): JSX.Element {
+export default function History(): React.JSX.Element {
   const [viewedWeekStart, setViewedWeekStart] = useState(() =>
     startOfWeekMonday(new Date())
   );
@@ -350,7 +350,7 @@ export default function History(): JSX.Element {
   }
 
   return (
-    <Screen className="pb-24">
+    <Screen className="pb-12">
       <Stack.Screen options={headerOptions({ title: "History" })} />
       <AppHeader showBackButton={false} title="History" isMainScreen />
       <View className="flex-1">

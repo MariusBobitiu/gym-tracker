@@ -1,4 +1,4 @@
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import { View } from "@/components/ui";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { BackgroundGradient } from "@/components/background-gradient";
@@ -11,6 +11,9 @@ import { useConnectivityRecovery } from "@/hooks/use-connectivity-recovery";
 export default function Layout() {
   const { colors } = useTheme();
   useConnectivityRecovery();
+  const pathname = usePathname();
+  const hideBottomNav =
+    pathname.startsWith("/settings") || pathname.startsWith("/notifications");
 
   return (
     <View className="flex-1">
@@ -38,7 +41,7 @@ export default function Layout() {
             }}
           />
         </Stack>
-        <BottomNavigation />
+        {!hideBottomNav ? <BottomNavigation /> : null}
       </PlannerDbProvider>
     </View>
   );

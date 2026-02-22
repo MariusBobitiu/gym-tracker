@@ -119,7 +119,13 @@ export default function ReportBugSettings(): React.ReactElement {
       safeAreaEdges={["bottom", "top"]}
       contentContainerClassName="pb-24"
     >
-      <Stack.Screen options={headerOptions({ title: "Report a bug" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Report a bug",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Report a bug" />
 
       <UIView className="gap-4 px-2 pt-4">

@@ -158,7 +158,13 @@ export default function ProfileSettingsScreen(): React.ReactElement {
       safeAreaEdges={["bottom", "top"]}
       contentContainerClassName="pb-24"
     >
-      <Stack.Screen options={headerOptions({ title: "Profile" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Profile",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Profile" />
 
       <UIView className="gap-6 px-2 pt-4">

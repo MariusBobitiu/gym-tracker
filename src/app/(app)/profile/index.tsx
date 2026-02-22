@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { CalendarClock, Dumbbell, Timer } from "lucide-react-native";
@@ -180,9 +181,15 @@ function BentoGrid({
   last14DaysMins,
 }: BentoGridProps): React.ReactElement {
   const { colors } = useTheme();
+  const progressCompleted = Math.min(
+    thisWeekCompletedAll,
+    thisWeekTotalPlanned
+  );
+  const progressColor =
+    progressCompleted > 0 ? colors.primary : colors.mutedForeground;
   const progressPct =
     planReady && thisWeekTotalPlanned > 0
-      ? Math.min((thisWeekCompletedPlanned / thisWeekTotalPlanned) * 100, 100)
+      ? Math.min((progressCompleted / thisWeekTotalPlanned) * 100, 100)
       : 0;
   const upNext = thisWeekTotalPlanned - thisWeekCompletedPlanned;
   const upNextLabel = !planReady
@@ -201,7 +208,7 @@ function BentoGrid({
             <CalendarClock size={18} color={colors.mutedForeground} />
             <Small style={{ color: colors.mutedForeground }}>This week</Small>
           </View>
-          <View className="flex-row items-end gap-2">
+          <P style={{ color: colors.mutedForeground }}>
             <Text
               style={{
                 color: colors.primary,
@@ -212,16 +219,14 @@ function BentoGrid({
             >
               {planReady ? thisWeekCompletedAll : "—"}
             </Text>
-            <P style={{ color: colors.mutedForeground }}>
-              of{" "}
-              {planReady && thisWeekTotalPlanned > 0
-                ? thisWeekTotalPlanned
-                : planReady
-                  ? 0
-                  : "—"}{" "}
-              planned sessions
-            </P>
-          </View>
+            {" of "}
+            {planReady && thisWeekTotalPlanned > 0
+              ? thisWeekTotalPlanned
+              : planReady
+                ? 0
+                : "—"}{" "}
+            planned sessions
+          </P>
           <View
             className="h-2 w-full overflow-hidden rounded-full"
             style={{ backgroundColor: colors.muted }}
@@ -230,7 +235,7 @@ function BentoGrid({
               className="h-2 rounded-full"
               style={{
                 width: `${progressPct}%`,
-                backgroundColor: colors.primary,
+                backgroundColor: progressColor,
               }}
             />
           </View>
@@ -242,11 +247,24 @@ function BentoGrid({
             value={planReady ? String(Math.max(0, upNext)) : "—"}
             subtitle={planReady ? "Session remaining" : "—"}
           />
-          <BentoCard
-            title="Last week"
-            value={String(lastWeekCompletedAll)}
-            subtitle={`of ${lastWeekTotalPlanned} planned sessions`}
-          />
+          <Card className="gap-2">
+            <Small style={{ color: colors.mutedForeground }}>Last week</Small>
+            <P style={{ color: colors.mutedForeground }}>
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: 28,
+                  fontWeight: "700",
+                  lineHeight: 28,
+                }}
+              >
+                {String(lastWeekCompletedAll)}
+              </Text>{" "}
+              {planReady
+                ? `of ${lastWeekTotalPlanned} planned sessions`
+                : "sessions"}
+            </P>
+          </Card>
         </View>
       </View>
       <View className="flex-row gap-3">
@@ -472,30 +490,31 @@ export function ProfileScreen(): React.ReactElement {
 
   if (loading && !profileStats) {
     return (
-      <Screen
-        preset="scroll"
-        padding="none"
-        safeAreaEdges={["bottom", "top"]}
-        contentContainerClassName="flex-1 items-center justify-center pb-20"
-      >
+      <Screen preset="fixed" padding="none" safeAreaEdges={["bottom", "top"]}>
         <Stack.Screen options={headerOptions({ title: "Profile" })} />
-        <AppHeader showBackButton={false} title="Profile" isMainScreen />
-        <LoadingState label="Loading profile..." />
+        <View className="px-4 pt-2">
+          <AppHeader showBackButton={false} title="Profile" isMainScreen />
+        </View>
+        <View className="flex-1 items-center justify-center pb-20">
+          <LoadingState label="Loading profile..." />
+        </View>
       </Screen>
     );
   }
 
   return (
-    <Screen
-      preset="scroll"
-      padding="none"
-      safeAreaEdges={["bottom", "top"]}
-      contentContainerClassName="pb-20"
-    >
+    <Screen preset="fixed" padding="none" safeAreaEdges={["bottom", "top"]}>
       <Stack.Screen options={headerOptions({ title: "Profile" })} />
       <View className="px-4 pt-2">
         <AppHeader showBackButton={false} title="Profile" isMainScreen />
-        <View className="gap-8">
+      </View>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="px-4 pb-20"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="gap-8 pt-2">
           <ProfileHeader stats={stats} />
           <BentoGrid
             planReady={plan !== null}
@@ -509,7 +528,7 @@ export function ProfileScreen(): React.ReactElement {
           />
           <BestLiftsSection lifts={bestLiftsList} />
         </View>
-      </View>
+      </ScrollView>
     </Screen>
   );
 }

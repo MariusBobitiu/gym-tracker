@@ -56,7 +56,13 @@ export default function VerifyEmailSettings(): React.ReactElement {
       safeAreaEdges={["bottom", "top"]}
       contentContainerClassName="pb-24"
     >
-      <Stack.Screen options={headerOptions({ title: "Verify email" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Verify email",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Verify email" />
 
       <UIView className="gap-4 px-2 pt-4">

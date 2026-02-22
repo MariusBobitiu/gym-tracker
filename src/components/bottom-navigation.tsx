@@ -167,19 +167,19 @@ export function BottomNavigation({
   return (
     <View className="absolute bottom-6 left-0 right-0 px-4">
       <BlurView
-        intensity={15}
+        intensity={10}
         tint={Platform.OS === "ios" ? "systemMaterial" : "dark"}
-        className={`overflow-hidden rounded-full border-[0.6px] ${className}`}
+        className={`overflow-hidden rounded-full border ${className}`}
         style={{
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.3,
           shadowRadius: 12,
           elevation: 10,
-          borderColor: isDark ? `${colors.border}90` : `${colors.border}70`,
+          borderColor: isDark ? `${colors.border}` : `${colors.border}70`,
           backgroundColor: isDark
             ? `${colors.background}95`
-            : `${colors.background}95`,
+            : `${colors.background}90`,
         }}
       >
         <View className="relative flex-row items-center px-2 py-1">

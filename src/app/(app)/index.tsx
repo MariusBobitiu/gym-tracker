@@ -524,13 +524,12 @@ export default function Home(): React.ReactElement {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View className="flex-1">
+      <View className="flex-1 overflow-y-hidden pb-12">
         <AmbientBackground />
         <NoiseOverlay />
         <Screen
-          preset="scroll"
-          safeAreaEdges={["top"]}
-          contentContainerClassName="pb-28 pt-4"
+          // preset="scroll"
+          safeAreaEdges={["top", "bottom"]}
           background="none"
         >
           <AppHeader showBackButton={false} title={greeting} isMainScreen />

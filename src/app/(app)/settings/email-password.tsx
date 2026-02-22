@@ -105,7 +105,13 @@ export default function EmailPasswordSettings(): React.ReactElement {
       keyboardAvoiding
       keyboardOffset={Platform.OS === "ios" ? 10 : 0}
     >
-      <Stack.Screen options={headerOptions({ title: "Email & password" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Email & password",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Email & password" />
 
       <H2 className="mt-6">Email</H2>

@@ -4,7 +4,6 @@ import AppHeader, { headerOptions } from "@/components/app-header";
 import { Screen } from "@/components/screen";
 import { FormField } from "@/components/forms";
 import { Radio, View as UIView } from "@/components/ui";
-import { useTheme } from "@/lib/theme-context";
 import {
   getStorageItem,
   setStorageItem,
@@ -18,7 +17,6 @@ const WEIGHT_OPTIONS: { value: WeightUnit; label: string }[] = [
 ];
 
 export default function UnitsSettings(): React.ReactElement {
-  const { tokens } = useTheme();
   const [weightUnit, setWeightUnit] = useState<WeightUnit>(
     () => getStorageItem(STORAGE_KEYS.weightUnit) ?? "kg"
   );
@@ -30,7 +28,13 @@ export default function UnitsSettings(): React.ReactElement {
 
   return (
     <Screen className="pb-24">
-      <Stack.Screen options={headerOptions({ title: "Units" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Units",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Units" />
 
       <UIView className="gap-4 px-4 pt-4">

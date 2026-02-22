@@ -14,7 +14,13 @@ export default function AppleHealthSettings(): React.ReactElement {
       safeAreaEdges={["bottom", "top"]}
       contentContainerClassName="pb-24"
     >
-      <Stack.Screen options={headerOptions({ title: "Apple Health" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Apple Health",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Apple Health" />
 
       <UIView className="gap-3 px-2 pt-4">

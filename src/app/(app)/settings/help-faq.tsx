@@ -29,7 +29,13 @@ export default function HelpFaqSettings(): React.ReactElement {
       safeAreaEdges={["bottom", "top"]}
       contentContainerClassName="pb-24"
     >
-      <Stack.Screen options={headerOptions({ title: "Help & FAQ" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Help & FAQ",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Help & FAQ" />
 
       <UIView className="gap-4 px-2 pt-4">

@@ -63,7 +63,13 @@ export default function NotificationsSettings(): React.ReactElement {
       safeAreaEdges={["bottom", "top"]}
       contentContainerClassName="pb-24"
     >
-      <Stack.Screen options={headerOptions({ title: "Notifications" })} />
+      <Stack.Screen
+        options={headerOptions({
+          title: "Notifications",
+          animation: "ios_from_right",
+          animationDuration: 300,
+        })}
+      />
       <AppHeader showBackButton title="Notifications" />
 
       <UIView className="gap-4 px-2 pt-4">
