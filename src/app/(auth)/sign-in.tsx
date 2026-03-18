@@ -10,6 +10,25 @@ import { SignInFormData, signInSchema } from "@/lib/form-schemas";
 import { showMessage } from "react-native-flash-message";
 import { applyFieldErrors, resolveErrorMessage } from "@/lib/auth/auth-errors";
 
+function isInvalidCredentialsError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const statusCode =
+    "statusCode" in error
+      ? (error as { statusCode?: unknown }).statusCode
+      : null;
+  const message =
+    "message" in error ? (error as { message?: unknown }).message : null;
+
+  return (
+    statusCode === 401 ||
+    (typeof message === "string" &&
+      message.toLowerCase().includes("invalid credentials"))
+  );
+}
+
 export default function SignIn() {
   const { signIn } = useAuth();
   const {
@@ -28,6 +47,13 @@ export default function SignIn() {
         ["email", "password"],
         setError
       );
+      if (!hasFieldErrors && isInvalidCredentialsError(error)) {
+        setError("password", {
+          type: "server",
+          message: "Incorrect email or password. Please try again.",
+        });
+        return;
+      }
       if (!hasFieldErrors) {
         showMessage({
           message: resolveErrorMessage(

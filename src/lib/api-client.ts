@@ -127,11 +127,18 @@ function resolveBody(body: unknown, headers: Headers): BodyInit | undefined {
 }
 
 function buildError(status: number, payload: unknown): ApiError {
-  if (payload && typeof payload === "object" && "message" in payload) {
-    const message = String(
-      (payload as { message?: string }).message ?? "Request failed"
+  if (payload && typeof payload === "object") {
+    const candidate = payload as {
+      error?: unknown;
+      message?: unknown;
+      detail?: unknown;
+    };
+    const message = [candidate.message, candidate.error, candidate.detail].find(
+      (value) => typeof value === "string" && value.trim().length > 0
     );
-    return { message, statusCode: status, details: payload };
+    if (typeof message === "string") {
+      return { message, statusCode: status, details: payload };
+    }
   }
 
   if (typeof payload === "string" && payload.trim().length > 0) {

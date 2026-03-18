@@ -175,7 +175,7 @@ export function SessionProvider({
 
   const signIn = useCallback(
     async (credentials: AuthCredentials): Promise<AuthSession> => {
-      useAuthStore.getState().setStatus("loading");
+      const previousStatus = useAuthStore.getState().status;
 
       try {
         const session = authenticate
@@ -226,7 +226,11 @@ export function SessionProvider({
         setStorageItem(STORAGE_KEYS.user, session.user ?? null);
         return session;
       } catch (error) {
-        useAuthStore.getState().setStatus("signedOut");
+        useAuthStore
+          .getState()
+          .setStatus(
+            previousStatus === "loading" ? "signedOut" : previousStatus
+          );
         throw error;
       }
     },

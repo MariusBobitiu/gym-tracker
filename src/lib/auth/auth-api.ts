@@ -13,6 +13,7 @@ export const AUTH_ENDPOINTS = {
   login: "/v1/auth/login",
   apple: "/v1/auth/apple",
   refresh: "/v1/auth/refresh",
+  requestPasswordReset: "/v1/auth/reset-password/request",
   requestVerifyEmail: "/v1/auth/verify-email/request",
   me: "/v1/me",
   updatePassword: "/v1/me/password",
@@ -64,6 +65,10 @@ export type UpdatePasswordRequest = {
 
 export type UpdateEmailRequest = {
   newEmail: string;
+};
+
+export type RequestPasswordResetRequest = {
+  email: string;
 };
 
 type LoginResponse =
@@ -266,6 +271,19 @@ export async function refreshSession(
     headers: result.headers,
     data: { token: refreshed },
   } satisfies ApiSuccess<LoginResult>;
+}
+
+export async function requestPasswordReset(
+  payload: RequestPasswordResetRequest
+): Promise<ApiResult<{ status: string } | null, ApiError>> {
+  return request<{ status: string } | null>(
+    AUTH_ENDPOINTS.requestPasswordReset,
+    {
+      method: "POST",
+      body: payload,
+      auth: false,
+    }
+  );
 }
 
 export async function getMe(
